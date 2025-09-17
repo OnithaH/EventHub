@@ -56,6 +56,21 @@ main {
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
+.event-header {
+    display: flex; /* keeps icon + text on same line */
+    justify-content: center; /* vertically centers them */
+    gap: 12px; /* <— controls space between icon & text */
+    margin-top:10px;
+}
+
+
+.gradient-text {
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+   /* remove default margin from h3 */
+}
+
     .btn-modern:hover {
         transform: translateY(-3px);
         box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
