@@ -317,3 +317,8 @@ MigrationBackup/
 # Environment files
 .env
 appsettings.Development.json
+
+# User secrets and development settings
+appsettings.Development.json
+appsettings.*.json
+*.user
