@@ -229,5 +229,36 @@ namespace EventHub.Controllers
 
             return Json(result);
         }
+        // Add this method to handle search form from homepage
+        [HttpGet]
+        public async Task<IActionResult> Search(string searchTerm, string category, string location)
+        {
+            IEnumerable<Event> events;
+
+            if (!string.IsNullOrEmpty(searchTerm) || !string.IsNullOrEmpty(category) || !string.IsNullOrEmpty(location))
+            {
+                events = await _eventService.SearchEventsAsync(category, null, location);
+
+                // Additional text search if provided
+                if (!string.IsNullOrEmpty(searchTerm))
+                {
+                    events = events.Where(e =>
+                        e.Title.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                        e.Description.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                        e.Category.Contains(searchTerm, StringComparison.OrdinalIgnoreCase));
+                }
+            }
+            else
+            {
+                events = await _eventService.GetAllEventsAsync();
+            }
+
+            // Pass search parameters to view for maintaining form state
+            ViewBag.CurrentCategory = category;
+            ViewBag.CurrentLocation = location;
+            ViewBag.CurrentSearch = searchTerm;
+
+            return View("Index", events);
+        }
     }
 }
