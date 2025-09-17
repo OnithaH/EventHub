@@ -123,7 +123,7 @@ namespace EventHub.Controllers
                     TempData["SuccessMessage"] = "Booking created successfully! Please proceed with payment.";
                     return RedirectToAction("Details", new { id = createdBooking.Id });
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     ModelState.AddModelError("", "An error occurred while creating your booking. Please try again.");
                 }
@@ -195,7 +195,7 @@ namespace EventHub.Controllers
                 await _bookingService.CancelBookingAsync(id);
                 TempData["SuccessMessage"] = "Booking cancelled successfully.";
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 TempData["ErrorMessage"] = "An error occurred while cancelling the booking.";
             }

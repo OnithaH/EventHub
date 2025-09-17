@@ -100,7 +100,7 @@ namespace EventHub.Controllers
                     TempData["SuccessMessage"] = "Event created successfully!";
                     return RedirectToAction("Details", new { id = eventModel.Id });
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     ModelState.AddModelError("", "An error occurred while creating the event. Please try again.");
                     // Log exception in production
@@ -160,7 +160,7 @@ namespace EventHub.Controllers
                     TempData["SuccessMessage"] = "Event updated successfully!";
                     return RedirectToAction("Details", new { id });
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     ModelState.AddModelError("", "An error occurred while updating the event. Please try again.");
                     // Log exception in production
@@ -195,7 +195,7 @@ namespace EventHub.Controllers
                 await _eventService.DeleteEventAsync(id);
                 TempData["SuccessMessage"] = "Event deleted successfully!";
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 TempData["ErrorMessage"] = "An error occurred while deleting the event.";
                 // Log exception in production

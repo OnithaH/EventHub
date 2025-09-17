@@ -117,7 +117,7 @@ namespace EventHub.Controllers
                         _ => RedirectToAction("Index", "Home")
                     };
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     ModelState.AddModelError("", "An error occurred during registration. Please try again.");
                     // Log the exception in production
