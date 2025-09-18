@@ -1,0 +1,367 @@
+﻿@{
+    ViewData["Title"] = "Dashboard";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@model EventHub.Models.ViewModels.CustomerDashboardViewModel
+
+<!-- Dashboard Hero Section -->
+<section class="hero-gradient py-5">
+    <div class="container">
+        <div class="hero-content">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="user-avatar me-3" style="width: 60px; height: 60px; font-size: 24px;">
+                            @Model.CustomerName.Substring(0, 1).ToUpper()
+                        </div>
+                        <div>
+                            <h1 class="text-white mb-1">Welcome back, @Model.CustomerName!</h1>
+                            <p class="text-white-50 mb-0">
+                                <i class="bi bi-star-fill me-2"></i>@Model.LoyaltyPoints Loyalty Points Available
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 text-lg-end">
+                    <div class="d-flex flex-wrap gap-2 justify-content-lg-end">
+                        <a href="@Url.Action("Index", "Event")" class="btn btn-white-modern">
+                            <i class="bi bi-search me-2"></i>Browse Events
+                        </a>
+                        <a href="@Url.Action("MyBookings", "Booking")" class="btn btn-primary-modern">
+                            <i class="bi bi-ticket-perforated me-2"></i>My Tickets
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Dashboard Stats Cards -->
+<section class="py-5">
+    <div class="container">
+        <div class="row g-4 mb-5">
+            <div class="col-lg-3 col-md-6">
+                <div class="card card-modern h-100">
+                    <div class="card-body text-center">
+                        <div class="mb-3">
+                            <i class="bi bi-calendar-check display-4 text-primary"></i>
+                        </div>
+                        <h3 class="card-title">@Model.UpcomingEventsCount</h3>
+                        <p class="card-text text-muted">Upcoming Events</p>
+                        <a href="@Url.Action("MyBookings", "Booking")" class="btn btn-outline-primary btn-sm">View All</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="card card-modern h-100">
+                    <div class="card-body text-center">
+                        <div class="mb-3">
+                            <i class="bi bi-ticket-detailed display-4 text-success"></i>
+                        </div>
+                        <h3 class="card-title">@Model.TotalTicketsPurchased</h3>
+                        <p class="card-text text-muted">Total Tickets</p>
+                        <a href="@Url.Action("MyBookings", "Booking")" class="btn btn-outline-success btn-sm">View Tickets</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="card card-modern h-100">
+                    <div class="card-body text-center">
+                        <div class="mb-3">
+                            <i class="bi bi-star-fill display-4 text-warning"></i>
+                        </div>
+                        <h3 class="card-title">@Model.LoyaltyPoints</h3>
+                        <p class="card-text text-muted">Loyalty Points</p>
+                        <button class="btn btn-outline-warning btn-sm" onclick="alert('Loyalty history coming soon!')">View History</button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="card card-modern h-100">
+                    <div class="card-body text-center">
+                        <div class="mb-3">
+                            <i class="bi bi-cash-stack display-4 text-info"></i>
+                        </div>
+                        <h3 class="card-title">$@Model.TotalAmountSpent.ToString("N0")</h3>
+                        <p class="card-text text-muted">Total Spent</p>
+                        <button class="btn btn-outline-info btn-sm" onclick="alert('Booking history coming soon!')">View History</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Dashboard Content -->
+        <div class="row g-4">
+            <!-- Left Column - Quick Actions -->
+            <div class="col-lg-8">
+                <!-- Quick Actions -->
+                <div class="card card-modern mb-4">
+                    <div class="card-body">
+                        <div class="event-header mb-4">
+                            <i class="bi bi-lightning-charge display-6 gradient-text"></i>
+                            <h3 class="gradient-text mb-0">Quick Actions</h3>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <a href="@Url.Action("Index", "Event")" class="text-decoration-none">
+                                    <div class="category-item text-center">
+                                        <i class="bi bi-search category-icon text-primary"></i>
+                                        <h6 class="mb-0">Search Events</h6>
+                                    </div>
+                                </a>
+                            </div>
+                            <div class="col-md-4">
+                                <a href="@Url.Action("MyBookings", "Booking")" class="text-decoration-none">
+                                    <div class="category-item text-center">
+                                        <i class="bi bi-ticket-perforated category-icon text-success"></i>
+                                        <h6 class="mb-0">My Bookings</h6>
+                                    </div>
+                                </a>
+                            </div>
+                            <div class="col-md-4">
+                                <a href="@Url.Action("Profile", "Account")" class="text-decoration-none">
+                                    <div class="category-item text-center">
+                                        <i class="bi bi-person-gear category-icon text-info"></i>
+                                        <h6 class="mb-0">Profile Settings</h6>
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Upcoming Events -->
+                <div class="card card-modern">
+                    <div class="card-body">
+                        <div class="event-header mb-4">
+                            <i class="bi bi-calendar-event display-6 gradient-text"></i>
+                            <h3 class="gradient-text mb-0">Upcoming Events</h3>
+                        </div>
+
+                        @if (Model.UpcomingEvents != null && Model.UpcomingEvents.Any())
+                        {
+                            <div class="row g-4">
+                                @foreach (var eventItem in Model.UpcomingEvents.Take(3))
+                                {
+                                    <div class="col-md-6 col-lg-4">
+                                        <div class="card card-modern h-100">
+                                            @if (!string.IsNullOrEmpty(eventItem.ImageUrl))
+                                            {
+                                                <img src="@eventItem.ImageUrl" class="card-img-top" alt="@eventItem.Title" style="height: 200px; object-fit: cover;">
+                                            }
+                                            else
+                                            {
+                                                <div class="card-img-top d-flex align-items-center justify-content-center bg-light" style="height: 200px;">
+                                                    <i class="bi bi-calendar-event display-4 text-muted"></i>
+                                                </div>
+                                            }
+                                            <div class="card-body">
+                                                <h5 class="card-title">@eventItem.Title</h5>
+                                                <p class="card-text">
+                                                    <small class="text-muted">
+                                                        <i class="bi bi-calendar me-1"></i>@eventItem.FormattedDate
+                                                    </small><br>
+                                                    <small class="text-muted">
+                                                        <i class="bi bi-geo-alt me-1"></i>@eventItem.VenueName
+                                                    </small>
+                                                </p>
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <span class="badge bg-primary">@eventItem.Category</span>
+                                                    <a href="@Url.Action("MyBookings", "Booking")" class="btn btn-sm btn-outline-primary">
+                                                        View Tickets
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+
+                            @if (Model.UpcomingEvents.Count() > 3)
+                            {
+                                <div class="text-center mt-4">
+                                    <a href="@Url.Action("MyBookings", "Booking")" class="btn btn-primary-modern">
+                                        View All Upcoming Events (@Model.UpcomingEvents.Count())
+                                    </a>
+                                </div>
+                            }
+                        }
+                        else if (Model.UpcomingEventsCount > 0)
+                        {
+                            <div class="text-center py-4">
+                                <i class="bi bi-calendar-check display-1 text-success"></i>
+                                <h4 class="mt-3">You have @Model.UpcomingEventsCount upcoming events!</h4>
+                                <p class="text-muted">Check your bookings for event details.</p>
+                                <a href="@Url.Action("MyBookings", "Booking")" class="btn btn-primary-modern">
+                                    View My Bookings
+                                </a>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="text-center py-5">
+                                <i class="bi bi-calendar-x display-1 text-muted"></i>
+                                <h4 class="mt-3 text-muted">No Upcoming Events</h4>
+                                <p class="text-muted">Book your first event to see it here!</p>
+                                <a href="@Url.Action("Index", "Event")" class="btn btn-primary-modern">
+                                    <i class="bi bi-search me-2"></i>Browse Events
+                                </a>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column - Loyalty Points & Recent Activity -->
+            <div class="col-lg-4">
+                <!-- Loyalty Points Widget -->
+                <div class="card card-modern mb-4">
+                    <div class="card-body text-center">
+                        <div class="mb-3">
+                            <i class="bi bi-star-fill display-4" style="color: #667eea;"></i>
+                        </div>
+                        <h3 class="gradient-text">@Model.LoyaltyPoints Points</h3>
+                        <p class="text-muted mb-3">Loyalty Balance</p>
+
+                        <div class="progress mb-3" style="height: 10px;">
+                            <div class="progress-bar" role="progressbar"
+                                 style="width: @Model.ProgressPercentage%; background: linear-gradient(45deg, #667eea, #764ba2);"
+                                 aria-valuenow="@Model.ProgressPercentage" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+
+                        <p class="small text-muted mb-3">
+                            @Model.PointsToNextReward points until next $10 reward
+                        </p>
+
+                        @if (Model.CanRedeemPoints)
+                        {
+                            <button class="btn btn-success btn-sm" onclick="alert('Points redemption coming soon!')">
+                                <i class="bi bi-gift me-1"></i>Redeem Points
+                            </button>
+                        }
+                        else
+                        {
+                            <p class="small text-muted">Earn points with every purchase!</p>
+                        }
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="card card-modern">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-clock-history me-2 text-primary"></i>Recent Activity
+                            </h5>
+                            <button class="btn btn-outline-primary btn-sm" onclick="alert('Booking history coming soon!')">View All</button>
+                        </div>
+
+                        @if (Model.RecentBookings != null && Model.RecentBookings.Any())
+                        {
+                            <div class="list-group list-group-flush">
+                                @foreach (var booking in Model.RecentBookings.Take(5))
+                                {
+                                    <div class="list-group-item border-0 px-0">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div class="flex-grow-1">
+                                                <h6 class="mb-1">@booking.EventTitle</h6>
+                                                <p class="mb-1 small text-muted">
+                                                    @booking.Quantity ticket(s) • @booking.FormattedAmount
+                                                </p>
+                                                <small class="text-muted">@booking.FormattedBookingDate</small>
+                                            </div>
+                                            <span class="badge @booking.StatusBadgeClass">
+                                                @booking.Status
+                                            </span>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="text-center py-4">
+                                <i class="bi bi-receipt display-4 text-muted"></i>
+                                <p class="text-muted mt-2 mb-0">No recent bookings</p>
+                                <small class="text-muted">Your booking history will appear here</small>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recommended Events Section -->
+        @if (Model.RecommendedEvents != null && Model.RecommendedEvents.Any())
+        {
+            <div class="mt-5">
+                <div class="text-center mb-4">
+                    <div class="event-header justify-content-center">
+                        <i class="bi bi-stars display-6 gradient-text"></i>
+                        <h3 class="gradient-text mb-0">Recommended for You</h3>
+                    </div>
+                    <p class="text-muted">Based on your booking history and preferences</p>
+                </div>
+
+                <div class="row g-4">
+                    @foreach (var eventItem in Model.RecommendedEvents.Take(4))
+                    {
+                        <div class="col-lg-3 col-md-6">
+                            <div class="card card-modern h-100">
+                                @if (!string.IsNullOrEmpty(eventItem.ImageUrl))
+                                {
+                                    <img src="@eventItem.ImageUrl" class="card-img-top" alt="@eventItem.Title" style="height: 200px; object-fit: cover;">
+                                }
+                                else
+                                {
+                                    <div class="card-img-top d-flex align-items-center justify-content-center bg-light" style="height: 200px;">
+                                        <i class="bi bi-calendar-event display-4 text-muted"></i>
+                                    </div>
+                                }
+                                <div class="card-body">
+                                    <h6 class="card-title">@eventItem.Title</h6>
+                                    <p class="card-text small">
+                                        <i class="bi bi-calendar me-1"></i>@eventItem.FormattedDate
+                                        <br>
+                                        <i class="bi bi-geo-alt me-1"></i>@eventItem.VenueName
+                                    </p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="h6 mb-0 text-primary">@eventItem.FormattedPrice</span>
+                                        <a href="@Url.Action("Details", "Event", new { id = eventItem.EventId })" class="btn btn-sm btn-primary">
+                                            Book Now
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <div class="text-center mt-4">
+                    <a href="@Url.Action("Index", "Event")" class="btn btn-outline-primary">
+                        <i class="bi bi-arrow-right me-2"></i>Explore More Events
+                    </a>
+                </div>
+            </div>
+        }
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Customer Dashboard loaded successfully!');
+
+            @if (TempData["SuccessMessage"] != null)
+            {
+                    <text>alert('Success: @TempData["SuccessMessage"]');</text>
+            }
+
+            @if (TempData["ErrorMessage"] != null)
+            {
+                    <text>alert('Error: @TempData["ErrorMessage"]');</text>
+            }
+        });
+    </script>
+}
