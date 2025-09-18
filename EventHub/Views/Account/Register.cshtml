@@ -1,341 +1,211 @@
 ﻿@model EventHub.Models.ViewModels.RegisterViewModel
 @{
-    ViewData["Title"] = "Sign Up - EventHub";
-    ViewData["BodyClass"] = "auth-page";
+    ViewData["Title"] = "Register - EventHub";
+    Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<!-- Animated Background -->
-<div class="auth-background">
-    <div class="auth-gradient"></div>
-    <div class="floating-shapes">
-        <div class="shape shape-1"></div>
-        <div class="shape shape-2"></div>
-        <div class="shape shape-3"></div>
-        <div class="shape shape-4"></div>
-        <div class="shape shape-5"></div>
-    </div>
-</div>
-
-<!-- Main Content -->
-<div class="auth-container">
-    <div class="container">
-        <div class="row justify-content-center align-items-center min-vh-100">
-            <div class="col-lg-6 col-md-8 col-sm-10">
-                <!-- Auth Card -->
+<div class="auth-wrapper">
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6">
                 <div class="auth-card">
-                    <div class="auth-card-header">
-                        <div class="auth-icon">
-                            <i class="bi bi-person-plus-fill"></i>
-                        </div>
-                        <h2 class="auth-title">Join EventHub!</h2>
-                        <p class="auth-subtitle">Create your account and start discovering amazing events</p>
+                    <!-- Header -->
+                    <div class="auth-header text-center mb-4">
+                        <h2 class="fw-bold text-primary mb-2">Join EventHub</h2>
+                        <p class="text-muted">Create your account to start discovering amazing events</p>
                     </div>
 
-                    <div class="auth-card-body">
-                        <!-- Progress Indicator -->
-                        <div class="signup-progress mb-4">
-                            <div class="progress-steps">
-                                <div class="step active" data-step="1">
-                                    <div class="step-number">1</div>
-                                    <div class="step-label">Personal Info</div>
-                                </div>
-                                <div class="step" data-step="2">
-                                    <div class="step-number">2</div>
-                                    <div class="step-label">Account Setup</div>
-                                </div>
-                                <div class="step" data-step="3">
-                                    <div class="step-number">3</div>
-                                    <div class="step-label">Preferences</div>
-                                </div>
+                    <!-- Multi-step Progress Indicator -->
+                    <div class="progress-container mb-4">
+                        <div class="progress-bar-custom">
+                            <div class="step active" data-step="1">
+                                <div class="step-number">1</div>
+                                <div class="step-label">Personal Info</div>
                             </div>
-                            <div class="progress-bar">
-                                <div class="progress-fill" style="width: 33.33%"></div>
+                            <div class="step" data-step="2">
+                                <div class="step-number">2</div>
+                                <div class="step-label">Account Setup</div>
+                            </div>
+                            <div class="step" data-step="3">
+                                <div class="step-number">3</div>
+                                <div class="step-label">Complete</div>
                             </div>
                         </div>
+                    </div>
 
-                        <!-- Error Messages -->
-                        @if (!ViewData.ModelState.IsValid)
-                        {
-                            <div class="alert alert-danger" role="alert">
-                                <i class="bi bi-exclamation-triangle me-2"></i>
-                                @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
-                                {
-                                    <span>@error.ErrorMessage</span>
-                            
-                                    <br />
-                                }
+                    <!-- Validation Summary -->
+                    <div asp-validation-summary="All" class="alert alert-danger d-none" role="alert"></div>
+
+                    <form asp-action="Register" method="post" id="registrationForm" novalidate>
+                        <!-- Step 1: Personal Information -->
+                        <div class="form-step active" data-step="1">
+                            <h4 class="step-title mb-3">Personal Information</h4>
+
+                            <div class="form-floating mb-3">
+                                <input asp-for="Name" class="form-control form-control-modern" id="nameInput"
+                                       placeholder="Enter your full name" autocomplete="name">
+                                <label for="nameInput" class="form-label">
+                                    <i class="bi bi-person me-1"></i>Full Name
+                                </label>
+                                <span asp-validation-for="Name" class="invalid-feedback"></span>
                             </div>
-                        }
 
-                        <!-- Success Messages -->
-                        @if (TempData["SuccessMessage"] != null)
-                        {
-                            <div class="alert alert-success" role="alert">
-                                <i class="bi bi-check-circle me-2"></i>
-                                <span>@TempData["SuccessMessage"]</span>
+                            <div class="form-floating mb-3">
+                                <input asp-for="Email" type="email" class="form-control form-control-modern"
+                                       id="emailInput" placeholder="Enter your email address" autocomplete="email">
+                                <label for="emailInput" class="form-label">
+                                    <i class="bi bi-envelope me-1"></i>Email Address
+                                </label>
+                                <span asp-validation-for="Email" class="invalid-feedback"></span>
                             </div>
-                        }
 
-                        <!-- Sign Up Form -->
-                        <form id="registerForm" method="post" asp-action="Register" asp-controller="Account">
-                            @Html.AntiForgeryToken()
+                            <div class="form-floating mb-4">
+                                <input asp-for="Phone" type="tel" class="form-control form-control-modern"
+                                       id="phoneInput" placeholder="Enter your phone number" autocomplete="tel">
+                                <label for="phoneInput" class="form-label">
+                                    <i class="bi bi-telephone me-1"></i>Phone Number
+                                </label>
+                                <span asp-validation-for="Phone" class="invalid-feedback"></span>
+                            </div>
 
-                            <!-- Step 1: Personal Information -->
-                            <div class="form-step active" data-step="1">
-                                <div class="step-header mb-4">
-                                    <h4><i class="bi bi-person me-2"></i>Personal Information</h4>
-                                    <p class="text-muted">Tell us a bit about yourself</p>
-                                </div>
-
-                                <!-- Full Name -->
-                                <div class="form-group-modern mb-4">
-                                    <div class="input-group-modern">
-                                        <span class="input-icon">
-                                            <i class="bi bi-person"></i>
-                                        </span>
-                                        <input asp-for="Name"
-                                               class="form-control-modern"
-                                               placeholder="Enter your full name"
-                                               required>
-                                        <label class="floating-label" for="Name">Full Name</label>
-                                    </div>
-                                    <span asp-validation-for="Name" class="invalid-feedback"></span>
-                                </div>
-
-                                <!-- Phone Number -->
-                                <div class="form-group-modern mb-4">
-                                    <div class="input-group-modern">
-                                        <span class="input-icon">
-                                            <i class="bi bi-telephone"></i>
-                                        </span>
-                                        <input asp-for="Phone"
-                                               type="tel"
-                                               class="form-control-modern"
-                                               placeholder="Enter your phone number">
-                                        <label class="floating-label" for="Phone">Phone Number (Optional)</label>
-                                    </div>
-                                    <span asp-validation-for="Phone" class="invalid-feedback"></span>
-                                </div>
-
-                                <!-- Next Button -->
-                                <button type="button" class="btn-auth btn-primary-modern next-step" data-next="2">
-                                    <i class="bi bi-arrow-right me-2"></i>Continue
+                            <div class="d-grid">
+                                <button type="button" class="btn btn-primary btn-next" data-next="2">
+                                    Continue <i class="bi bi-arrow-right ms-1"></i>
                                 </button>
                             </div>
-
-                            <!-- Step 2: Account Setup -->
-                            <div class="form-step" data-step="2">
-                                <div class="step-header mb-4">
-                                    <h4><i class="bi bi-shield-lock me-2"></i>Account Security</h4>
-                                    <p class="text-muted">Choose your email and create a secure password</p>
-                                </div>
-
-                                <!-- Email Field -->
-                                <div class="form-group-modern mb-4">
-                                    <div class="input-group-modern">
-                                        <span class="input-icon">
-                                            <i class="bi bi-envelope"></i>
-                                        </span>
-                                        <input asp-for="Email"
-                                               type="email"
-                                               class="form-control-modern"
-                                               placeholder="Enter your email address"
-                                               required>
-                                        <label class="floating-label" for="Email">Email Address</label>
-                                    </div>
-                                    <span asp-validation-for="Email" class="invalid-feedback"></span>
-                                    <div class="form-hint">
-                                        <i class="bi bi-info-circle me-1"></i>
-                                        We'll use this email for important account notifications
-                                    </div>
-                                </div>
-
-                                <!-- Password Field -->
-                                <div class="form-group-modern mb-4">
-                                    <div class="input-group-modern">
-                                        <span class="input-icon">
-                                            <i class="bi bi-lock"></i>
-                                        </span>
-                                        <input asp-for="Password"
-                                               type="password"
-                                               class="form-control-modern"
-                                               placeholder="Create a strong password"
-                                               required>
-                                        <label class="floating-label" for="Password">Password</label>
-                                        <button type="button" class="password-toggle" onclick="togglePassword('Password')">
-                                            <i class="bi bi-eye"></i>
-                                        </button>
-                                    </div>
-                                    <span asp-validation-for="Password" class="invalid-feedback"></span>
-
-                                    <!-- Password Strength Indicator -->
-                                    <div class="password-strength mt-2">
-                                        <div class="strength-bar">
-                                            <div class="strength-fill" id="strengthFill"></div>
-                                        </div>
-                                        <div class="strength-text" id="strengthText">Enter a password</div>
-                                    </div>
-                                </div>
-
-                                <!-- Confirm Password Field -->
-                                <div class="form-group-modern mb-4">
-                                    <div class="input-group-modern">
-                                        <span class="input-icon">
-                                            <i class="bi bi-lock-fill"></i>
-                                        </span>
-                                        <input asp-for="ConfirmPassword"
-                                               type="password"
-                                               class="form-control-modern"
-                                               placeholder="Confirm your password"
-                                               required>
-                                        <label class="floating-label" for="ConfirmPassword">Confirm Password</label>
-                                        <button type="button" class="password-toggle" onclick="togglePassword('ConfirmPassword')">
-                                            <i class="bi bi-eye"></i>
-                                        </button>
-                                    </div>
-                                    <span asp-validation-for="ConfirmPassword" class="invalid-feedback"></span>
-                                </div>
-
-                                <!-- Navigation Buttons -->
-                                <div class="step-navigation">
-                                    <button type="button" class="btn-auth btn-outline-modern prev-step" data-prev="1">
-                                        <i class="bi bi-arrow-left me-2"></i>Back
-                                    </button>
-                                    <button type="button" class="btn-auth btn-primary-modern next-step" data-next="3">
-                                        <i class="bi bi-arrow-right me-2"></i>Continue
-                                    </button>
-                                </div>
-                            </div>
-
-                            <!-- Step 3: Role & Preferences -->
-                            <div class="form-step" data-step="3">
-                                <div class="step-header mb-4">
-                                    <h4><i class="bi bi-person-badge me-2"></i>Account Type</h4>
-                                    <p class="text-muted">How do you plan to use EventHub?</p>
-                                </div>
-
-                                <!-- Role Selection -->
-                                <div class="form-group-modern mb-4">
-                                    <label class="form-label-modern">Choose your account type:</label>
-                                    <div class="role-selector-expanded">
-                                        <div class="role-option-expanded">
-                                            <input type="radio" id="CustomerRole" asp-for="Role" value="Customer" checked>
-                                            <label for="CustomerRole">
-                                                <div class="role-card-expanded">
-                                                    <div class="role-icon">
-                                                        <i class="bi bi-person"></i>
-                                                    </div>
-                                                    <div class="role-content">
-                                                        <h5>Event Attendee</h5>
-                                                        <p>Browse and book tickets for amazing events</p>
-                                                        <ul class="role-features">
-                                                            <li><i class="bi bi-check"></i> Discover events near you</li>
-                                                            <li><i class="bi bi-check"></i> Book tickets easily</li>
-                                                            <li><i class="bi bi-check"></i> Earn loyalty points</li>
-                                                            <li><i class="bi bi-check"></i> Get event recommendations</li>
-                                                        </ul>
-                                                    </div>
-                                                </div>
-                                            </label>
-                                        </div>
-
-                                        <div class="role-option-expanded">
-                                            <input type="radio" id="OrganizerRole" asp-for="Role" value="Organizer">
-                                            <label for="OrganizerRole">
-                                                <div class="role-card-expanded">
-                                                    <div class="role-icon">
-                                                        <i class="bi bi-briefcase"></i>
-                                                    </div>
-                                                    <div class="role-content">
-                                                        <h5>Event Organizer</h5>
-                                                        <p>Create and manage your own events</p>
-                                                        <ul class="role-features">
-                                                            <li><i class="bi bi-check"></i> Create unlimited events</li>
-                                                            <li><i class="bi bi-check"></i> Manage ticket sales</li>
-                                                            <li><i class="bi bi-check"></i> Track analytics</li>
-                                                            <li><i class="bi bi-check"></i> QR code verification</li>
-                                                        </ul>
-                                                    </div>
-                                                </div>
-                                            </label>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Company Field (for Organizers) -->
-                                <div class="form-group-modern mb-4 organizer-field" style="display: none;">
-                                    <div class="input-group-modern">
-                                        <span class="input-icon">
-                                            <i class="bi bi-building"></i>
-                                        </span>
-                                        <input asp-for="Company"
-                                               class="form-control-modern"
-                                               placeholder="Enter your company or organization name">
-                                        <label class="floating-label" for="Company">Company/Organization</label>
-                                    </div>
-                                    <span asp-validation-for="Company" class="invalid-feedback"></span>
-                                    <div class="form-hint">
-                                        <i class="bi bi-info-circle me-1"></i>
-                                        This will be displayed on your event listings
-                                    </div>
-                                </div>
-
-                                <!-- Terms and Conditions -->
-                                <div class="form-check-modern mb-4">
-                                    <input type="checkbox" class="form-check-input-modern" id="AgreeTerms" required>
-                                    <label class="form-check-label-modern" for="AgreeTerms">
-                                        I agree to the <a href="/Home/Terms" target="_blank">Terms of Service</a>
-                                        and <a href="/Home/Privacy" target="_blank">Privacy Policy</a>
-                                    </label>
-                                </div>
-
-                                <!-- Marketing Consent -->
-                                <div class="form-check-modern mb-4">
-                                    <input type="checkbox" class="form-check-input-modern" id="MarketingConsent" name="MarketingConsent">
-                                    <label class="form-check-label-modern" for="MarketingConsent">
-                                        I'd like to receive updates about new events and features
-                                    </label>
-                                </div>
-
-                                <!-- Navigation Buttons -->
-                                <div class="step-navigation">
-                                    <button type="button" class="btn-auth btn-outline-modern prev-step" data-prev="2">
-                                        <i class="bi bi-arrow-left me-2"></i>Back
-                                    </button>
-                                    <button type="submit" class="btn-auth btn-primary-modern" id="registerBtn">
-                                        <span class="btn-text">
-                                            <i class="bi bi-person-plus me-2"></i>Create Account
-                                        </span>
-                                        <span class="btn-loading d-none">
-                                            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                            Creating account...
-                                        </span>
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-
-                    <!-- Footer -->
-                    <div class="auth-card-footer">
-                        <div class="divider">
-                            <span>Already have an account?</span>
                         </div>
-                        <a href="/Account/Login" class="btn-auth btn-outline-modern">
-                            <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
-                        </a>
-                    </div>
-                </div>
 
-                <!-- Additional Links -->
-                <div class="auth-links text-center mt-4">
-                    <a href="/Home/Privacy" class="auth-link">Privacy Policy</a>
-                    <span class="mx-2">•</span>
-                    <a href="/Home/Terms" class="auth-link">Terms of Service</a>
-                    <span class="mx-2">•</span>
-                    <a href="/Home/Help" class="auth-link">Help Center</a>
+                        <!-- Step 2: Account Setup -->
+                        <div class="form-step" data-step="2">
+                            <h4 class="step-title mb-3">Account Setup</h4>
+
+                            <div class="form-floating mb-3">
+                                <input asp-for="Password" type="password" class="form-control form-control-modern"
+                                       id="passwordInput" placeholder="Create a secure password" autocomplete="new-password">
+                                <label for="passwordInput" class="form-label">
+                                    <i class="bi bi-lock me-1"></i>Password
+                                </label>
+                                <span asp-validation-for="Password" class="invalid-feedback"></span>
+                                <div class="password-strength-indicator">
+                                    <div class="strength-bar"></div>
+                                    <small class="strength-text">Password strength: Weak</small>
+                                </div>
+                            </div>
+
+                            <div class="form-floating mb-3">
+                                <input asp-for="ConfirmPassword" type="password" class="form-control form-control-modern"
+                                       id="confirmPasswordInput" placeholder="Confirm your password" autocomplete="new-password">
+                                <label for="confirmPasswordInput" class="form-label">
+                                    <i class="bi bi-lock-fill me-1"></i>Confirm Password
+                                </label>
+                                <span asp-validation-for="ConfirmPassword" class="invalid-feedback"></span>
+                            </div>
+
+                            <div class="role-selection mb-4">
+                                <label class="form-label mb-3">
+                                    <i class="bi bi-person-badge me-1"></i>I want to join as:
+                                </label>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <div class="role-card">
+                                            <input type="radio" asp-for="Role" value="Customer" id="customerRole" class="role-radio" checked>
+                                            <label for="customerRole" class="role-label">
+                                                <i class="bi bi-ticket-perforated"></i>
+                                                <span class="role-title">Customer</span>
+                                                <span class="role-description">Discover and book events</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="role-card">
+                                            <input type="radio" asp-for="Role" value="Organizer" id="organizerRole" class="role-radio">
+                                            <label for="organizerRole" class="role-label">
+                                                <i class="bi bi-calendar-event"></i>
+                                                <span class="role-title">Organizer</span>
+                                                <span class="role-description">Create and manage events</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <span asp-validation-for="Role" class="invalid-feedback d-block"></span>
+                            </div>
+
+                            <div class="form-floating mb-4 company-field d-none">
+                                <input asp-for="Company" class="form-control form-control-modern"
+                                       id="companyInput" placeholder="Enter your company name">
+                                <label for="companyInput" class="form-label">
+                                    <i class="bi bi-building me-1"></i>Company Name
+                                </label>
+                                <span asp-validation-for="Company" class="invalid-feedback"></span>
+                            </div>
+
+                            <div class="d-grid gap-2 d-md-flex">
+                                <button type="button" class="btn btn-outline-secondary btn-prev flex-fill" data-prev="1">
+                                    <i class="bi bi-arrow-left me-1"></i> Back
+                                </button>
+                                <button type="button" class="btn btn-primary btn-next flex-fill" data-next="3">
+                                    Continue <i class="bi bi-arrow-right ms-1"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Step 3: Terms & Complete -->
+                        <div class="form-step" data-step="3">
+                            <h4 class="step-title mb-3">Almost Done!</h4>
+
+                            <div class="registration-summary mb-4">
+                                <h6 class="mb-3">Registration Summary</h6>
+                                <div class="summary-item">
+                                    <strong>Name:</strong> <span id="summaryName">-</span>
+                                </div>
+                                <div class="summary-item">
+                                    <strong>Email:</strong> <span id="summaryEmail">-</span>
+                                </div>
+                                <div class="summary-item">
+                                    <strong>Phone:</strong> <span id="summaryPhone">-</span>
+                                </div>
+                                <div class="summary-item">
+                                    <strong>Role:</strong> <span id="summaryRole">-</span>
+                                </div>
+                                <div class="summary-item company-summary d-none">
+                                    <strong>Company:</strong> <span id="summaryCompany">-</span>
+                                </div>
+                            </div>
+
+                            <div class="form-check mb-4">
+                                <input type="checkbox" class="form-check-input" id="termsCheck" required>
+                                <label class="form-check-label" for="termsCheck">
+                                    I agree to the <a href="#" class="text-primary">Terms of Service</a> and
+                                    <a href="#" class="text-primary">Privacy Policy</a>
+                                </label>
+                                <div class="invalid-feedback">Please accept the terms and conditions.</div>
+                            </div>
+
+                            <div class="d-grid gap-2 d-md-flex">
+                                <button type="button" class="btn btn-outline-secondary btn-prev flex-fill" data-prev="2">
+                                    <i class="bi bi-arrow-left me-1"></i> Back
+                                </button>
+                                <button type="submit" class="btn btn-success flex-fill" id="submitBtn">
+                                    <i class="bi bi-check-circle me-1"></i> Create Account
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <!-- Login Link -->
+                    <div class="text-center mt-4">
+                        <p class="text-muted">
+                            Already have an account?
+                            <a href="@Url.Action("Login", "Account")" class="text-primary fw-bold">Sign in here</a>
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/auth.js"></script>
+}
