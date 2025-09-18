@@ -66,7 +66,7 @@ builder.Services.AddLogging(logging =>
 
     if (builder.Environment.IsProduction())
     {
-        logging.AddApplicationInsights(); // Add Application Insights in production
+        //logging.AddApplicationInsights(); // Add Application Insights in production
     }
 });
 
@@ -94,10 +94,11 @@ if (!app.Environment.IsDevelopment())
 app.Use(async (context, next) =>
 {
     // Add security headers
-    context.Response.Headers.Add("X-Content-Type-Options", "nosniff");
-    context.Response.Headers.Add("X-Frame-Options", "DENY");
-    context.Response.Headers.Add("X-XSS-Protection", "1; mode=block");
-    context.Response.Headers.Add("Referrer-Policy", "strict-origin-when-cross-origin");
+    context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+    context.Response.Headers.Append("X-Frame-Options", "DENY");
+    context.Response.Headers.Append("X-XSS-Protection", "1; mode=block");
+    context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
+    //context.Response.Headers.Append("Content-Security-Policy", csp);
 
     // Content Security Policy
     var csp = "default-src 'self'; " +
