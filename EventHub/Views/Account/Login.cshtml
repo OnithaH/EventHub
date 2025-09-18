@@ -1,0 +1,179 @@
+﻿@model EventHub.Models.ViewModels.LoginViewModel
+@{
+    ViewData["Title"] = "Sign In - EventHub";
+    ViewData["BodyClass"] = "auth-page";
+}
+
+<!-- Animated Background -->
+<div class="auth-background">
+    <div class="auth-gradient"></div>
+    <div class="floating-shapes">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
+        <div class="shape shape-4"></div>
+    </div>
+</div>
+
+<!-- Main Content -->
+<div class="auth-container">
+    <div class="container">
+        <div class="row justify-content-center align-items-center min-vh-100">
+            <div class="col-lg-5 col-md-7 col-sm-9">
+                <!-- Auth Card -->
+                <div class="auth-card">
+                    <div class="auth-card-header">
+                        <div class="auth-icon">
+                            <i class="bi bi-person-circle"></i>
+                        </div>
+                        <h2 class="auth-title">Welcome Back!</h2>
+                        <p class="auth-subtitle">Sign in to your EventHub account</p>
+                    </div>
+
+                    <div class="auth-card-body">
+                        <!-- Error Messages -->
+                        @if (!ViewData.ModelState.IsValid)
+                        {
+                            <div class="alert alert-danger" role="alert">
+                                <i class="bi bi-exclamation-triangle me-2"></i>
+                                @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                                {
+                                    <span>@error.ErrorMessage</span>
+                            
+                                    <br />
+                                }
+                            </div>
+                        }
+
+                        <!-- Success Messages -->
+                        @if (TempData["SuccessMessage"] != null)
+                        {
+                            <div class="alert alert-success" role="alert">
+                                <i class="bi bi-check-circle me-2"></i>
+                                <span>@TempData["SuccessMessage"]</span>
+                            </div>
+                        }
+
+                        <!-- Sign In Form -->
+                        <form id="loginForm" method="post" asp-action="Login" asp-controller="Account">
+                            @Html.AntiForgeryToken()
+
+                            <!-- Email Field -->
+                            <div class="form-group-modern mb-4">
+                                <div class="input-group-modern">
+                                    <span class="input-icon">
+                                        <i class="bi bi-envelope"></i>
+                                    </span>
+                                    <input asp-for="Email"
+                                           class="form-control-modern"
+                                           placeholder="Enter your email address"
+                                           required>
+                                    <label class="floating-label" for="Email">Email Address</label>
+                                </div>
+                                <span asp-validation-for="Email" class="invalid-feedback"></span>
+                            </div>
+
+                            <!-- Password Field -->
+                            <div class="form-group-modern mb-4">
+                                <div class="input-group-modern">
+                                    <span class="input-icon">
+                                        <i class="bi bi-lock"></i>
+                                    </span>
+                                    <input asp-for="Password"
+                                           type="password"
+                                           class="form-control-modern"
+                                           placeholder="Enter your password"
+                                           required>
+                                    <label class="floating-label" for="Password">Password</label>
+                                    <button type="button" class="password-toggle" onclick="togglePassword('Password')">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                </div>
+                                <span asp-validation-for="Password" class="invalid-feedback"></span>
+                            </div>
+
+                            <!-- Role Selection -->
+                            <div class="form-group-modern mb-4">
+                                <label class="form-label-modern">Sign in as:</label>
+                                <div class="role-selector">
+                                    <div class="role-option">
+                                        <input type="radio" id="Customer" asp-for="Role" value="Customer" checked>
+                                        <label for="Customer">
+                                            <div class="role-card">
+                                                <i class="bi bi-person"></i>
+                                                <span>Customer</span>
+                                            </div>
+                                        </label>
+                                    </div>
+                                    <div class="role-option">
+                                        <input type="radio" id="Organizer" asp-for="Role" value="Organizer">
+                                        <label for="Organizer">
+                                            <div class="role-card">
+                                                <i class="bi bi-briefcase"></i>
+                                                <span>Organizer</span>
+                                            </div>
+                                        </label>
+                                    </div>
+                                    <div class="role-option">
+                                        <input type="radio" id="Admin" asp-for="Role" value="Admin">
+                                        <label for="Admin">
+                                            <div class="role-card">
+                                                <i class="bi bi-shield-check"></i>
+                                                <span>Admin</span>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Remember Me -->
+                            <div class="form-check-modern mb-4">
+                                <input asp-for="RememberMe" type="checkbox" class="form-check-input-modern">
+                                <label asp-for="RememberMe" class="form-check-label-modern">
+                                    Keep me signed in
+                                </label>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <button type="submit" class="btn-auth btn-primary-modern" id="loginBtn">
+                                <span class="btn-text">
+                                    <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+                                </span>
+                                <span class="btn-loading d-none">
+                                    <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                    Signing in...
+                                </span>
+                            </button>
+
+                            <!-- Forgot Password Link -->
+                            <div class="text-center mt-3">
+                                <a href="/Account/ForgotPassword" class="forgot-password-link">
+                                    Forgot your password?
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="auth-card-footer">
+                        <div class="divider">
+                            <span>New to EventHub?</span>
+                        </div>
+                        <a href="/Account/Register" class="btn-auth btn-outline-modern">
+                            <i class="bi bi-person-plus me-2"></i>Create Account
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Additional Links -->
+                <div class="auth-links text-center mt-4">
+                    <a href="/Home/Privacy" class="auth-link">Privacy Policy</a>
+                    <span class="mx-2">•</span>
+                    <a href="/Home/Terms" class="auth-link">Terms of Service</a>
+                    <span class="mx-2">•</span>
+                    <a href="/Home/Help" class="auth-link">Help Center</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,19 @@
+﻿@{
+    ViewData["Title"] = "Database Insert Test";
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-6 mx-auto">
+            <div class="card">
+                <div class="card-header @(ViewBag.Status == "Success" ? "bg-success" : "bg-danger") text-white">
+                    <h4><i class="bi bi-plus-circle"></i> Insert Test</h4>
+                </div>
+                <div class="card-body">
+                    <p>@ViewBag.Message</p>
+                    <a href="@Url.Action("Database")" class="btn btn-primary">Back to Database Test</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
