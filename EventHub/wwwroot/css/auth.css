@@ -1,0 +1,259 @@
+﻿/* Clean Authentication CSS for EventHub */
+
+/* Logo Styling */
+.auth-logo {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+    transform: rotate(-5deg);
+    transition: all 0.3s ease;
+}
+
+    .auth-logo:hover {
+        transform: rotate(0deg) scale(1.05);
+    }
+
+    .auth-logo i {
+        font-size: 2.5rem;
+        color: white;
+    }
+
+/* Title and Subtitle */
+.auth-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 1rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.auth-subtitle {
+    color: #6b7280;
+    font-size: 1.1rem;
+    font-weight: 400;
+    line-height: 1.6;
+}
+
+/* Form Labels */
+.form-label.required::after {
+    content: '*';
+    color: #ef4444;
+    margin-left: 0.25rem;
+}
+
+.form-label {
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.5rem;
+}
+
+/* Input Groups */
+.input-group-text {
+    background: #f8fafc;
+    border-color: #e2e8f0;
+    color: #6b7280;
+}
+
+.form-control {
+    border-color: #e2e8f0;
+    transition: all 0.3s ease;
+}
+
+    .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .form-control.is-invalid {
+        border-color: #ef4444;
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+    }
+
+    .form-control.is-valid {
+        border-color: #10b981;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+    }
+
+/* Password Strength Indicator */
+.password-strength {
+    height: 4px;
+    background: #e2e8f0;
+    border-radius: 2px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.password-strength-bar {
+    height: 100%;
+    width: 0%;
+    transition: all 0.3s ease;
+    border-radius: 2px;
+}
+
+.password-strength.weak .password-strength-bar {
+    width: 25%;
+    background: #ef4444;
+}
+
+.password-strength.fair .password-strength-bar {
+    width: 50%;
+    background: #f59e0b;
+}
+
+.password-strength.good .password-strength-bar {
+    width: 75%;
+    background: #3b82f6;
+}
+
+.password-strength.strong .password-strength-bar {
+    width: 100%;
+    background: #10b981;
+}
+
+/* Role Selection Buttons */
+.btn-check:checked + .btn-outline-primary {
+    background: #667eea;
+    border-color: #667eea;
+    color: white;
+}
+
+.btn-outline-primary {
+    border-color: #e2e8f0;
+    color: #374151;
+    transition: all 0.3s ease;
+}
+
+    .btn-outline-primary:hover {
+        background: #f8fafc;
+        border-color: #667eea;
+        color: #667eea;
+    }
+
+/* Primary Button */
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+    }
+
+/* Secondary Buttons */
+.btn-outline-secondary {
+    border-color: #e2e8f0;
+    color: #6b7280;
+    transition: all 0.3s ease;
+}
+
+    .btn-outline-secondary:hover {
+        background: #f8fafc;
+        border-color: #d1d5db;
+    }
+
+/* Error Messages */
+.field-validation-error {
+    color: #ef4444;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+.validation-summary-errors {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+    .validation-summary-errors ul {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .validation-summary-errors li {
+        color: #ef4444;
+    }
+
+/* Success Messages */
+.alert-success {
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    color: #065f46;
+}
+
+.alert-danger {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    color: #991b1b;
+}
+
+/* Links */
+a {
+    color: #667eea;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+    a:hover {
+        color: #764ba2;
+    }
+
+/* Mobile Responsiveness */
+@media (max-width: 992px) {
+    .auth-title {
+        font-size: 2rem;
+    }
+
+    .auth-logo {
+        width: 60px;
+        height: 60px;
+    }
+
+        .auth-logo i {
+            font-size: 2rem;
+        }
+}
+
+/* Company Field Animation */
+.company-field {
+    transition: all 0.4s ease;
+}
+
+/* Focus Effects */
+.input-group:focus-within .input-group-text {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+}
+
+/* Smooth Animations */
+* {
+    transition: all 0.3s ease;
+}
+
+/* Remove Bootstrap validation icons */
+.was-validated .form-control:valid,
+.form-control.is-valid {
+    background-image: none;
+    padding-right: 0.75rem;
+}
+
+.was-validated .form-control:invalid,
+.form-control.is-invalid {
+    background-image: none;
+    padding-right: 0.75rem;
+}
