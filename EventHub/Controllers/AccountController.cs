@@ -160,7 +160,19 @@ namespace EventHub.Controllers
                         Company = model.Company?.Trim(),
                         LoyaltyPoints = 0,
                         IsActive = true,
-                        CreatedAt = DateTime.UtcNow
+                        CreatedAt = DateTime.UtcNow,
+
+
+                        DateOfBirth = model.DateOfBirth,
+                        Gender = model.Gender?.Trim(),
+                        City = model.City?.Trim(),
+                        Interests = model.Role == UserRole.Customer ? model.Interests?.Trim() : null,
+                        Website = model.Role == UserRole.Organizer ? model.Website?.Trim() : null,
+                        OrganizationType = model.Role == UserRole.Organizer ? model.OrganizationType?.Trim() : null,
+                        Description = model.Role == UserRole.Organizer ? model.Description?.Trim() : null,
+                        EmailNotifications = model.EmailNotifications,
+                        SmsNotifications = model.SmsNotifications,
+                        MarketingEmails = model.MarketingEmails
                     };
 
                     await _userService.CreateUserAsync(user);

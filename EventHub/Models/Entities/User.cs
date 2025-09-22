@@ -36,6 +36,32 @@ namespace EventHub.Models.Entities
 
         public bool IsActive { get; set; } = true;
 
+        // Add these NEW properties to your existing User class:
+
+        public DateTime? DateOfBirth { get; set; }
+
+        [MaxLength(20)]
+        public string? Gender { get; set; }
+
+        [MaxLength(50)]
+        public string? City { get; set; }
+
+        [MaxLength(500)]
+        public string? Interests { get; set; }
+
+        [MaxLength(200)]
+        public string? Website { get; set; }
+
+        [MaxLength(50)]
+        public string? OrganizationType { get; set; }
+
+        [MaxLength(1000)]
+        public string? Description { get; set; }
+
+        public bool EmailNotifications { get; set; } = true;
+        public bool SmsNotifications { get; set; } = false;
+        public bool MarketingEmails { get; set; } = true;
+
         // Navigation properties
         public virtual ICollection<Event> OrganizedEvents { get; set; } = new List<Event>();
         public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();

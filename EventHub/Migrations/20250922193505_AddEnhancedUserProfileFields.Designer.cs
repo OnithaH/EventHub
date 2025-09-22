@@ -3,6 +3,7 @@ using System;
 using EventHub.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace EventHub.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250922193505_AddEnhancedUserProfileFields")]
+    partial class AddEnhancedUserProfileFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -362,43 +365,6 @@ namespace EventHub.Migrations
                     b.Property<string>("Website")
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
-
-                    b.Property<string>("City")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<DateTime?>("DateOfBirth")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
-
-                    b.Property<bool>("EmailNotifications")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("Gender")
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
-
-                    b.Property<string>("Interests")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<bool>("MarketingEmails")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("OrganizationType")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<bool>("SmsNotifications")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("Website")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
 
                     b.HasKey("Id");
 
