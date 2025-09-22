@@ -112,7 +112,8 @@ namespace EventHub.Controllers
             return View();
         }
 
-        // POST: /Account/Register
+        // FIXED: AccountController.cs - Replace your Register POST method with this:
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Register(RegisterViewModel model)
@@ -149,6 +150,13 @@ namespace EventHub.Controllers
                         return View(model);
                     }
 
+                    // FIXED: Convert DateOfBirth to UTC if provided
+                    DateTime? utcDateOfBirth = null;
+                    if (model.DateOfBirth.HasValue)
+                    {
+                        utcDateOfBirth = DateTime.SpecifyKind(model.DateOfBirth.Value, DateTimeKind.Utc);
+                    }
+
                     // Create new user
                     var user = new User
                     {
@@ -160,10 +168,10 @@ namespace EventHub.Controllers
                         Company = model.Company?.Trim(),
                         LoyaltyPoints = 0,
                         IsActive = true,
-                        CreatedAt = DateTime.UtcNow,
+                        CreatedAt = DateTime.UtcNow, // Already UTC
 
-
-                        DateOfBirth = model.DateOfBirth,
+                        // FIXED: New fields with proper UTC handling
+                        DateOfBirth = utcDateOfBirth,
                         Gender = model.Gender?.Trim(),
                         City = model.City?.Trim(),
                         Interests = model.Role == UserRole.Customer ? model.Interests?.Trim() : null,
@@ -187,9 +195,6 @@ namespace EventHub.Controllers
                     HttpContext.Session.SetString("LoginTime", DateTime.UtcNow.ToString());
 
                     TempData["SuccessMessage"] = "Registration successful! Welcome to EventHub.";
-
-                    // Send welcome email (implement if needed)
-                    // await _emailService.SendWelcomeEmailAsync(user);
 
                     return RedirectBasedOnRole(user.Role.ToString());
                 }
