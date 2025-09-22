@@ -1,0 +1,485 @@
+﻿/* EventHub Custom Styles - Extracted from your HTML files */
+* {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #f8fafc;
+    line-height: 1.6;
+}
+
+/* Navbar Styling - From your HTML files */
+.eventhub-navbar {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+    padding: 0.75rem 0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.eventhub-brand {
+    text-decoration: none;
+    color: #6366f1 !important;
+    font-weight: 700;
+    font-size: 1.5rem;
+}
+
+    .eventhub-brand:hover {
+        color: #5855eb !important;
+        text-decoration: none;
+    }
+
+.brand-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.brand-text {
+    color: #6366f1;
+    font-weight: 700;
+}
+
+.eventhub-nav-link {
+    color: #64748b !important;
+    font-weight: 500;
+    font-size: 0.95rem;
+    padding: 0.5rem 1rem !important;
+    margin: 0 0.25rem;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+}
+
+    .eventhub-nav-link:hover {
+        color: #6366f1 !important;
+        background-color: rgba(99, 102, 241, 0.1);
+    }
+
+    .eventhub-nav-link.active {
+        color: #6366f1 !important;
+        background-color: rgba(99, 102, 241, 0.15);
+        font-weight: 600;
+    }
+
+    /* Categories Dropdown Toggle */
+    .eventhub-nav-link.dropdown-toggle {
+        position: relative;
+    }
+
+        .eventhub-nav-link.dropdown-toggle::after {
+            border-top: 0.3em solid;
+            border-right: 0.3em solid transparent;
+            border-bottom: 0;
+            border-left: 0.3em solid transparent;
+            margin-left: 0.5rem;
+            vertical-align: 0.255em;
+            content: "";
+            display: inline-block;
+            transition: transform 0.2s ease;
+        }
+
+        .eventhub-nav-link.dropdown-toggle[aria-expanded="true"]::after {
+            transform: rotate(180deg);
+        }
+
+/* Categories Dropdown Menu */
+.eventhub-dropdown {
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    padding: 0.5rem;
+    margin-top: 0.5rem;
+    min-width: 220px;
+    background-color: white;
+}
+
+    /* Categories Dropdown Items */
+    .eventhub-dropdown .dropdown-item {
+        color: #374151;
+        padding: 0.75rem 1rem;
+        font-weight: 500;
+        border-radius: 8px;
+        margin-bottom: 0.25rem;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        text-decoration: none;
+    }
+
+        .eventhub-dropdown .dropdown-item:hover {
+            background-color: rgba(99, 102, 241, 0.1);
+            color: #6366f1;
+            transform: translateX(2px);
+        }
+
+        .eventhub-dropdown .dropdown-item:active {
+            background-color: rgba(99, 102, 241, 0.15);
+            color: #6366f1;
+        }
+
+        .eventhub-dropdown .dropdown-item:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Icons in dropdown items */
+        .eventhub-dropdown .dropdown-item i {
+            font-size: 1rem;
+            width: 20px;
+            text-align: center;
+            color: #6b7280;
+            transition: color 0.2s ease;
+        }
+
+        .eventhub-dropdown .dropdown-item:hover i {
+            color: #6366f1;
+        }
+
+        /* Categories icons specific colors */
+        .eventhub-dropdown .dropdown-item:hover .bi-music-note {
+            color: #ef4444; /* Red for music */
+        }
+
+        .eventhub-dropdown .dropdown-item:hover .bi-trophy {
+            color: #f59e0b; /* Orange for sports */
+        }
+
+        .eventhub-dropdown .dropdown-item:hover .bi-palette {
+            color: #8b5cf6; /* Purple for arts */
+        }
+
+        .eventhub-dropdown .dropdown-item:hover .bi-briefcase {
+            color: #10b981; /* Green for business */
+        }
+
+        .eventhub-dropdown .dropdown-item:hover .bi-cup-hot {
+            color: #f97316; /* Orange for food */
+        }
+
+        .eventhub-dropdown .dropdown-item:hover .bi-laptop {
+            color: #3b82f6; /* Blue for technology */
+        }
+
+        .eventhub-dropdown .dropdown-item:hover .bi-heart-pulse {
+            color: #ec4899; /* Pink for health */
+        }
+
+        .eventhub-dropdown .dropdown-item:hover .bi-book {
+            color: #14b8a6; /* Teal for education */
+        }
+
+/* Animation for dropdown show/hide */
+.eventhub-dropdown {
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+    .eventhub-dropdown.show {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+/* Auth Buttons - Login & Signup */
+
+/* Login Button */
+.eventhub-btn-login {
+    background: transparent;
+    border: 2px solid #6366f1;
+    color: #6366f1 !important;
+    font-weight: 600;
+    font-size: 0.85rem;
+    padding: 0.6rem 1.5rem;
+    border-radius: 25px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+    .eventhub-btn-login:hover {
+        background-color: #6366f1;
+        color: white !important;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        text-decoration: none;
+    }
+
+    .eventhub-btn-login:focus {
+        outline: 2px solid #6366f1;
+        outline-offset: 2px;
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    }
+
+    .eventhub-btn-login:active {
+        transform: translateY(0);
+        background-color: #5855eb;
+        border-color: #5855eb;
+    }
+
+    /* Active state for login button (when on login page) */
+    .eventhub-btn-login.active {
+        background-color: #6366f1;
+        color: white !important;
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+    }
+
+/* Signup Button */
+.eventhub-btn-signup {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    border: none;
+    color: white !important;
+    font-weight: 600;
+    font-size: 0.85rem;
+    padding: 0.6rem 1.5rem;
+    border-radius: 25px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+    .eventhub-btn-signup:hover {
+        background: linear-gradient(135deg, #5855eb 0%, #7c3aed 100%);
+        color: white !important;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+        text-decoration: none;
+    }
+
+    .eventhub-btn-signup:focus {
+        outline: 2px solid #8b5cf6;
+        outline-offset: 2px;
+        box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+    }
+
+    .eventhub-btn-signup:active {
+        transform: translateY(0);
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    }
+
+    /* Active state for signup button (when on register page) */
+    .eventhub-btn-signup.active {
+        background: linear-gradient(135deg, #5855eb 0%, #7c3aed 100%);
+        box-shadow: 0 4px 12px rgba(139, 92, 246, 0.5);
+    }
+
+    /* Button Icons */
+    .eventhub-btn-login i,
+    .eventhub-btn-signup i {
+        font-size: 1rem;
+        transition: transform 0.2s ease;
+    }
+
+    .eventhub-btn-login:hover i,
+    .eventhub-btn-signup:hover i {
+        transform: scale(1.1);
+    }
+
+    /* Loading state for buttons */
+    .eventhub-btn-login.loading,
+    .eventhub-btn-signup.loading {
+        pointer-events: none;
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+        .eventhub-btn-login.loading i,
+        .eventhub-btn-signup.loading i {
+            animation: spin 1s linear infinite;
+        }
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* User Menu - From user-header.html */
+.user-menu {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 1rem !important;
+    border-radius: 50px;
+    background: rgba(99, 102, 241, 0.1);
+    color: #6366f1 !important;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+    .user-menu:hover {
+        background: rgba(99, 102, 241, 0.15);
+        color: #6366f1 !important;
+    }
+
+.user-avatar {
+    font-size: 1.5rem;
+}
+
+.user-name {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.user-dropdown {
+    border-radius: 1rem;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    border: 1px solid #e2e8f0;
+    padding: 0.5rem;
+    min-width: 220px;
+}
+
+    .user-dropdown .dropdown-item {
+        border-radius: 0.5rem;
+        padding: 0.75rem 1rem;
+        margin-bottom: 0.25rem;
+        transition: all 0.2s ease;
+    }
+
+        .user-dropdown .dropdown-item:hover {
+            background-color: rgba(99, 102, 241, 0.1);
+            color: #6366f1;
+        }
+
+        .user-dropdown .dropdown-item.active {
+            background-color: rgba(99, 102, 241, 0.15);
+            color: #6366f1;
+            font-weight: 600;
+        }
+
+.custom-toggler {
+    border: none;
+    padding: 0.25rem 0.5rem;
+}
+
+    .custom-toggler:focus {
+        box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25);
+    }
+
+/* Mobile Responsiveness */
+@media (max-width: 991.98px) {
+    .eventhub-dropdown {
+        position: static !important;
+        transform: none !important;
+        box-shadow: none;
+        border: none;
+        border-radius: 8px;
+        margin-top: 0.5rem;
+        background-color: #f8fafc;
+    }
+
+    .eventhub-nav-link.dropdown-toggle::after {
+        margin-left: auto;
+    }
+
+    .navbar-collapse {
+        margin-top: 1rem;
+        padding: 1rem;
+        background-color: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e2e8f0;
+    }
+
+    .eventhub-nav-link {
+        padding: 0.75rem 1rem !important;
+        margin: 0.25rem 0;
+    }
+
+    .user-menu {
+        width: 100%;
+        justify-content: center;
+        margin: 0.5rem 0;
+    }
+
+    .navbar-nav.ms-auto {
+        margin-top: 1rem;
+        border-top: 1px solid #e2e8f0;
+        padding-top: 1rem;
+    }
+
+    /* Login/Signup buttons in mobile */
+    .eventhub-btn-login,
+    .eventhub-btn-signup {
+        width: 100%;
+        justify-content: center;
+        margin: 0.5rem 0;
+        padding: 0.75rem 1.5rem;
+    }
+
+        /* Remove margin in mobile */
+        .eventhub-btn-login.me-2 {
+            margin-right: 0 !important;
+        }
+}
+
+@media (max-width: 576px) {
+    .eventhub-navbar {
+        padding: 0.5rem 0;
+    }
+
+    .eventhub-brand {
+        font-size: 1.25rem;
+    }
+
+    .brand-icon {
+        font-size: 1.25rem;
+    }
+
+    .eventhub-btn-login,
+    .eventhub-btn-signup {
+        font-size: 0.8rem;
+        padding: 0.7rem 1.25rem;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .eventhub-btn-login {
+        border-width: 3px;
+    }
+
+        .eventhub-btn-login:hover,
+        .eventhub-btn-signup:hover {
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.5);
+        }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .eventhub-btn-login,
+    .eventhub-btn-signup {
+        transition: none;
+    }
+
+        .eventhub-btn-login:hover,
+        .eventhub-btn-signup:hover {
+            transform: none;
+        }
+}
+
+/* Print styles */
+@media print {
+    .eventhub-btn-login,
+    .eventhub-btn-signup {
+        border: 2px solid #000;
+        background: white !important;
+        color: #000 !important;
+        box-shadow: none;
+    }
+}

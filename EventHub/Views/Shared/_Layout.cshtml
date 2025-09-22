@@ -1,132 +1,254 @@
-﻿<!DOCTYPE html>
+﻿@using Microsoft.AspNetCore.Identity
+@using EventHub.Models.Entities
+@inject SignInManager<User> SignInManager
+@inject UserManager<User> UserManager
+
+<!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - EventHub</title>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/eventhub.css" asp-append-version="true" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+    <!-- Bootstrap 5.3 CSS (Latest) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+
+    <!-- Bootstrap Icons (Latest) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- Chart.js for payment analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- EventHub Styles -->
+    <link rel="stylesheet" href="~/css/eventhub-header.css" asp-append-version="true" />
 </head>
+
 <body>
-    <!-- Modern Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-modern fixed-top" id="mainNavbar">
-        <div class="container">
+    <!-- EventHub Header - Dynamic Navigation -->
+    <nav class="navbar navbar-expand-lg eventhub-navbar">
+        <div class="container-fluid px-4">
             <!-- Brand Logo -->
-            <a class="navbar-brand navbar-brand-modern" asp-area="" asp-controller="Home" asp-action="Index">
-                <i class="bi bi-calendar-event me-2"></i>EventHub
+            <a class="navbar-brand eventhub-brand d-flex align-items-center" asp-controller="Home" asp-action="Index">
+                <div class="brand-icon me-2">
+                    <i class="bi bi-calendar-event me-1"></i>
+                </div>
+                <span class="brand-text">EventHub</span>
             </a>
 
             <!-- Mobile Toggle Button -->
-            <button class="navbar-toggler navbar-toggler-modern" type="button" data-bs-toggle="collapse"
+            <button class="navbar-toggler custom-toggler" type="button" data-bs-toggle="collapse"
                     data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false"
                     aria-label="Toggle navigation">
-                <i class="bi bi-list"></i>
+                <span class="navbar-toggler-icon"></span>
             </button>
 
-            <!-- Navigation Menu -->
+            <!-- Navigation Items -->
             <div class="collapse navbar-collapse" id="navbarNav">
-                <!-- Main Navigation Links -->
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <!-- Left Navigation -->
+                <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link nav-link-modern" asp-area="" asp-controller="Home" asp-action="Index">
-                            <i class="bi bi-house me-1"></i>Home
+                        <a class="nav-link eventhub-nav-link" asp-controller="Home" asp-action="Index">
+                            <i class="bi bi-house-fill me-1"></i>
+                            Home
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link nav-link-modern" asp-area="" asp-controller="Event" asp-action="Index">
-                            <i class="bi bi-calendar3 me-1"></i>Events
-                        </a>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link nav-link-modern dropdown-toggle" href="#" id="categoriesDropdown"
-                           role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="bi bi-grid-3x3-gap me-1"></i>Categories
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-modern" aria-labelledby="categoriesDropdown">
-                            <li><a class="dropdown-item dropdown-item-modern" href="@Url.Action("Index", "Event", new { category = "Music" })">🎵 Music</a></li>
-                            <li><a class="dropdown-item dropdown-item-modern" href="@Url.Action("Index", "Event", new { category = "Sports" })">⚽ Sports</a></li>
-                            <li><a class="dropdown-item dropdown-item-modern" href="@Url.Action("Index", "Event", new { category = "Theatre" })">🎭 Theatre</a></li>
-                            <li><a class="dropdown-item dropdown-item-modern" href="@Url.Action("Index", "Event", new { category = "Cultural" })">🎨 Cultural</a></li>
-                            <li><a class="dropdown-item dropdown-item-modern" href="@Url.Action("Index", "Event", new { category = "Technology" })">💻 Technology</a></li>
-                        </ul>
-                    </li>
-                    @if (User.IsInRole("Organizer"))
+
+                    @if (!SignInManager.IsSignedIn(User) || User.IsInRole("Customer"))
                     {
+                        <!-- Events link for guests and customers -->
                         <li class="nav-item">
-                            <a class="nav-link nav-link-modern" asp-area="" asp-controller="Organizer" asp-action="Dashboard">
-                                <i class="bi bi-speedometer2 me-1"></i>Dashboard
+                            <a class="nav-link eventhub-nav-link" asp-controller="Event" asp-action="Index">
+                                <i class="bi bi-calendar3 me-1"></i>Events
+                            </a>
+                        </li>
+
+                        <!-- Categories Dropdown for guests and customers -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link eventhub-nav-link dropdown-toggle" href="#" id="categoriesDropdown"
+                               role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-grid-3x3-gap me-1"></i>
+                                Categories
+                            </a>
+                            <ul class="dropdown-menu eventhub-dropdown" aria-labelledby="categoriesDropdown">
+                                <li>
+                                    <a class="dropdown-item" asp-controller="Event" asp-action="Index" asp-route-category="music">
+                                        <i class="bi bi-music-note me-2"></i>Music
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" asp-controller="Event" asp-action="Index" asp-route-category="sports">
+                                        <i class="bi bi-trophy me-2"></i>Sports
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" asp-controller="Event" asp-action="Index" asp-route-category="arts">
+                                        <i class="bi bi-palette me-2"></i>Arts & Culture
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" asp-controller="Event" asp-action="Index" asp-route-category="business">
+                                        <i class="bi bi-briefcase me-2"></i>Business
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" asp-controller="Event" asp-action="Index" asp-route-category="food">
+                                        <i class="bi bi-cup-hot me-2"></i>Food & Drink
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" asp-controller="Event" asp-action="Index" asp-route-category="technology">
+                                        <i class="bi bi-laptop me-2"></i>Technology
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" asp-controller="Event" asp-action="Index" asp-route-category="health">
+                                        <i class="bi bi-heart-pulse me-2"></i>Health & Wellness
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" asp-controller="Event" asp-action="Index" asp-route-category="education">
+                                        <i class="bi bi-book me-2"></i>Education
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                    }
+                    else if (User.IsInRole("Organizer"))
+                    {
+                        <!-- Browse Events for organizers -->
+                        <li class="nav-item">
+                            <a class="nav-link eventhub-nav-link" asp-controller="Event" asp-action="Index">
+                                <i class="bi bi-calendar-event me-1"></i>Browse Events
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link eventhub-nav-link" asp-controller="Event" asp-action="MyEvents">
+                                <i class="bi bi-calendar3 me-1"></i>My Events
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link eventhub-nav-link" asp-controller="Event" asp-action="Create">
+                                <i class="bi bi-plus-circle me-1"></i>Create Event
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link eventhub-nav-link" asp-controller="Report" asp-action="Sales">
+                                <i class="bi bi-bar-chart me-1"></i>Sales Reports
                             </a>
                         </li>
                     }
-                    @if (User.IsInRole("Admin"))
+
+                    <li class="nav-item">
+                        <a class="nav-link eventhub-nav-link" asp-controller="Home" asp-action="About">
+                            <i class="bi bi-info-circle me-1"></i>About
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link eventhub-nav-link" asp-controller="Home" asp-action="Contact">
+                            <i class="bi bi-telephone me-1"></i>Contact
+                        </a>
+                    </li>
+
+                    @if (User.IsInRole("Customer"))
                     {
+                        <!-- Customer-specific navigation -->
                         <li class="nav-item">
-                            <a class="nav-link nav-link-modern" asp-area="" asp-controller="Admin" asp-action="Dashboard">
-                                <i class="bi bi-gear me-1"></i>Admin
+                            <a class="nav-link eventhub-nav-link" asp-controller="Booking" asp-action="MyBookings">
+                                <i class="bi bi-ticket-perforated me-1"></i>My Bookings
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link eventhub-nav-link" asp-controller="Ticket" asp-action="MyTickets">
+                                <i class="bi bi-qr-code me-1"></i>My Tickets
                             </a>
                         </li>
                     }
                 </ul>
 
-                <!-- User Authentication Section -->
+                <!-- Right Navigation - User Authentication -->
                 <ul class="navbar-nav ms-auto">
-                    @if (User.Identity.IsAuthenticated)
+                    @if (SignInManager.IsSignedIn(User))
                     {
                         <!-- Authenticated User Menu -->
-                        @if (User.IsInRole("Customer"))
-                        {
-                            <li class="nav-item me-2">
-                                <a class="nav-link nav-link-modern position-relative" asp-controller="Booking" asp-action="MyBookings">
-                                    <i class="bi bi-ticket-perforated me-1"></i>My Tickets
-                                </a>
-                            </li>
-                        }
-
                         <li class="nav-item dropdown">
-                            <a class="nav-link nav-link-modern dropdown-toggle d-flex align-items-center" href="#"
-                               id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <a class="nav-link dropdown-toggle user-menu" href="#" id="userDropdown" role="button"
+                               data-bs-toggle="dropdown" aria-expanded="false">
                                 <div class="user-avatar">
-                                    @User.Identity.Name?.Substring(0, 1).ToUpper()
+                                    <i class="bi bi-person-circle"></i>
                                 </div>
-                                @User.Identity.Name
+                                <span class="user-name" id="userName">@User.Identity.Name</span>
                             </a>
-                            <ul class="dropdown-menu dropdown-menu-modern dropdown-menu-end" aria-labelledby="userDropdown">
-                                <li>
-                                    <a class="dropdown-item dropdown-item-modern" asp-controller="Profile" asp-action="Index">
-                                        <i class="bi bi-person me-2"></i>Profile
-                                    </a>
-                                </li>
+                            <ul class="dropdown-menu user-dropdown" aria-labelledby="userDropdown">
                                 @if (User.IsInRole("Customer"))
                                 {
                                     <li>
-                                        <a class="dropdown-item dropdown-item-modern" asp-controller="Booking" asp-action="MyBookings">
-                                            <i class="bi bi-ticket me-2"></i>My Bookings
+                                        <a class="dropdown-item" asp-controller="Customer" asp-action="Dashboard">
+                                            <i class="bi bi-speedometer2 me-2"></i>Dashboard
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Account" asp-action="Profile">
+                                            <i class="bi bi-person me-2"></i>Edit Profile
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Booking" asp-action="MyBookings">
+                                            <i class="bi bi-ticket-perforated me-2"></i>My Bookings
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Payment" asp-action="History">
+                                            <i class="bi bi-credit-card me-2"></i>Payment History
                                         </a>
                                     </li>
                                 }
-                                @if (User.IsInRole("Organizer"))
+                                else if (User.IsInRole("Organizer"))
                                 {
                                     <li>
-                                        <a class="dropdown-item dropdown-item-modern" asp-controller="Organizer" asp-action="MyEvents">
-                                            <i class="bi bi-calendar-plus me-2"></i>My Events
+                                        <a class="dropdown-item" asp-controller="Organizer" asp-action="Dashboard">
+                                            <i class="bi bi-speedometer2 me-2"></i>Dashboard
                                         </a>
                                     </li>
                                     <li>
-                                        <a class="dropdown-item dropdown-item-modern" asp-controller="Organizer" asp-action="Reports">
-                                            <i class="bi bi-graph-up me-2"></i>Reports
+                                        <a class="dropdown-item" asp-controller="Account" asp-action="Profile">
+                                            <i class="bi bi-person me-2"></i>Edit Profile
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Event" asp-action="MyEvents">
+                                            <i class="bi bi-calendar3 me-2"></i>My Events
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Event" asp-action="Create">
+                                            <i class="bi bi-plus-circle me-2"></i>Create Event
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Report" asp-action="Sales">
+                                            <i class="bi bi-bar-chart me-2"></i>Sales Reports
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="QR" asp-action="Scanner">
+                                            <i class="bi bi-qr-code-scan me-2"></i>QR Scanner
                                         </a>
                                     </li>
                                 }
+
                                 <li><hr class="dropdown-divider"></li>
                                 <li>
-                                    <a class="dropdown-item dropdown-item-modern" asp-controller="Account" asp-action="Settings">
-                                        <i class="bi bi-gear me-2"></i>Settings
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item dropdown-item-modern" asp-controller="Account" asp-action="Logout">
+                                    <a class="dropdown-item" href="javascript:void(0)" onclick="logout()">
                                         <i class="bi bi-box-arrow-right me-2"></i>Logout
                                     </a>
                                 </li>
@@ -135,15 +257,17 @@
                     }
                     else
                     {
-                        <!-- Guest User Buttons -->
-                        <li class="nav-item me-2">
-                            <a class="btn btn-auth btn-login" asp-controller="Account" asp-action="Login">
-                                <i class="bi bi-box-arrow-in-right me-1"></i>Login
+                        <!-- Guest User - Login and Register buttons -->
+                        <li class="nav-item">
+                            <a class="btn eventhub-btn-login me-2" asp-controller="Account" asp-action="Login">
+                                <i class="bi bi-box-arrow-in-right me-1"></i>
+                                LOGIN
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="btn btn-auth btn-signup" asp-controller="Account" asp-action="Register">
-                                <i class="bi bi-person-plus me-1"></i>Sign Up
+                            <a class="btn eventhub-btn-signup" asp-controller="Account" asp-action="Register">
+                                <i class="bi bi-person-plus me-1"></i>
+                                SIGN UP
                             </a>
                         </li>
                     }
@@ -152,229 +276,344 @@
         </div>
     </nav>
 
-    <!-- Main Content with padding for fixed navbar -->
-    <main role="main" class="flex-fill" style="padding-top: 80px;">
+    <!-- Main Content Area -->
+    <main role="main">
         @RenderBody()
     </main>
 
-    <!-- Modern Footer -->
-    <footer class="footer-modern">
-        <div class="container">
-            <div class="row">
-                <!-- Company Info -->
-                <div class="col-lg-4 col-md-6 mb-4">
-                    <h5 class="fw-bold mb-3">
-                        <i class="bi bi-calendar-event me-2"></i>EventHub
-                    </h5>
-                    <p class="mb-3">Your trusted platform for discovering and booking amazing events. From concerts to conferences, we bring you closer to the experiences you love.</p>
-                    <div class="d-flex flex-wrap">
-                        <a href="#" class="social-icon">
-                            <i class="bi bi-facebook"></i>
-                        </a>
-                        <a href="#" class="social-icon">
-                            <i class="bi bi-twitter-x"></i>
-                        </a>
-                        <a href="#" class="social-icon">
-                            <i class="bi bi-instagram"></i>
-                        </a>
-                        <a href="#" class="social-icon">
-                            <i class="bi bi-linkedin"></i>
-                        </a>
-                        <a href="#" class="social-icon">
-                            <i class="bi bi-youtube"></i>
-                        </a>
-                    </div>
-                </div>
-
-                <!-- Quick Links -->
-                <div class="col-lg-2 col-md-6 mb-4">
-                    <h6 class="fw-bold mb-3">Quick Links</h6>
-                    <ul class="list-unstyled">
-                        <li>
-                            <a href="@Url.Action("Index", "Home")" class="footer-link">
-                                <i class="bi bi-chevron-right me-1"></i>Home
-                            </a>
-                        </li>
-                        <li>
-                            <a href="@Url.Action("Index", "Event")" class="footer-link">
-                                <i class="bi bi-chevron-right me-1"></i>Browse Events
-                            </a>
-                        </li>
-                        <li>
-                            <a href="@Url.Action("About", "Home")" class="footer-link">
-                                <i class="bi bi-chevron-right me-1"></i>About Us
-                            </a>
-                        </li>
-                        <li>
-                            <a href="@Url.Action("Contact", "Home")" class="footer-link">
-                                <i class="bi bi-chevron-right me-1"></i>Contact
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-
-                <!-- Categories -->
-                <div class="col-lg-2 col-md-6 mb-4">
-                    <h6 class="fw-bold mb-3">Categories</h6>
-                    <ul class="list-unstyled">
-                        <li>
-                            <a href="@Url.Action("Index", "Event", new { category = "Music" })" class="footer-link">
-                                <i class="bi bi-music-note me-1"></i>Music
-                            </a>
-                        </li>
-                        <li>
-                            <a href="@Url.Action("Index", "Event", new { category = "Sports" })" class="footer-link">
-                                <i class="bi bi-trophy me-1"></i>Sports
-                            </a>
-                        </li>
-                        <li>
-                            <a href="@Url.Action("Index", "Event", new { category = "Theatre" })" class="footer-link">
-                                <i class="bi bi-mask me-1"></i>Theatre
-                            </a>
-                        </li>
-                        <li>
-                            <a href="@Url.Action("Index", "Event", new { category = "Cultural" })" class="footer-link">
-                                <i class="bi bi-palette me-1"></i>Cultural
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-
-                <!-- For Organizers -->
-                <div class="col-lg-2 col-md-6 mb-4">
-                    <h6 class="fw-bold mb-3">For Organizers</h6>
-                    <ul class="list-unstyled">
-                        <li>
-                            <a href="@Url.Action("Register", "Account", new { role = "organizer" })" class="footer-link">
-                                <i class="bi bi-plus-circle me-1"></i>Create Events
-                            </a>
-                        </li>
-                        <li>
-                            <a href="@Url.Action("Pricing", "Home")" class="footer-link">
-                                <i class="bi bi-currency-dollar me-1"></i>Pricing
-                            </a>
-                        </li>
-                        <li>
-                            <a href="@Url.Action("Features", "Home")" class="footer-link">
-                                <i class="bi bi-star me-1"></i>Features
-                            </a>
-                        </li>
-                        <li>
-                            <a href="@Url.Action("Support", "Home")" class="footer-link">
-                                <i class="bi bi-headset me-1"></i>Support
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-
-                <!-- Support -->
-                <div class="col-lg-2 col-md-6 mb-4">
-                    <h6 class="fw-bold mb-3">Support</h6>
-                    <ul class="list-unstyled">
-                        <li>
-                            <a href="@Url.Action("Help", "Home")" class="footer-link">
-                                <i class="bi bi-question-circle me-1"></i>Help Center
-                            </a>
-                        </li>
-                        <li>
-                            <a href="@Url.Action("Privacy", "Home")" class="footer-link">
-                                <i class="bi bi-shield-check me-1"></i>Privacy Policy
-                            </a>
-                        </li>
-                        <li>
-                            <a href="@Url.Action("Terms", "Home")" class="footer-link">
-                                <i class="bi bi-file-text me-1"></i>Terms of Service
-                            </a>
-                        </li>
-                        <li>
-                            <a href="@Url.Action("FAQ", "Home")" class="footer-link">
-                                <i class="bi bi-chat-dots me-1"></i>FAQ
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-
-            <!-- Footer Bottom -->
-            <div class="footer-bottom">
-                <div class="row align-items-center">
-                    <div class="col-md-6">
-                        <p>&copy; @DateTime.Now.Year EventHub. All rights reserved.</p>
-                    </div>
-                    <div class="col-md-6 text-md-end">
-                        <p>Made with <i class="bi bi-heart-fill text-danger"></i> in Sri Lanka</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </footer>
-
-    <!-- Scripts -->
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
+    <!-- Bootstrap JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
+            crossorigin="anonymous"></script>
 
     <script>
-        // Navbar scroll effect
-        window.addEventListener('scroll', function() {
-            const navbar = document.getElementById('mainNavbar');
-            if (window.scrollY > 50) {
-                navbar.classList.add('navbar-scrolled');
+        // EventHub JavaScript - Extracted from your HTML files
+        document.addEventListener('DOMContentLoaded', function () {
+            initializeNavigation();
+            updateUserInfo();
+            setActiveNavigation();
+            // Initialize categories dropdown
+            initializeCategoriesDropdown();
+            handleCategorySelection();
+            trackCategoryClicks();
+        });
+
+        // Initialize navigation functionality
+        function initializeNavigation() {
+            const dropdownToggle = document.querySelector('[data-bs-toggle="dropdown"]');
+            if (dropdownToggle) {
+                console.log('Navigation dropdown initialized');
+            }
+
+            const navLinks = document.querySelectorAll('.eventhub-nav-link');
+            navLinks.forEach(link => {
+                link.addEventListener('click', function (e) {
+                    navLinks.forEach(l => l.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+        }
+
+        // Update user information
+        function updateUserInfo() {
+            const userNameElement = document.getElementById('userName');
+            const userSession = localStorage.getItem('userSession') || sessionStorage.getItem('userSession');
+
+            if (userSession) {
+                try {
+                    const userData = JSON.parse(userSession);
+                    if (userNameElement && userData.name) {
+                        userNameElement.textContent = userData.name;
+                    }
+                } catch (error) {
+                    console.error('Error parsing user session:', error);
+                    if (userNameElement) {
+                        userNameElement.textContent = 'User';
+                    }
+                }
             } else {
-                navbar.classList.remove('navbar-scrolled');
+                if (userNameElement) {
+                    // Keep default from server-side rendering
+                }
+            }
+        }
+
+        // Set active navigation
+        function setActiveNavigation() {
+            const currentPath = window.location.pathname;
+            const navLinks = document.querySelectorAll('.eventhub-nav-link');
+            const dropdownItems = document.querySelectorAll('.dropdown-item');
+
+            navLinks.forEach(link => link.classList.remove('active'));
+            dropdownItems.forEach(item => item.classList.remove('active'));
+
+            // Match current path with navigation links
+            navLinks.forEach(link => {
+                const href = link.getAttribute('href');
+                if (href === currentPath || currentPath.includes(href)) {
+                    link.classList.add('active');
+                }
+            });
+
+            dropdownItems.forEach(item => {
+                const href = item.getAttribute('href');
+                if (href === currentPath || currentPath.includes(href)) {
+                    item.classList.add('active');
+                }
+            });
+        }
+
+        // Logout function
+        function logout() {
+            Swal.fire({
+                title: 'Logout',
+                text: 'Are you sure you want to logout?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#6366f1',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Yes, logout',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    performLogout();
+                }
+            });
+        }
+
+        // Perform actual logout
+        function performLogout() {
+            localStorage.removeItem('userSession');
+            sessionStorage.removeItem('userSession');
+            localStorage.removeItem('userLoggedIn');
+
+            Swal.fire({
+                title: 'Logged Out',
+                text: 'You have been successfully logged out.',
+                icon: 'success',
+                confirmButtonColor: '#6366f1',
+                timer: 1500,
+                showConfirmButton: false
+            }).then(() => {
+                // Use ASP.NET Core logout action
+                window.location.href = '@Url.Action("Logout", "Account")';
+            });
+        }
+
+        // Close mobile navigation when clicking outside
+        document.addEventListener('click', function (event) {
+            const navbar = document.querySelector('.navbar-collapse');
+            const toggler = document.querySelector('.navbar-toggler');
+
+            if (navbar && navbar.classList.contains('show') &&
+                !navbar.contains(event.target) &&
+                !toggler.contains(event.target)) {
+
+                const bsCollapse = bootstrap.Collapse.getInstance(navbar);
+                if (bsCollapse) {
+                    bsCollapse.hide();
+                }
             }
         });
 
-        // Active nav link highlighting
-        document.addEventListener('DOMContentLoaded', function() {
-            const currentLocation = location.pathname;
-            const navLinks = document.querySelectorAll('.nav-link-modern');
+        // ========== CATEGORIES DROPDOWN FUNCTIONALITY ==========
 
-            navLinks.forEach(link => {
-                if (link.getAttribute('href') === currentLocation) {
-                    link.classList.add('active');
-                } else {
-                    link.classList.remove('active');
-                }
+        // Initialize categories dropdown functionality
+        function initializeCategoriesDropdown() {
+            const categoriesDropdown = document.getElementById('categoriesDropdown');
+            const dropdownMenu = categoriesDropdown?.nextElementSibling;
+
+            if (!categoriesDropdown || !dropdownMenu) return;
+
+            // Enhanced Bootstrap dropdown initialization
+            const dropdown = new bootstrap.Dropdown(categoriesDropdown, {
+                autoClose: true,
+                boundary: 'viewport'
             });
-        });
 
-        // Mobile menu close on link click
-        document.addEventListener('DOMContentLoaded', function() {
-            const navLinks = document.querySelectorAll('.navbar-nav .nav-link');
-            const navbarCollapse = document.querySelector('.navbar-collapse');
+            // Add custom event listeners
+            categoriesDropdown.addEventListener('show.bs.dropdown', function() {
+                console.log('Categories dropdown opening');
+                this.setAttribute('aria-expanded', 'true');
 
-            navLinks.forEach(link => {
-                link.addEventListener('click', function() {
-                    if (window.innerWidth < 992) { // Bootstrap lg breakpoint
-                        const bsCollapse = new bootstrap.Collapse(navbarCollapse, {
-                            toggle: false
+                // Add show animation class
+                setTimeout(() => {
+                    dropdownMenu.classList.add('show');
+                }, 10);
+            });
+
+            categoriesDropdown.addEventListener('hide.bs.dropdown', function() {
+                console.log('Categories dropdown closing');
+                this.setAttribute('aria-expanded', 'false');
+                dropdownMenu.classList.remove('show');
+            });
+        }
+
+        // Handle category selection
+        function handleCategorySelection() {
+            const categoryItems = document.querySelectorAll('.eventhub-dropdown .dropdown-item');
+
+            categoryItems.forEach(item => {
+                item.addEventListener('click', function(e) {
+                    const categoryName = this.textContent.trim();
+                    const categoryUrl = this.getAttribute('href');
+
+                    console.log(`Category selected: ${categoryName}`);
+
+                    // Add loading state
+                    this.style.opacity = '0.7';
+                    this.innerHTML = `<i class="bi bi-arrow-repeat me-2 spinner-border spinner-border-sm"></i>${categoryName}`;
+
+                    // Optional: Store selected category in localStorage
+                    localStorage.setItem('selectedCategory', categoryName);
+
+                    // Optional: Add analytics tracking
+                    if (typeof gtag !== 'undefined') {
+                        gtag('event', 'category_click', {
+                            'event_category': 'navigation',
+                            'event_label': categoryName
                         });
-                        bsCollapse.hide();
                     }
                 });
+
+                // Add hover effects
+                item.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateX(2px)';
+                });
+
+                item.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateX(0)';
+                });
             });
-        });
+        }
 
-        // Add loading states to navigation links
-        document.querySelectorAll('.nav-link, .btn-auth').forEach(link => {
-            link.addEventListener('click', function(e) {
-                // Only add loading state for navigation links, not dropdowns
-                if (!this.classList.contains('dropdown-toggle') && !this.getAttribute('href').startsWith('#')) {
-                    const originalText = this.innerHTML;
-                    this.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Loading...';
-                    this.style.pointerEvents = 'none';
+        // Track category clicks for analytics
+        function trackCategoryClicks() {
+            const categoryItems = document.querySelectorAll('.eventhub-dropdown .dropdown-item');
 
-                    // Reset after 5 seconds (failsafe)
-                    setTimeout(() => {
-                        this.innerHTML = originalText;
-                        this.style.pointerEvents = 'auto';
-                    }, 5000);
+            categoryItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    const categoryName = this.textContent.trim();
+                    const categoryIcon = this.querySelector('i').className;
+
+                    // Track in localStorage for user preferences
+                    const categoryHistory = JSON.parse(localStorage.getItem('categoryHistory') || '[]');
+                    const categoryClick = {
+                        name: categoryName,
+                        icon: categoryIcon,
+                        timestamp: new Date().toISOString(),
+                        url: this.getAttribute('href')
+                    };
+
+                    categoryHistory.unshift(categoryClick);
+
+                    // Keep only last 10 category clicks
+                    if (categoryHistory.length > 10) {
+                        categoryHistory.pop();
+                    }
+
+                    localStorage.setItem('categoryHistory', JSON.stringify(categoryHistory));
+
+                    console.log('Category click tracked:', categoryClick);
+                });
+            });
+        }
+
+        // Get user's category preferences
+        function getCategoryPreferences() {
+            const categoryHistory = JSON.parse(localStorage.getItem('categoryHistory') || '[]');
+
+            // Count category clicks
+            const categoryCount = {};
+            categoryHistory.forEach(click => {
+                categoryCount[click.name] = (categoryCount[click.name] || 0) + 1;
+            });
+
+            // Sort by frequency
+            const sortedCategories = Object.entries(categoryCount)
+                .sort(([,a], [,b]) => b - a)
+                .map(([name]) => name);
+
+            return {
+                mostViewed: sortedCategories,
+                recentHistory: categoryHistory.slice(0, 5)
+            };
+        }
+
+        // Filter events by category (utility function)
+        function filterEventsByCategory(category) {
+            const url = new URL(window.location);
+            url.searchParams.set('category', category.toLowerCase());
+
+            // Update URL without page reload
+            window.history.pushState({}, '', url);
+
+            // Trigger custom event for other scripts to listen
+            const categoryChangeEvent = new CustomEvent('categoryChanged', {
+                detail: { category: category }
+            });
+            document.dispatchEvent(categoryChangeEvent);
+
+            return url.toString();
+        }
+
+        // Navigate to category page with filters
+        function navigateToCategory(categoryName) {
+            const categorySlug = categoryName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+            const url = `/Event?category=${categorySlug}`;
+
+            // Add smooth transition effect
+            document.body.style.opacity = '0.9';
+
+            setTimeout(() => {
+                window.location.href = url;
+            }, 150);
+        }
+
+        // Additional keyboard navigation support for categories
+        document.addEventListener('keydown', function(e) {
+            const categoriesDropdown = document.getElementById('categoriesDropdown');
+            const dropdownMenu = document.querySelector('.eventhub-dropdown');
+
+            if (!categoriesDropdown || !dropdownMenu) return;
+
+            // ESC key to close dropdown
+            if (e.key === 'Escape' && dropdownMenu.classList.contains('show')) {
+                const dropdown = bootstrap.Dropdown.getInstance(categoriesDropdown);
+                if (dropdown) {
+                    dropdown.hide();
+                    categoriesDropdown.focus();
                 }
-            });
+            }
+
+            // Arrow keys navigation within dropdown
+            if (dropdownMenu.classList.contains('show')) {
+                const items = dropdownMenu.querySelectorAll('.dropdown-item');
+                const currentFocus = document.activeElement;
+                const currentIndex = Array.from(items).indexOf(currentFocus);
+
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    const nextIndex = currentIndex < items.length - 1 ? currentIndex + 1 : 0;
+                    items[nextIndex].focus();
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    const prevIndex = currentIndex > 0 ? currentIndex - 1 : items.length - 1;
+                    items[prevIndex].focus();
+                }
+            }
         });
+
+        // Export functions for use in other scripts
+        window.EventHubCategories = {
+            getCategoryPreferences,
+            filterEventsByCategory,
+            navigateToCategory,
+            trackCategoryClicks
+        };
     </script>
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>
+
 </html>
