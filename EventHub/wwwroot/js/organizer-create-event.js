@@ -1,40 +1,34 @@
 ﻿// ==========================================
-// EventHub Create Event JavaScript
+// EventHub Create Event JavaScript - FINAL FIX
+// Compatible with jQuery Validation Unobtrusive
 // ==========================================
 
 document.addEventListener('DOMContentLoaded', function () {
     initializeCreateEventForm();
 });
 
-/**
- * Initialize Create Event Form
- */
 function initializeCreateEventForm() {
     setupCharacterCounters();
     setupImageUpload();
-    setupFormValidation();
     setupLivePreview();
     setMinDate();
+    // DO NOT call setupFormValidation() - jQuery handles it
 }
 
 /**
- * Setup character counters for text inputs
+ * Setup character counters
  */
 function setupCharacterCounters() {
-    // Title counter
     const titleInput = document.querySelector('[name="Title"]');
     const titleCount = document.getElementById('titleCount');
-
     if (titleInput && titleCount) {
         titleInput.addEventListener('input', function () {
             titleCount.textContent = this.value.length;
         });
     }
 
-    // Description counter
     const descInput = document.querySelector('[name="Description"]');
     const descCount = document.getElementById('descriptionCount');
-
     if (descInput && descCount) {
         descInput.addEventListener('input', function () {
             descCount.textContent = this.value.length;
@@ -43,7 +37,7 @@ function setupCharacterCounters() {
 }
 
 /**
- * Setup image upload functionality
+ * Setup image upload
  */
 function setupImageUpload() {
     const uploadArea = document.getElementById('imageUploadArea');
@@ -55,13 +49,11 @@ function setupImageUpload() {
 
     if (!uploadArea || !fileInput) return;
 
-    // Click to upload
     uploadArea.addEventListener('click', function (e) {
         if (e.target.closest('.remove-image')) return;
         fileInput.click();
     });
 
-    // Drag and drop
     uploadArea.addEventListener('dragover', function (e) {
         e.preventDefault();
         this.style.borderColor = '#6366f1';
@@ -78,7 +70,6 @@ function setupImageUpload() {
         e.preventDefault();
         this.style.borderColor = '#cbd5e1';
         this.style.background = '#f8fafc';
-
         const files = e.dataTransfer.files;
         if (files.length > 0) {
             fileInput.files = files;
@@ -86,14 +77,12 @@ function setupImageUpload() {
         }
     });
 
-    // File input change
     fileInput.addEventListener('change', function () {
         if (this.files && this.files[0]) {
             handleImageSelect(this.files[0]);
         }
     });
 
-    // Remove image
     removeBtn?.addEventListener('click', function (e) {
         e.stopPropagation();
         fileInput.value = '';
@@ -103,19 +92,14 @@ function setupImageUpload() {
     });
 
     function handleImageSelect(file) {
-        // Validate file type
         if (!file.type.match('image.*')) {
             alert('Please select an image file');
             return;
         }
-
-        // Validate file size (10MB)
         if (file.size > 10 * 1024 * 1024) {
             alert('Image size should be less than 10MB');
             return;
         }
-
-        // Read and display image
         const reader = new FileReader();
         reader.onload = function (e) {
             previewImage.src = e.target.result;
@@ -128,189 +112,113 @@ function setupImageUpload() {
 }
 
 /**
- * Setup form validation
- */
-function setupFormValidation() {
-    const form = document.getElementById('createEventForm');
-
-    if (!form) return;
-
-    // Bootstrap validation
-    form.addEventListener('submit', function (event) {
-        if (!form.checkValidity()) {
-            event.preventDefault();
-            event.stopPropagation();
-        }
-        form.classList.add('was-validated');
-    }, false);
-
-    // Real-time validation
-    const requiredFields = form.querySelectorAll('[required]');
-    requiredFields.forEach(field => {
-        field.addEventListener('blur', function () {
-            validateField(this);
-        });
-    });
-}
-
-/**
- * Validate individual field
- */
-function validateField(field) {
-    if (!field.checkValidity()) {
-        field.classList.add('is-invalid');
-        field.classList.remove('is-valid');
-    } else {
-        field.classList.remove('is-invalid');
-        field.classList.add('is-valid');
-    }
-}
-
-/**
- * Setup live preview updates
+ * Setup live preview
  */
 function setupLivePreview() {
-    // Title
     const titleInput = document.querySelector('[name="Title"]');
-    const previewTitle = document.getElementById('previewTitle');
-
-    if (titleInput && previewTitle) {
+    if (titleInput) {
         titleInput.addEventListener('input', function () {
-            previewTitle.textContent = this.value || 'Event Title';
+            updatePreviewTitle(this.value);
         });
     }
 
-    // Category
     const categorySelect = document.querySelector('[name="Category"]');
-    const previewCategory = document.getElementById('previewCategory');
-
-    if (categorySelect && previewCategory) {
+    if (categorySelect) {
         categorySelect.addEventListener('change', function () {
-            previewCategory.textContent = this.value || 'Category';
+            updatePreviewCategory(this.value);
         });
     }
 
-    // Date
     const dateInput = document.querySelector('[name="EventDate"]');
-    const previewDate = document.getElementById('previewDate');
-
-    if (dateInput && previewDate) {
+    if (dateInput) {
         dateInput.addEventListener('change', function () {
-            if (this.value) {
-                const date = new Date(this.value);
-                const options = { year: 'numeric', month: 'short', day: 'numeric' };
-                previewDate.textContent = date.toLocaleDateString('en-US', options);
-            } else {
-                previewDate.textContent = 'Select date';
-            }
+            updatePreviewDate(this.value);
         });
     }
 
-    // Time
     const timeInput = document.querySelector('[name="EventTime"]');
-    const previewTime = document.getElementById('previewTime');
-
-    if (timeInput && previewTime) {
+    if (timeInput) {
         timeInput.addEventListener('change', function () {
-            if (this.value) {
-                previewTime.textContent = formatTime(this.value);
-            } else {
-                previewTime.textContent = 'Select time';
-            }
+            updatePreviewTime(this.value);
         });
     }
 
-    // Venue
     const venueSelect = document.querySelector('[name="VenueId"]');
-    const previewVenue = document.getElementById('previewVenue');
-
-    if (venueSelect && previewVenue) {
+    if (venueSelect) {
         venueSelect.addEventListener('change', function () {
             const selectedOption = this.options[this.selectedIndex];
-            if (selectedOption.value) {
-                const venueName = selectedOption.text.split(' - ')[0];
-                previewVenue.textContent = venueName;
-            } else {
-                previewVenue.textContent = 'Select venue';
-            }
+            updatePreviewVenue(selectedOption.text);
         });
     }
 
-    // Tickets
     const ticketsInput = document.querySelector('[name="AvailableTickets"]');
-    const previewTickets = document.getElementById('previewTickets');
-
-    if (ticketsInput && previewTickets) {
+    if (ticketsInput) {
         ticketsInput.addEventListener('input', function () {
-            const value = parseInt(this.value) || 0;
-            previewTickets.textContent = value + ' tickets';
+            updatePreviewTickets(this.value);
         });
     }
 
-    // Price
     const priceInput = document.querySelector('[name="TicketPrice"]');
-    const previewPrice = document.getElementById('previewPrice');
-
-    if (priceInput && previewPrice) {
+    if (priceInput) {
         priceInput.addEventListener('input', function () {
-            const value = parseFloat(this.value) || 0;
-            previewPrice.textContent = value.toFixed(2);
+            updatePreviewPrice(this.value);
         });
     }
 }
 
-/**
- * Update preview card image
- */
-function updatePreviewImage(src) {
-    const previewCardImage = document.getElementById('previewCardImage');
-    if (previewCardImage) {
-        previewCardImage.src = src;
+function updatePreviewTitle(value) {
+    const previewTitle = document.getElementById('previewTitle');
+    if (previewTitle) previewTitle.textContent = value || 'Event Title';
+}
+
+function updatePreviewCategory(value) {
+    const previewCategory = document.getElementById('previewCategory');
+    if (previewCategory) previewCategory.textContent = value || 'Category';
+}
+
+function updatePreviewDate(value) {
+    const previewDate = document.getElementById('previewDate');
+    if (previewDate && value) {
+        const date = new Date(value);
+        const options = { month: 'short', day: 'numeric', year: 'numeric' };
+        previewDate.textContent = date.toLocaleDateString('en-US', options);
     }
 }
 
-/**
- * Format time to 12-hour format
- */
-function formatTime(time) {
-    const [hours, minutes] = time.split(':');
-    const hour = parseInt(hours);
-    const ampm = hour >= 12 ? 'PM' : 'AM';
-    const displayHour = hour % 12 || 12;
-    return `${displayHour}:${minutes} ${ampm}`;
+function updatePreviewTime(value) {
+    const previewTime = document.getElementById('previewTime');
+    if (previewTime && value) previewTime.textContent = value;
 }
 
-/**
- * Set minimum date to today
- */
+function updatePreviewVenue(value) {
+    const previewVenue = document.getElementById('previewVenue');
+    if (previewVenue) previewVenue.textContent = value || 'Select venue';
+}
+
+function updatePreviewTickets(value) {
+    const previewTickets = document.getElementById('previewTickets');
+    if (previewTickets) {
+        previewTickets.textContent = value ? `${value} tickets` : '0 tickets';
+    }
+}
+
+function updatePreviewPrice(value) {
+    const previewPrice = document.getElementById('previewPrice');
+    if (previewPrice) {
+        const price = parseFloat(value);
+        previewPrice.textContent = !isNaN(price) ? price.toFixed(2) : '0.00';
+    }
+}
+
+function updatePreviewImage(src) {
+    const previewImage = document.getElementById('previewCardImage');
+    if (previewImage) previewImage.src = src;
+}
+
 function setMinDate() {
     const dateInput = document.querySelector('[name="EventDate"]');
     if (dateInput) {
         const today = new Date().toISOString().split('T')[0];
         dateInput.setAttribute('min', today);
     }
-}
-
-/**
- * Confirm before leaving page with unsaved changes
- */
-let formChanged = false;
-const form = document.getElementById('createEventForm');
-
-if (form) {
-    form.addEventListener('change', function () {
-        formChanged = true;
-    });
-
-    window.addEventListener('beforeunload', function (e) {
-        if (formChanged) {
-            e.preventDefault();
-            e.returnValue = '';
-            return '';
-        }
-    });
-
-    form.addEventListener('submit', function () {
-        formChanged = false;
-    });
 }

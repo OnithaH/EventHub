@@ -118,6 +118,21 @@ namespace EventHub.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Register(RegisterViewModel model)
         {
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState
+                    .Where(x => x.Value.Errors.Count > 0)
+                    .Select(x => new { x.Key, x.Value.Errors })
+                    .ToArray();
+
+                foreach (var error in errors)
+                {
+                    foreach (var e in error.Errors)
+                    {
+                        _logger.LogError($"VALIDATION ERROR - {error.Key}: {e.ErrorMessage}");
+                    }
+                }
+            }
             try
             {
                 if (ModelState.IsValid)

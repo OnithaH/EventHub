@@ -31,7 +31,7 @@
 <section class="create-event-section py-5">
     <div class="container">
         <form asp-action="Create" asp-controller="Organizer" method="post" enctype="multipart/form-data"
-              id="createEventForm" class="needs-validation" novalidate>
+              id="createEventForm">
             @Html.AntiForgeryToken()
 
             <div class="row g-4">
@@ -275,8 +275,8 @@
 </section>
 
 @section Scripts {
-    <script src="~/js/organizer-create-event.js" asp-append-version="true"></script>
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+    <script src="~/js/organizer-create-event.js" asp-append-version="true"></script>
 }
