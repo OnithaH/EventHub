@@ -1,8 +1,4 @@
-﻿// ==========================================
-// EventHub My Events JavaScript
-// ==========================================
-
-document.addEventListener('DOMContentLoaded', function () {
+﻿document.addEventListener('DOMContentLoaded', function () {
     initializeMyEvents();
 });
 
