@@ -1,0 +1,455 @@
+﻿/* ==========================================
+   EventHub My Events Page Styles
+   ========================================== */
+
+/* Page Header */
+.page-header {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    padding: 3rem 0 2rem;
+    color: white;
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+}
+
+.page-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+}
+
+.page-subtitle {
+    font-size: 1.1rem;
+    opacity: 0.9;
+    margin-bottom: 1rem;
+}
+
+.breadcrumb {
+    background: transparent;
+    padding: 0;
+    margin: 0;
+}
+
+.breadcrumb-item a {
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+}
+
+.breadcrumb-item.active {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+/* Events Overview Stats */
+.events-overview {
+    background: #f8fafc;
+}
+
+.stat-mini-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e2e8f0;
+    transition: all 0.3s ease;
+}
+
+    .stat-mini-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+.stat-mini-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+}
+
+.stat-mini-card.active .stat-mini-icon {
+    background: linear-gradient(135deg, #10b981, #34d399);
+}
+
+.stat-mini-card.tickets .stat-mini-icon {
+    background: linear-gradient(135deg, #f59e0b, #fbbf24);
+}
+
+.stat-mini-card.revenue .stat-mini-icon {
+    background: linear-gradient(135deg, #3b82f6, #60a5fa);
+}
+
+.stat-mini-content h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 0.25rem;
+}
+
+.stat-mini-content p {
+    color: #64748b;
+    margin-bottom: 0;
+    font-size: 0.875rem;
+}
+
+/* Events Management */
+.events-management {
+    background: #f8fafc;
+}
+
+.events-controls {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e2e8f0;
+}
+
+.search-box .input-group-text {
+    background: #f8fafc;
+    border-color: #e2e8f0;
+    color: #6b7280;
+}
+
+.search-box .form-control {
+    border-color: #e2e8f0;
+}
+
+    .search-box .form-control:focus {
+        border-color: #6366f1;
+        box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.1);
+    }
+
+.form-select {
+    border-color: #e2e8f0;
+}
+
+    .form-select:focus {
+        border-color: #6366f1;
+        box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.1);
+    }
+
+.view-toggle .btn {
+    border-color: #e2e8f0;
+    color: #6b7280;
+}
+
+    .view-toggle .btn.active {
+        background-color: #6366f1;
+        border-color: #6366f1;
+        color: white;
+    }
+
+/* Event Cards */
+.event-card {
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e2e8f0;
+    transition: all 0.3s ease;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+    .event-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    }
+
+.event-image {
+    position: relative;
+    height: 200px;
+    background: #f1f5f9;
+    overflow: hidden;
+}
+
+    .event-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.3s ease;
+    }
+
+.event-card:hover .event-image img {
+    transform: scale(1.05);
+}
+
+.event-status {
+    position: absolute;
+    top: 0.75rem;
+    left: 0.75rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status-active {
+    background: rgba(34, 197, 94, 0.9);
+    color: white;
+}
+
+.status-draft {
+    background: rgba(156, 163, 175, 0.9);
+    color: white;
+}
+
+.status-completed {
+    background: rgba(59, 130, 246, 0.9);
+    color: white;
+}
+
+.status-cancelled {
+    background: rgba(239, 68, 68, 0.9);
+    color: white;
+}
+
+.event-actions-btn {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    display: flex;
+    gap: 0.5rem;
+}
+
+    .event-actions-btn .btn {
+        backdrop-filter: blur(10px);
+    }
+
+.event-content {
+    padding: 1.5rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.event-header {
+    margin-bottom: 1rem;
+}
+
+.event-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 0.5rem;
+}
+
+.event-category .badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.35rem 0.75rem;
+}
+
+.event-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.info-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #64748b;
+    font-size: 0.875rem;
+}
+
+    .info-row i {
+        color: #6366f1;
+    }
+
+.event-stats-container {
+    margin-top: auto;
+}
+
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stat-value {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+    .stat-value.revenue {
+        color: #10b981;
+    }
+
+.progress-container {
+    margin-top: 0.75rem;
+}
+
+.progress {
+    height: 6px;
+    border-radius: 10px;
+    margin-bottom: 0.25rem;
+}
+
+.progress-text {
+    font-size: 0.75rem;
+    color: #64748b;
+}
+
+/* No Events State */
+.no-events-container {
+    background: white;
+    border-radius: 16px;
+    padding: 4rem 2rem;
+    text-align: center;
+    border: 2px dashed #e2e8f0;
+}
+
+.no-events-icon {
+    font-size: 4rem;
+    color: #cbd5e1;
+    margin-bottom: 1.5rem;
+}
+
+.no-events-content h5 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 0.5rem;
+}
+
+.no-events-content p {
+    color: #64748b;
+    margin-bottom: 1.5rem;
+}
+
+/* Responsive Design */
+@media (max-width: 991px) {
+    .page-title {
+        font-size: 2rem;
+    }
+
+    .header-content {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .header-actions {
+        width: 100%;
+    }
+
+        .header-actions .btn {
+            width: 100%;
+        }
+
+    .events-controls .row {
+        gap: 0.75rem;
+    }
+}
+
+@media (max-width: 767px) {
+    .page-header {
+        padding: 2rem 0 1.5rem;
+    }
+
+    .page-title {
+        font-size: 1.75rem;
+    }
+
+    .stat-mini-card {
+        padding: 1.25rem;
+    }
+
+    .stat-mini-icon {
+        width: 45px;
+        height: 45px;
+        font-size: 1.25rem;
+    }
+
+    .stat-mini-content h3 {
+        font-size: 1.25rem;
+    }
+
+    .events-controls {
+        padding: 1rem;
+    }
+
+    .view-toggle {
+        display: none;
+    }
+
+    .event-image {
+        height: 180px;
+    }
+}
+
+/* Animation */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.event-card-container {
+    animation: fadeInUp 0.4s ease-out forwards;
+}
+
+    .event-card-container:nth-child(1) {
+        animation-delay: 0.05s;
+    }
+
+    .event-card-container:nth-child(2) {
+        animation-delay: 0.1s;
+    }
+
+    .event-card-container:nth-child(3) {
+        animation-delay: 0.15s;
+    }
+
+    .event-card-container:nth-child(4) {
+        animation-delay: 0.2s;
+    }
+
+    .event-card-container:nth-child(5) {
+        animation-delay: 0.25s;
+    }
+
+    .event-card-container:nth-child(6) {
+        animation-delay: 0.3s;
+    }

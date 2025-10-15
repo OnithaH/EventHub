@@ -3,729 +3,303 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
+@section Styles {
+    <!-- Home Page Specific CSS -->
+    <link rel="stylesheet" href="~/css/home-index.css" asp-append-version="true" />
+}
+
 <!-- Hero Section -->
-<div class="hero-gradient text-white py-5 mb-5">
-    <div class="container hero-content">
-        <div class="row align-items-center" style="min-height: 60vh;">
-            <div class="col-lg-6 fade-in-up">
-                <h1 class="display-4 fw-bold mb-4">Find Amazing Events Near You</h1>
-                <p class="lead mb-4">Discover concerts, festivals, sports events, and more. Book tickets instantly and securely with our trusted platform.</p>
-                <div class="d-flex gap-3 flex-wrap">
-                    <a href="@Url.Action("Index", "Event")" class="btn btn-white-modern btn-modern">
-                        🔍 Browse Events
-                    </a>
-                    @if (!User.Identity.IsAuthenticated)
-                    {
-                        <a href="@Url.Action("Register", "Account")" class="btn btn-outline-light btn-modern">Join Now</a>
-                    }
+<section class="hero-section">
+    <div class="hero-overlay"></div>
+    <div class="container">
+        <div class="row align-items-center min-vh-75">
+            <div class="col-lg-6">
+                <div class="hero-content">
+                    <h1 class="hero-title">Discover Amazing <span class="gradient-text">Events</span> Near You</h1>
+                    <p class="hero-subtitle">
+                        From concerts to conferences, find and book tickets for the best events in Sri Lanka.
+                        Create unforgettable memories with EventHub.
+                    </p>
+                    <div class="hero-buttons">
+                        <a href="@Url.Action("Index", "Event")" class="btn btn-hero-primary">
+                            <i class="bi bi-search me-2"></i>Explore Events
+                        </a>
+                        <a href="@Url.Action("Register", "Account")" class="btn btn-hero-secondary">
+                            <i class="bi bi-person-plus me-2"></i>Get Started
+                        </a>
+                    </div>
                 </div>
             </div>
-            <div class="col-lg-6 text-center">
-                <div class="bg-white bg-opacity-15 rounded-4 p-4 mt-4 mt-lg-0">
-                    <div class="event-header">
-                        <h3 class="mb-4">📊</h3>
-                        <h3 class="gradient-text font-size: 1.8rem; font-weight: 700; margin: 0;">EventHub Stats</h3>
-                    </div>
-
-                    <div class="row text-center">
-                        <div class="col-6 stats-item">
-                            <div class="stats-number">150+</div>
-                            <small class="gradient-text">Live Events</small>
-                        </div>
-                        <div class="col-6 stats-item">
-                            <div class="stats-number">2.5K+</div>
-                            <small class="gradient-text">Happy Users</small>
-                        </div>
-                        <div class="col-6 stats-item">
-                            <div class="stats-number">5.8K+</div>
-                            <small class="gradient-text">Tickets Sold</small>
-                        </div>
-                        <div class="col-6 stats-item">
-                            <div class="stats-number">45+</div>
-                            <small class="gradient-text">Organizers</small>
-                        </div>
-                    </div>
+            <div class="col-lg-6">
+                <div class="hero-image">
+                    <img src="~/images/hero-events.jpg" alt="Amazing Events" class="img-fluid rounded-4 shadow-lg">
                 </div>
             </div>
         </div>
     </div>
-</div>
+</section>
 
-<!-- Quick Search Bar -->
-<div class="container mb-5">
-    <div class="row justify-content-center">
-        <div class="col-lg-10">
-            <div class="search-card card-modern">
-                <div class="card-body p-5">
-                    <div class="text-center mb-4">
-                        <h3 class="fw-bold text-gradient mb-2">🔍 Find Your Perfect Event</h3>
-                        <p class="text-muted">Search through thousands of amazing events</p>
-                    </div>
-                    <form asp-action="Search" asp-controller="Event" method="get">
-                        <div class="row g-4">
+<!-- Search Section -->
+<section class="search-section py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="search-card">
+                    <h3 class="search-title text-center mb-4">Find Your Perfect Event</h3>
+                    <form class="search-form" asp-controller="Event" asp-action="Index" method="get">
+                        <div class="row g-3">
                             <div class="col-md-4">
-                                <label for="searchTerm" class="form-label fw-semibold text-dark">Event Name</label>
-                                <input type="text" class="form-control form-control-modern" id="searchTerm" name="searchTerm"
-                                       placeholder="Search events..." value="@ViewBag.SearchTerm">
+                                <div class="search-field">
+                                    <label class="form-label">
+                                        <i class="bi bi-grid-3x3-gap me-2"></i>Category
+                                    </label>
+                                    <select class="form-select" id="searchCategory" name="category">
+                                        <option value="">All Categories</option>
+                                        <option value="music">Music</option>
+                                        <option value="sports">Sports</option>
+                                        <option value="arts">Arts & Culture</option>
+                                        <option value="business">Business</option>
+                                        <option value="technology">Technology</option>
+                                        <option value="food">Food & Drink</option>
+                                    </select>
+                                </div>
                             </div>
-                            <div class="col-md-3">
-                                <label for="category" class="form-label fw-semibold text-dark">Category</label>
-                                <select class="form-select form-select-modern" id="category" name="category">
-                                    <option value="">All Categories</option>
-                                    <option value="Music">🎵 Music</option>
-                                    <option value="Sports">⚽ Sports</option>
-                                    <option value="Theatre">🎭 Theatre</option>
-                                    <option value="Cultural">🎨 Cultural</option>
-                                    <option value="Technology">💻 Technology</option>
-                                </select>
+                            <div class="col-md-4">
+                                <div class="search-field">
+                                    <label class="form-label">
+                                        <i class="bi bi-geo-alt me-2"></i>Location
+                                    </label>
+                                    <select class="form-select" id="searchLocation" name="location">
+                                        <option value="">All Locations</option>
+                                        <option value="Colombo">Colombo</option>
+                                        <option value="Kandy">Kandy</option>
+                                        <option value="Galle">Galle</option>
+                                        <option value="Jaffna">Jaffna</option>
+                                        <option value="Negombo">Negombo</option>
+                                    </select>
+                                </div>
                             </div>
-                            <div class="col-md-3">
-                                <label for="location" class="form-label fw-semibold text-dark">Location</label>
-                                <select class="form-select form-select-modern" id="location" name="location">
-                                    <option value="">All Locations</option>
-                                    <option value="Colombo">Colombo</option>
-                                    <option value="Kandy">Kandy</option>
-                                    <option value="Galle">Galle</option>
-                                    <option value="Jaffna">Jaffna</option>
-                                </select>
+                            <div class="col-md-4">
+                                <div class="search-field">
+                                    <label class="form-label">
+                                        <i class="bi bi-calendar me-2"></i>Date
+                                    </label>
+                                    <input type="date" class="form-control" id="searchDate" name="date">
+                                </div>
                             </div>
-                            <div class="col-md-2 d-flex align-items-end">
-                                <button type="submit" class="btn btn-primary-modern btn-modern w-100">
-                                    Search
-                                </button>
-                            </div>
+                        </div>
+                        <div class="text-center mt-4">
+                            <button type="submit" class="btn btn-search">
+                                <i class="bi bi-search me-2"></i>Search Events
+                            </button>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
     </div>
-</div>
+</section>
+
+<!-- Stats Section -->
+<section class="stats-section py-5">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-lg-3 col-md-6">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="bi bi-calendar-event"></i>
+                    </div>
+                    <div class="stat-number">@ViewBag.TotalEvents+</div>
+                    <p class="stat-label">Live Events</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="bi bi-people"></i>
+                    </div>
+                    <div class="stat-number">@ViewBag.TotalUsers+</div>
+                    <p class="stat-label">Happy Users</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="bi bi-ticket-perforated"></i>
+                    </div>
+                    <div class="stat-number">@ViewBag.TotalBookings+</div>
+                    <p class="stat-label">Tickets Sold</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="bi bi-star"></i>
+                    </div>
+                    <div class="stat-number">@ViewBag.TotalOrganizers+</div>
+                    <p class="stat-label">Organizers</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
 
 <!-- Featured Events Section -->
-<div class="container mb-5">
-    <div class="row align-items-center mb-4">
-        <div class="col">
-            <h2 class="h1 fw-bold mb-0">🔥 Featured Events</h2>
-            <p class="text-muted">Don't miss these amazing upcoming events</p>
+<section class="featured-events py-5">
+    <div class="container">
+        <div class="row mb-5">
+            <div class="col-12 text-center">
+                <h2 class="section-title">Featured Events</h2>
+                <p class="section-subtitle">Don't miss these amazing upcoming events</p>
+            </div>
         </div>
-        <div class="col-auto">
-            <a href="@Url.Action("Index", "Event")" class="btn btn-outline-primary">
-                View All Events →
-            </a>
-        </div>
-    </div>
 
-    <div class="row g-4">
-        @if (ViewBag.FeaturedEvents != null && ((IEnumerable<dynamic>)ViewBag.FeaturedEvents).Any())
-        {
-            @foreach (var eventItem in ViewBag.FeaturedEvents)
+        <div class="row g-4">
+            @if (ViewBag.FeaturedEvents != null && ((IEnumerable<dynamic>)ViewBag.FeaturedEvents).Any())
             {
-                <div class="col-lg-4 col-md-6">
-                    <div class="card card-modern h-100">
-                        <div class="position-relative overflow-hidden">
-                            <img src="@(string.IsNullOrEmpty(eventItem.ImageUrl) ? "https://via.placeholder.com/400x200/667eea/ffffff?text=" + Uri.EscapeDataString(eventItem.Category + "+Event") : eventItem.ImageUrl)"
-                                 class="card-img-top" alt="@eventItem.Title" style="height: 220px; object-fit: cover;">
-                            <div class="position-absolute top-0 end-0 m-3">
-                                <span class="badge badge-modern bg-primary">@eventItem.Category</span>
-                            </div>
-                            @if (eventItem.AvailableTickets < 10 && eventItem.AvailableTickets > 0)
-                            {
-                                <div class="position-absolute top-0 start-0 m-3">
-                                    <span class="badge bg-warning text-dark">Only @eventItem.AvailableTickets left!</span>
+                @foreach (var eventItem in ViewBag.FeaturedEvents)
+                {
+                    <div class="col-lg-4 col-md-6">
+                        <div class="event-card">
+                            <div class="event-image">
+                                @if (!string.IsNullOrEmpty(eventItem.ImageUrl))
+                                {
+                                    <img src="@eventItem.ImageUrl" alt="@eventItem.Title">
+                                }
+                                else
+                                {
+                                    <img src="~/images/events/default-event.jpg" alt="@eventItem.Title">
+                                }
+                                <div class="event-badge">@eventItem.Category</div>
+                                <div class="event-date">
+                                    <span class="date-month">@(((DateTime)eventItem.Date).ToString("MMM"))</span>
+                                    <span class="date-day">@(((DateTime)eventItem.Date).ToString("dd"))</span>
                                 </div>
-                            }
-                        </div>
-                        <div class="card-body p-4">
-                            <div class="d-flex justify-content-between align-items-start mb-3">
-                                <h5 class="card-title fw-bold mb-0">@eventItem.Title</h5>
-                                <small class="text-muted">@eventItem.Date.ToString("MMM dd")</small>
                             </div>
-                            <div class="mb-3">
-                                <p class="text-muted mb-2">
-                                    <i class="me-2">📍</i>@eventItem.VenueName, @eventItem.Location
-                                </p>
-                                <p class="text-muted mb-0">
-                                    <i class="me-2">🕒</i>@eventItem.Time.ToString("hh:mm tt")
-                                </p>
-                            </div>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <span class="h5 text-primary fw-bold mb-0">Rs. @eventItem.TicketPrice.ToString("N0")</span>
-                                    <small class="text-muted d-block">per ticket</small>
+                            <div class="event-content">
+                                <h3 class="event-title">@eventItem.Title</h3>
+                                <div class="event-details">
+                                    <div class="detail-item">
+                                        <i class="bi bi-clock"></i>
+                                        <span>@(((DateTime)eventItem.Date).ToString("MMM dd")) · @eventItem.Time</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <i class="bi bi-geo-alt"></i>
+                                        <span>@eventItem.VenueName</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <i class="bi bi-ticket"></i>
+                                        <span>@eventItem.AvailableTickets tickets left</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <i class="bi bi-currency-dollar"></i>
+                                        <span>From Rs. @eventItem.TicketPrice.ToString("N0")</span>
+                                    </div>
                                 </div>
-                                <div class="btn-group">
-                                    <a href="@Url.Action("Details", "Event", new { id = eventItem.EventID })" class="btn btn-outline-primary btn-sm">Details</a>
-                                    @if (eventItem.AvailableTickets > 0)
-                                    {
-                                        <a href="@Url.Action("SelectTickets", "Booking", new { eventId = eventItem.EventID })" class="btn btn-primary-modern btn-sm">Book Now</a>
-                                    }
-                                    else
-                                    {
-                                        <button class="btn btn-secondary btn-sm" disabled>Sold Out</button>
-                                    }
-                                </div>
+                                <a href="@Url.Action("Details", "Event", new { id = eventItem.EventID })" class="btn btn-event">View Details</a>
                             </div>
                         </div>
                     </div>
+                }
+            }
+            else
+            {
+                <div class="col-12 text-center py-5">
+                    <i class="bi bi-calendar-x display-1 text-muted"></i>
+                    <h3 class="mt-3">No Events Available</h3>
+                    <p class="text-muted">Check back later for exciting events!</p>
                 </div>
             }
-        }
-        else
-        {
-            @* Sample Events - Remove when you have real data *@
-            <div class="col-lg-4 col-md-6">
-                <div class="card card-modern h-100">
-                    <div class="position-relative overflow-hidden">
-                        <img src="https://via.placeholder.com/400x200/667eea/ffffff?text=Music+Concert"
-                             class="card-img-top" alt="Sample Event" style="height: 220px; object-fit: cover;">
-                        <div class="position-absolute top-0 end-0 m-3">
-                            <span class="badge badge-modern bg-primary">Music</span>
-                        </div>
-                    </div>
-                    <div class="card-body p-4">
-                        <div class="d-flex justify-content-between align-items-start mb-3">
-                            <h5 class="card-title fw-bold mb-0">Rock Concert Live</h5>
-                            <small class="text-muted">Dec 25</small>
-                        </div>
-                        <div class="mb-3">
-                            <p class="text-muted mb-2">
-                                <i class="me-2">📍</i>BMICH, Colombo
-                            </p>
-                            <p class="text-muted mb-0">
-                                <i class="me-2">🕒</i>8:00 PM
-                            </p>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <span class="h5 text-primary fw-bold mb-0">Rs. 2,500</span>
-                                <small class="text-muted d-block">per ticket</small>
-                            </div>
-                            <div class="btn-group">
-                                <a href="#" class="btn btn-outline-primary btn-sm">Details</a>
-                                <a href="#" class="btn btn-primary-modern btn-sm">Book Now</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+        </div>
+
+        <div class="row mt-5">
+            <div class="col-12 text-center">
+                <a href="@Url.Action("Index", "Event")" class="btn btn-view-all">
+                    <i class="bi bi-arrow-right me-2"></i>View All Events
+                </a>
             </div>
-
-            <div class="col-lg-4 col-md-6">
-                <div class="card card-modern h-100">
-                    <div class="position-relative overflow-hidden">
-                        <img src="https://via.placeholder.com/400x200/28a745/ffffff?text=Sports+Event"
-                             class="card-img-top" alt="Sample Event" style="height: 220px; object-fit: cover;">
-                        <div class="position-absolute top-0 end-0 m-3">
-                            <span class="badge badge-modern bg-success">Sports</span>
-                        </div>
-                    </div>
-                    <div class="card-body p-4">
-                        <div class="d-flex justify-content-between align-items-start mb-3">
-                            <h5 class="card-title fw-bold mb-0">Cricket Championship</h5>
-                            <small class="text-muted">Jan 15</small>
-                        </div>
-                        <div class="mb-3">
-                            <p class="text-muted mb-2">
-                                <i class="me-2">📍</i>R. Premadasa Stadium
-                            </p>
-                            <p class="text-muted mb-0">
-                                <i class="me-2">🕒</i>2:30 PM
-                            </p>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <span class="h5 text-success fw-bold mb-0">Rs. 1,500</span>
-                                <small class="text-muted d-block">per ticket</small>
-                            </div>
-                            <div class="btn-group">
-                                <a href="#" class="btn btn-outline-primary btn-sm">Details</a>
-                                <a href="#" class="btn btn-primary-modern btn-sm">Book Now</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-lg-4 col-md-6">
-                <div class="card card-modern h-100">
-                    <div class="position-relative overflow-hidden">
-                        <img src="https://via.placeholder.com/400x200/ffc107/ffffff?text=Theatre+Show"
-                             class="card-img-top" alt="Sample Event" style="height: 220px; object-fit: cover;">
-                        <div class="position-absolute top-0 end-0 m-3">
-                            <span class="badge badge-modern bg-warning text-dark">Theatre</span>
-                        </div>
-                    </div>
-                    <div class="card-body p-4">
-                        <div class="d-flex justify-content-between align-items-start mb-3">
-                            <h5 class="card-title fw-bold mb-0">Shakespeare Night</h5>
-                            <small class="text-muted">Feb 10</small>
-                        </div>
-                        <div class="mb-3">
-                            <p class="text-muted mb-2">
-                                <i class="me-2">📍</i>Lionel Wendt Theatre
-                            </p>
-                            <p class="text-muted mb-0">
-                                <i class="me-2">🕒</i>7:30 PM
-                            </p>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <span class="h5 text-warning fw-bold mb-0">Rs. 3,000</span>
-                                <small class="text-muted d-block">per ticket</small>
-                            </div>
-                            <div class="btn-group">
-                                <a href="#" class="btn btn-outline-primary btn-sm">Details</a>
-                                <a href="#" class="btn btn-primary-modern btn-sm">Book Now</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        }
-    </div>
-</div>
-
-<!-- Categories Section -->
-<div class="container category-section">
-    <div class="text-center mb-5">
-        <h2 class="h1 fw-bold text-gradient mb-3">Explore by Category</h2>
-        <p class="lead text-muted">Find events that match your interests</p>
-    </div>
-
-    <div class="row g-3 justify-content-center">
-        <div class="col-6 col-sm-4 col-md-3 col-lg-2">
-            <a href="@Url.Action("Index", "Event", new { category = "Music" })"
-               class="text-decoration-none d-block h-100">
-                <div class="category-item h-100">
-                    <span class="category-icon">🎵</span>
-                    <h6 class="fw-bold text-dark mb-0">Music</h6>
-                </div>
-            </a>
-        </div>
-        <div class="col-6 col-sm-4 col-md-3 col-lg-2">
-            <a href="@Url.Action("Index", "Event", new { category = "Sports" })"
-               class="text-decoration-none d-block h-100">
-                <div class="category-item h-100">
-                    <span class="category-icon">⚽</span>
-                    <h6 class="fw-bold text-dark mb-0">Sports</h6>
-                </div>
-            </a>
-        </div>
-        <div class="col-6 col-sm-4 col-md-3 col-lg-2">
-            <a href="@Url.Action("Index", "Event", new { category = "Theatre" })"
-               class="text-decoration-none d-block h-100">
-                <div class="category-item h-100">
-                    <span class="category-icon">🎭</span>
-                    <h6 class="fw-bold text-dark mb-0">Theatre</h6>
-                </div>
-            </a>
-        </div>
-        <div class="col-6 col-sm-4 col-md-3 col-lg-2">
-            <a href="@Url.Action("Index", "Event", new { category = "Cultural" })"
-               class="text-decoration-none d-block h-100">
-                <div class="category-item h-100">
-                    <span class="category-icon">🎨</span>
-                    <h6 class="fw-bold text-dark mb-0">Cultural</h6>
-                </div>
-            </a>
-        </div>
-        <div class="col-6 col-sm-4 col-md-3 col-lg-2">
-            <a href="@Url.Action("Index", "Event", new { category = "Technology" })"
-               class="text-decoration-none d-block h-100">
-                <div class="category-item h-100">
-                    <span class="category-icon">💻</span>
-                    <h6 class="fw-bold text-dark mb-0">Technology</h6>
-                </div>
-            </a>
-        </div>
-        <div class="col-6 col-sm-4 col-md-3 col-lg-2">
-            <a href="@Url.Action("Index", "Event")"
-               class="text-decoration-none d-block h-100">
-                <div class="category-item h-100">
-                    <span class="category-icon">📋</span>
-                    <h6 class="fw-bold text-dark mb-0">View All</h6>
-                </div>
-            </a>
         </div>
     </div>
-</div>
+</section>
 
-<!-- How It Works Section -->
-<div class="how-it-works py-5">
+<!-- Role Navigation Section -->
+<section class="role-section py-5">
     <div class="container">
-        <div class="text-center mb-5">
-            <h2 class="h1 fw-bold text-gradient mb-3">How EventHub Works</h2>
-            <p class="lead text-muted">Simple steps to book your next amazing event</p>
+        <div class="row">
+            <div class="col-12 text-center mb-5">
+                <h2 class="section-title">Join Our Community</h2>
+                <p class="section-subtitle">Choose your role and start your journey with EventHub</p>
+            </div>
         </div>
-
-        <div class="row g-5 text-center">
+        <div class="row g-4">
+            <!-- Customer Role -->
             <div class="col-lg-4">
-                <div class="step-circle step-1">🔍</div>
-                <h4 class="fw-bold mb-3">1. Find Events</h4>
-                <p class="text-muted">Browse through hundreds of events or search by category, location, and date to find exactly what you're looking for.</p>
-            </div>
-            <div class="col-lg-4">
-                <div class="step-circle step-2">🎫</div>
-                <h4 class="fw-bold mb-3">2. Book Tickets</h4>
-                <p class="text-muted">Select your tickets, choose your seats, and complete your purchase securely with our trusted payment system.</p>
-            </div>
-            <div class="col-lg-4">
-                <div class="step-circle step-3">🎉</div>
-                <h4 class="fw-bold mb-3">3. Enjoy Events</h4>
-                <p class="text-muted">Show your QR code ticket at the venue and enjoy your event. All tickets are instantly delivered to your email.</p>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Testimonials Section -->
-<div class="container mb-5">
-    <div class="text-center mb-5">
-        <h2 class="h1 fw-bold mb-3">What Our Users Say</h2>
-        <p class="lead text-muted">Hear from our happy customers and event organizers</p>
-    </div>
-
-    <div class="row g-4">
-        <div class="col-lg-4 col-md-6">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body p-4 text-center">
-                    <div class="mb-3">
-                        <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
-                            <i class="bi bi-person-fill fs-4"></i>
-                        </div>
+                <div class="role-card">
+                    <div class="role-icon">
+                        <i class="bi bi-person-heart"></i>
                     </div>
-                    <blockquote class="blockquote mb-3">
-                        <p>"EventHub made booking tickets so easy! Found the perfect concert and bought tickets in minutes. Love the QR code feature!"</p>
-                    </blockquote>
-                    <footer class="blockquote-footer">
-                        <strong>Sarah Silva</strong> <cite title="Source Title">Music Lover</cite>
-                    </footer>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-lg-4 col-md-6">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body p-4 text-center">
-                    <div class="mb-3">
-                        <div class="rounded-circle bg-success text-white d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
-                            <i class="bi bi-briefcase-fill fs-4"></i>
-                        </div>
-                    </div>
-                    <blockquote class="blockquote mb-3">
-                        <p>"As an event organizer, EventHub's platform is fantastic. Easy to set up events, track sales, and manage everything in one place."</p>
-                    </blockquote>
-                    <footer class="blockquote-footer">
-                        <strong>Rajesh Perera</strong> <cite title="Source Title">Event Organizer</cite>
-                    </footer>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-lg-4 col-md-6">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body p-4 text-center">
-                    <div class="mb-3">
-                        <div class="rounded-circle bg-warning text-white d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
-                            <i class="bi bi-star-fill fs-4"></i>
-                        </div>
-                    </div>
-                    <blockquote class="blockquote mb-3">
-                        <p>"Secure payments, instant tickets, and great customer service. EventHub is now my go-to for all event bookings!"</p>
-                    </blockquote>
-                    <footer class="blockquote-footer">
-                        <strong>Nimali Fernando</strong> <cite title="Source Title">Regular Customer</cite>
-                    </footer>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Newsletter Subscription -->
-<div class="bg-light py-5 mb-5">
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-lg-6 text-center">
-                <h3 class="fw-bold mb-3">Stay Updated</h3>
-                <p class="text-muted mb-4">Subscribe to our newsletter and never miss out on amazing events near you!</p>
-                <form class="d-flex gap-2" asp-action="Subscribe" asp-controller="Newsletter" method="post">
-                    <input type="email" name="email" class="form-control form-control-lg" placeholder="Enter your email address" required>
-                    <button type="submit" class="btn btn-primary-modern btn-modern px-4">Subscribe</button>
-                </form>
-                <small class="text-muted mt-2 d-block">We respect your privacy. No spam, ever.</small>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- CTA Section for Event Organizers -->
-@if (!User.IsInRole("Organizer") && !User.IsInRole("Admin"))
-{
-    <div class="organizer-cta py-5">
-        <div class="container organizer-content">
-            <div class="row align-items-center">
-                <div class="col-lg-8">
-                    <h2 class="h1 fw-bold mb-3 text-white">Are you an Event Organizer?</h2>
-                    <p class="lead mb-0 text-white-75">Create and manage your events, sell tickets, and grow your audience with EventHub's powerful tools.</p>
-                    <ul class="list-unstyled mt-3 text-white-75">
-                        <li><i class="bi bi-check-circle-fill me-2"></i>Easy event creation and management</li>
-                        <li><i class="bi bi-check-circle-fill me-2"></i>Real-time sales tracking and analytics</li>
-                        <li><i class="bi bi-check-circle-fill me-2"></i>Secure payment processing</li>
-                        <li><i class="bi bi-check-circle-fill me-2"></i>QR code ticket verification system</li>
+                    <h3 class="role-title">Event Goers</h3>
+                    <p class="role-description">
+                        Discover and book tickets for amazing events. Get exclusive deals
+                        and never miss your favorite events.
+                    </p>
+                    <ul class="role-features">
+                        <li><i class="bi bi-check-circle"></i> Easy event discovery</li>
+                        <li><i class="bi bi-check-circle"></i> Secure online booking</li>
+                        <li><i class="bi bi-check-circle"></i> Digital tickets with QR codes</li>
+                        <li><i class="bi bi-check-circle"></i> Exclusive discounts</li>
                     </ul>
+                    <a href="@Url.Action("Register", "Account", new { role = "customer" })" class="btn btn-role">Join as Customer</a>
                 </div>
-                <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
-                    <a href="@Url.Action("Register", "Account", new { role = "organizer" })"
-                       class="btn btn-white-modern btn-modern hover-glow">
-                        ➕ Start Creating Events
-                    </a>
+            </div>
+
+            <!-- Organizer Role -->
+            <div class="col-lg-4">
+                <div class="role-card featured">
+                    <div class="featured-badge">Popular</div>
+                    <div class="role-icon">
+                        <i class="bi bi-megaphone"></i>
+                    </div>
+                    <h3 class="role-title">Event Organizers</h3>
+                    <p class="role-description">
+                        Create and manage your events with powerful tools. Reach thousands
+                        of potential attendees effortlessly.
+                    </p>
+                    <ul class="role-features">
+                        <li><i class="bi bi-check-circle"></i> Easy event creation</li>
+                        <li><i class="bi bi-check-circle"></i> Real-time sales tracking</li>
+                        <li><i class="bi bi-check-circle"></i> QR code ticket validation</li>
+                        <li><i class="bi bi-check-circle"></i> Detailed analytics</li>
+                    </ul>
+                    <a href="@Url.Action("Register", "Account", new { role = "organizer" })" class="btn btn-role">Join as Organizer</a>
+                </div>
+            </div>
+
+            <!-- Admin Role -->
+            <div class="col-lg-4">
+                <div class="role-card">
+                    <div class="role-icon">
+                        <i class="bi bi-shield-check"></i>
+                    </div>
+                    <h3 class="role-title">System Admins</h3>
+                    <p class="role-description">
+                        Manage the entire platform with comprehensive admin tools. Oversee
+                        users, events, and system operations.
+                    </p>
+                    <ul class="role-features">
+                        <li><i class="bi bi-check-circle"></i> User management</li>
+                        <li><i class="bi bi-check-circle"></i> Event moderation</li>
+                        <li><i class="bi bi-check-circle"></i> System reports</li>
+                        <li><i class="bi bi-check-circle"></i> Platform oversight</li>
+                    </ul>
+                    <a href="@Url.Action("Register", "Account", new { role = "admin" })" class="btn btn-role">Contact for Admin</a>
                 </div>
             </div>
         </div>
     </div>
-}
-
-<!-- JavaScript for Enhanced Functionality -->
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Enhanced search form functionality
-        const searchForm = document.querySelector('form[asp-action="Search"]');
-        if (searchForm) {
-            searchForm.addEventListener('submit', function(e) {
-                const searchTerm = document.getElementById('searchTerm').value.trim();
-                const category = document.getElementById('category').value;
-                const location = document.getElementById('location').value;
-
-                if (!searchTerm && !category && !location) {
-                    e.preventDefault();
-                    alert('Please enter a search term or select a category/location.');
-                    return false;
-                }
-            });
-        }
-
-        // Newsletter subscription form
-        const newsletterForm = document.querySelector('form[asp-action="Subscribe"]');
-        if (newsletterForm) {
-            newsletterForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                const email = this.querySelector('input[name="email"]').value;
-                const button = this.querySelector('button[type="submit"]');
-                const originalText = button.innerHTML;
-
-                button.innerHTML = '<span class="loading-spinner me-2"></span>Subscribing...';
-                button.disabled = true;
-
-                // Simulate API call (replace with actual implementation)
-                setTimeout(() => {
-                    alert('Thank you for subscribing! You\'ll receive updates about amazing events.');
-                    this.reset();
-                    button.innerHTML = originalText;
-                    button.disabled = false;
-                }, 2000);
-            });
-        }
-
-        // Add loading state to book now buttons
-        const bookButtons = document.querySelectorAll('a[href*="Book"], a[href*="booking"]');
-        bookButtons.forEach(button => {
-            button.addEventListener('click', function(e) {
-                if (!this.href.includes('#')) {
-                    const btn = this;
-                    const originalText = btn.innerHTML;
-                    btn.innerHTML = '<span class="loading-spinner me-2"></span>Loading...';
-                    btn.style.pointerEvents = 'none';
-
-                    // Reset after 3 seconds (failsafe)
-                    setTimeout(() => {
-                        btn.innerHTML = originalText;
-                        btn.style.pointerEvents = 'auto';
-                    }, 3000);
-                }
-            });
-        });
-
-        // Add fade-in animation to cards when they come into view
-        const cards = document.querySelectorAll('.card-modern, .category-item');
-        const observerOptions = {
-            threshold: 0.1,
-            rootMargin: '0px 0px -50px 0px'
-        };
-
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.style.opacity = '0';
-                    entry.target.style.transform = 'translateY(20px)';
-                    entry.target.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
-
-                    setTimeout(() => {
-                        entry.target.style.opacity = '1';
-                        entry.target.style.transform = 'translateY(0)';
-                    }, 100);
-
-                    observer.unobserve(entry.target);
-                }
-            });
-        }, observerOptions);
-
-        cards.forEach(card => {
-            observer.observe(card);
-        });
-
-        // Smooth scrolling for anchor links
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start'
-                    });
-                }
-            });
-        });
-
-        // Stats animation on scroll
-        const statsNumbers = document.querySelectorAll('.stats-number');
-        const statsObserver = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    const target = entry.target;
-                    const text = target.textContent;
-                    const number = parseInt(text.replace(/\D/g, ''));
-                    const suffix = text.replace(/[\d.]/g, '');
-
-                    animateNumber(target, 0, number, suffix, 2000);
-                    statsObserver.unobserve(target);
-                }
-            });
-        }, { threshold: 0.5 });
-
-        statsNumbers.forEach(stat => {
-            statsObserver.observe(stat);
-        });
-
-        // Function to animate numbers
-        function animateNumber(element, start, end, suffix, duration) {
-            const range = end - start;
-            const increment = range / (duration / 16);
-            let current = start;
-
-            const timer = setInterval(() => {
-                current += increment;
-                if (current >= end) {
-                    current = end;
-                    clearInterval(timer);
-                }
-                element.textContent = Math.floor(current) + suffix;
-            }, 16);
-        }
-
-        // Category hover effects
-        const categoryItems = document.querySelectorAll('.category-item');
-        categoryItems.forEach(item => {
-            item.addEventListener('mouseenter', function() {
-                this.style.transform = 'translateY(-8px) scale(1.02)';
-            });
-
-            item.addEventListener('mouseleave', function() {
-                this.style.transform = 'translateY(0) scale(1)';
-            });
-        });
-
-        // Search suggestions (mock data - replace with real API)
-        const searchInput = document.getElementById('searchTerm');
-        if (searchInput) {
-            searchInput.addEventListener('input', function() {
-                const value = this.value.toLowerCase();
-                if (value.length > 2) {
-                    // Add search suggestions logic here
-                    console.log('Searching for:', value);
-                }
-            });
-        }
-
-        // Quick event type selection
-        const categorySelect = document.getElementById('category');
-        if (categorySelect) {
-            categorySelect.addEventListener('change', function() {
-                if (this.value) {
-                    // Auto-populate location based on category if needed
-                    console.log('Category selected:', this.value);
-                }
-            });
-        }
-
-        // Dynamic event loading (for future implementation)
-        function loadMoreEvents() {
-            // Implementation for loading more featured events
-            console.log('Loading more events...');
-        }
-
-        // Add scroll-to-top functionality
-        const scrollToTopBtn = document.createElement('button');
-        scrollToTopBtn.innerHTML = '<i class="bi bi-arrow-up"></i>';
-        scrollToTopBtn.className = 'btn btn-primary-modern position-fixed bottom-0 end-0 m-4 rounded-circle';
-        scrollToTopBtn.style.cssText = 'width: 50px; height: 50px; display: none; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.3);';
-        scrollToTopBtn.setAttribute('aria-label', 'Scroll to top');
-        document.body.appendChild(scrollToTopBtn);
-
-        window.addEventListener('scroll', function() {
-            if (window.pageYOffset > 300) {
-                scrollToTopBtn.style.display = 'block';
-            } else {
-                scrollToTopBtn.style.display = 'none';
-            }
-        });
-
-        scrollToTopBtn.addEventListener('click', function() {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        });
-
-        // Initialize tooltips if Bootstrap is available
-        if (typeof bootstrap !== 'undefined') {
-            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-            tooltipTriggerList.map(function (tooltipTriggerEl) {
-                return new bootstrap.Tooltip(tooltipTriggerEl);
-            });
-        }
-
-        // Add dynamic copyright year
-        const copyrightElements = document.querySelectorAll('.copyright-year');
-        copyrightElements.forEach(element => {
-            element.textContent = new Date().getFullYear();
-        });
-
-        // Performance optimization: Lazy load images
-        const images = document.querySelectorAll('img[data-src]');
-        const imageObserver = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    const img = entry.target;
-                    img.src = img.dataset.src;
-                    img.removeAttribute('data-src');
-                    imageObserver.unobserve(img);
-                }
-            });
-        });
-
-        images.forEach(img => imageObserver.observe(img));
-
-        console.log('EventHub homepage initialized successfully!');
-    });
-</script>
+</section>
 
 @section Scripts {
-    <script>
-        // Additional page-specific scripts can go here
-        console.log('EventHub - Homepage loaded at:', new Date().toLocaleString());
-
-        // Google Analytics or other tracking scripts can be added here
-        // gtag('config', 'GA_MEASUREMENT_ID');
-
-        // Any additional third-party integrations
-    </script>
+    <!-- Home Page Specific JavaScript -->
+    <script src="~/js/home-index.js" asp-append-version="true"></script>
 }

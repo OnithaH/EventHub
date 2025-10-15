@@ -1,0 +1,322 @@
+﻿@{
+    ViewData["Title"] = "Organizer Dashboard - EventHub";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/organizer-dashboard.css" asp-append-version="true" />
+}
+
+<!-- Welcome Section -->
+<section class="welcome-section">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="welcome-content">
+                    <div class="welcome-info">
+                        <div class="welcome-text">
+                            <h1 class="welcome-title">Welcome back, <span id="organizerName">@ViewBag.OrganizerName</span>! 🎉</h1>
+                            <p class="welcome-subtitle">Monitor your events, track sales, and grow your audience</p>
+                        </div>
+                        <div class="performance-summary">
+                            <div class="performance-card">
+                                <div class="performance-icon">
+                                    <i class="bi bi-graph-up"></i>
+                                </div>
+                                <div class="performance-content">
+                                    <h4 id="revenueGrowth">@(ViewBag.RevenueGrowth > 0 ? "+" : "")@ViewBag.RevenueGrowth%</h4>
+                                    <p>Revenue Growth</p>
+                                    <small>vs last month</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Dashboard Stats -->
+<section class="dashboard-stats py-4">
+    <div class="container-fluid">
+        <div class="row g-4">
+            <div class="col-xl-3 col-lg-6 col-md-6">
+                <div class="stat-card revenue">
+                    <div class="stat-icon">
+                        <i class="bi bi-currency-dollar"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h4 id="totalRevenue">Rs. @ViewBag.TotalRevenue.ToString("N0")</h4>
+                        <p>Total Revenue</p>
+                        <small class="stat-trend text-success">
+                            <i class="bi bi-arrow-up"></i> @(ViewBag.RevenueGrowth > 0 ? "+" : "")@ViewBag.RevenueGrowth% from last month
+                        </small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-3 col-lg-6 col-md-6">
+                <div class="stat-card events">
+                    <div class="stat-icon">
+                        <i class="bi bi-calendar-event"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h4 id="activeEvents">@ViewBag.ActiveEvents</h4>
+                        <p>Active Events</p>
+                        <small class="stat-info">@ViewBag.TotalEvents total events</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-3 col-lg-6 col-md-6">
+                <div class="stat-card tickets">
+                    <div class="stat-icon">
+                        <i class="bi bi-ticket-perforated"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h4 id="ticketsSold">@ViewBag.TotalTicketsSold</h4>
+                        <p>Tickets Sold</p>
+                        <small class="stat-info">Across all events</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-3 col-lg-6 col-md-6">
+                <div class="stat-card customers">
+                    <div class="stat-icon">
+                        <i class="bi bi-people"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h4 id="totalCustomers">@ViewBag.TotalCustomers</h4>
+                        <p>Total Customers</p>
+                        <small class="stat-info">Unique customers</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Analytics and Quick Actions -->
+<section class="analytics-section py-4">
+    <div class="container-fluid">
+        <div class="row g-4">
+            <!-- Revenue Chart -->
+            <div class="col-lg-8">
+                <div class="analytics-card">
+                    <div class="analytics-header">
+                        <div>
+                            <h5 class="analytics-title">Revenue Overview</h5>
+                            <p class="analytics-subtitle">Monthly revenue for the last 6 months</p>
+                        </div>
+                        <div class="analytics-summary">
+                            @{
+                                var monthlyData = ViewBag.MonthlyRevenue as List<dynamic>;
+                                if (monthlyData != null && monthlyData.Any())
+                                {
+                                    var latestMonth = monthlyData.Last();
+                                    <div class="summary-item">
+                                        <span class="summary-label">This Month</span>
+                                        <span class="summary-value">Rs. @latestMonth.Revenue.ToString("N0")</span>
+                                    </div>
+                                    if (monthlyData.Count > 1)
+                                    {
+                                        var previousMonth = monthlyData[monthlyData.Count - 2];
+                                        <div class="summary-item">
+                                            <span class="summary-label">Previous Period</span>
+                                            <span class="summary-value text-muted">Rs. @previousMonth.Revenue.ToString("N0")</span>
+                                        </div>
+                                        var growth = previousMonth.Revenue > 0 ? ((latestMonth.Revenue - previousMonth.Revenue) / previousMonth.Revenue) * 100 : 0;
+                                        <div class="summary-item">
+                                            <span class="summary-label">Growth</span>
+                                            <span class="summary-value @(growth >= 0 ? "text-success" : "text-danger")">
+                                                @(growth > 0 ? "+" : "")@growth.ToString("F1")%
+                                            </span>
+                                        </div>
+                                    }
+                                }
+                            }
+                        </div>
+                    </div>
+                    <div class="analytics-content">
+                        <canvas id="revenueChart" height="80"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="col-lg-4">
+                <div class="actions-card">
+                    <div class="actions-header">
+                        <h5 class="actions-title">Quick Actions</h5>
+                    </div>
+                    <div class="actions-content">
+                        <div class="action-buttons">
+                            <a href="@Url.Action("Create", "Organizer")" class="action-btn primary">
+                                <div class="action-icon">
+                                    <i class="bi bi-plus-circle"></i>
+                                </div>
+                                <div class="action-text">
+                                    <h6>Create New Event</h6>
+                                    <p>Add a new event to your portfolio</p>
+                                </div>
+                            </a>
+
+                            <a href="@Url.Action("MyEvents", "Organizer")" class="action-btn">
+                                <div class="action-icon">
+                                    <i class="bi bi-calendar3"></i>
+                                </div>
+                                <div class="action-text">
+                                    <h6>Manage Events</h6>
+                                    <p>View and edit your events</p>
+                                </div>
+                            </a>
+
+                            <button class="action-btn" onclick="window.print()">
+                                <div class="action-icon">
+                                    <i class="bi bi-download"></i>
+                                </div>
+                                <div class="action-text">
+                                    <h6>Export Data</h6>
+                                    <p>Download reports and analytics</p>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Recent Events and Bookings -->
+<section class="recent-section py-4">
+    <div class="container-fluid">
+        <div class="row g-4">
+            <!-- Recent Events -->
+            <div class="col-lg-6">
+                <div class="recent-card">
+                    <div class="recent-header">
+                        <div>
+                            <h5 class="recent-title">Recent Events</h5>
+                            <p class="recent-subtitle">Your latest published events</p>
+                        </div>
+                        <a href="@Url.Action("MyEvents", "Organizer")" class="btn btn-sm btn-outline-primary">View All</a>
+                    </div>
+                    <div class="recent-content">
+                        <div class="events-list">
+                            @if (ViewBag.RecentEvents != null && ((IEnumerable<dynamic>)ViewBag.RecentEvents).Any())
+                            {
+                                foreach (var evt in ViewBag.RecentEvents)
+                                {
+                                    var progressPercent = evt.Capacity > 0 ? (double)evt.TicketsSold / evt.Capacity * 100 : 0;
+                                    <div class="event-item">
+                                        <div class="event-image">
+                                            @if (!string.IsNullOrEmpty(evt.ImageUrl))
+                                            {
+                                                <img src="@evt.ImageUrl" alt="@evt.Title" style="width:100%; height:100%; object-fit:cover;">
+                                            }
+                                            else
+                                            {
+                                                <i class="bi bi-calendar-event"></i>
+                                            }
+                                        </div>
+                                        <div class="event-details">
+                                            <h6>@evt.Title</h6>
+                                            <p>
+                                                <i class="bi bi-geo-alt me-1"></i>@evt.Venue
+                                                <span class="mx-2">•</span>
+                                                <i class="bi bi-calendar me-1"></i>@evt.Date.ToString("MMM dd, yyyy")
+                                            </p>
+                                            <p class="text-muted mb-0">
+                                                <i class="bi bi-ticket me-1"></i>@evt.TicketsSold / @evt.Capacity tickets sold
+                                            </p>
+                                        </div>
+                                        <div class="event-stats">
+                                            <div class="event-revenue">Rs. @evt.Revenue.ToString("N0")</div>
+                                            <div class="event-progress">@progressPercent.ToString("F0")% sold</div>
+                                        </div>
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <div class="text-center py-4">
+                                    <i class="bi bi-calendar-x display-4 text-muted"></i>
+                                    <p class="text-muted mt-3">No events yet</p>
+                                    <a href="@Url.Action("Create", "Organizer")" class="btn btn-primary">Create Your First Event</a>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Bookings -->
+            <div class="col-lg-6">
+                <div class="recent-card">
+                    <div class="recent-header">
+                        <div>
+                            <h5 class="recent-title">Recent Bookings</h5>
+                            <p class="recent-subtitle">Latest ticket purchases</p>
+                        </div>
+                    </div>
+                    <div class="recent-content">
+                        <div class="bookings-content">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Booking ID</th>
+                                            <th>Customer</th>
+                                            <th>Event</th>
+                                            <th>Tickets</th>
+                                            <th>Amount</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @if (ViewBag.RecentBookings != null && ((IEnumerable<dynamic>)ViewBag.RecentBookings).Any())
+                                        {
+                                            foreach (var booking in ViewBag.RecentBookings)
+                                            {
+                                                var statusClass = booking.Status == BookingStatus.Confirmed ? "confirmed" :
+                                                booking.Status == BookingStatus.Pending ? "pending" : "cancelled";
+                                                <tr>
+                                                    <td><small>@booking.BookingReference</small></td>
+                                                    <td>@booking.CustomerName</td>
+                                                    <td><small>@booking.EventTitle</small></td>
+                                                    <td>@booking.Quantity</td>
+                                                    <td>Rs. @booking.TotalAmount.ToString("N0")</td>
+                                                    <td><span class="status-badge @statusClass">@booking.Status</span></td>
+                                                </tr>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <tr>
+                                                <td colspan="6" class="text-center py-4">
+                                                    <i class="bi bi-inbox text-muted"></i>
+                                                    <p class="text-muted mb-0">No bookings yet</p>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script src="~/js/organizer-dashboard.js" asp-append-version="true"></script>
+    <script>
+        // Pass monthly revenue data to JavaScript
+        var monthlyRevenueData = @Html.Raw(Json.Serialize(ViewBag.MonthlyRevenue ?? new List<object>()));
+    </script>
+}

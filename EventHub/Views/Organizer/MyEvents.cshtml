@@ -1,0 +1,307 @@
+﻿@{
+    ViewData["Title"] = "My Events - EventHub";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/organizer-my-events.css" asp-append-version="true" />
+}
+
+<!-- Page Header -->
+<section class="page-header">
+    <div class="container">
+        <div class="header-content">
+            <div class="header-text">
+                <h1 class="page-title"><i class="bi bi-calendar3 me-3"></i>My Events</h1>
+                <p class="page-subtitle">Manage your events, track performance, and engage with your audience</p>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="@Url.Action("Index", "Home")">Home</a></li>
+                        <li class="breadcrumb-item"><a href="@Url.Action("Dashboard", "Organizer")">Dashboard</a></li>
+                        <li class="breadcrumb-item active">My Events</li>
+                    </ol>
+                </nav>
+            </div>
+            <div class="header-actions">
+                <a href="@Url.Action("Create", "Organizer")" class="btn btn-primary">
+                    <i class="bi bi-plus-circle me-2"></i>Create New Event
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Events Overview Stats -->
+<section class="events-overview py-4">
+    <div class="container">
+        <div class="row g-3">
+            <div class="col-lg-3 col-md-6">
+                <div class="stat-mini-card">
+                    <div class="stat-mini-icon">
+                        <i class="bi bi-calendar-event"></i>
+                    </div>
+                    <div class="stat-mini-content">
+                        <h3 id="totalEvents">@ViewBag.TotalEvents</h3>
+                        <p>Total Events</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="stat-mini-card active">
+                    <div class="stat-mini-icon">
+                        <i class="bi bi-check-circle"></i>
+                    </div>
+                    <div class="stat-mini-content">
+                        <h3 id="activeEvents">@ViewBag.ActiveEvents</h3>
+                        <p>Active Events</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="stat-mini-card tickets">
+                    <div class="stat-mini-icon">
+                        <i class="bi bi-ticket-perforated"></i>
+                    </div>
+                    <div class="stat-mini-content">
+                        <h3 id="totalTickets">@ViewBag.TotalTicketsSold</h3>
+                        <p>Tickets Sold</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="stat-mini-card revenue">
+                    <div class="stat-mini-icon">
+                        <i class="bi bi-currency-dollar"></i>
+                    </div>
+                    <div class="stat-mini-content">
+                        <h3 id="totalRevenue">Rs. @ViewBag.TotalRevenue.ToString("N0")</h3>
+                        <p>Total Revenue</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Events Management Section -->
+<section class="events-management py-5">
+    <div class="container">
+        <!-- Filters and Search -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="events-controls">
+                    <div class="row g-3 align-items-center">
+                        <div class="col-lg-4">
+                            <div class="search-box">
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="bi bi-search"></i>
+                                    </span>
+                                    <input type="text" class="form-control" id="searchEvents"
+                                           placeholder="Search events...">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-2">
+                            <select class="form-select" id="statusFilter">
+                                <option value="all">All Status</option>
+                                <option value="active">Active</option>
+                                <option value="draft">Draft</option>
+                                <option value="completed">Completed</option>
+                            </select>
+                        </div>
+                        <div class="col-lg-2">
+                            <select class="form-select" id="categoryFilter">
+                                <option value="all">All Categories</option>
+                                <option value="Music">Music</option>
+                                <option value="Technology">Technology</option>
+                                <option value="Business">Business</option>
+                                <option value="Arts">Arts</option>
+                                <option value="Sports">Sports</option>
+                                <option value="Food">Food</option>
+                            </select>
+                        </div>
+                        <div class="col-lg-2">
+                            <select class="form-select" id="sortFilter">
+                                <option value="date_desc">Newest First</option>
+                                <option value="date_asc">Oldest First</option>
+                                <option value="revenue_desc">Highest Revenue</option>
+                                <option value="tickets_desc">Most Sold</option>
+                            </select>
+                        </div>
+                        <div class="col-lg-2">
+                            <div class="view-toggle btn-group w-100" role="group">
+                                <button type="button" class="btn btn-outline-secondary active" id="gridView">
+                                    <i class="bi bi-grid"></i>
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" id="listView">
+                                    <i class="bi bi-list"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Events Grid -->
+        <div class="row g-4" id="eventsGrid">
+            @if (ViewBag.Events != null && ((IEnumerable<dynamic>)ViewBag.Events).Any())
+            {
+                foreach (var evt in ViewBag.Events)
+                {
+                    var progressPercent = evt.TotalTickets > 0 ? (double)evt.TicketsSold / evt.TotalTickets * 100 : 0;
+                    var statusClass = evt.Status == "active" ? "status-active" :
+                    evt.Status == "draft" ? "status-draft" :
+                    evt.Status == "completed" ? "status-completed" : "status-cancelled";
+
+                    <div class="col-lg-4 col-md-6 event-card-container"
+                         data-status="@evt.Status"
+                         data-category="@evt.Category"
+                         data-event-id="@evt.EventId"
+                         data-date="@evt.EventDate.ToString("yyyy-MM-dd")"
+                         data-revenue="@evt.Revenue"
+                         data-tickets="@evt.TicketsSold">
+                        <div class="event-card">
+                            <div class="event-image">
+                                <img src="@(evt.ImageUrl ?? "/images/events/default-event.jpg")" alt="@evt.Title">
+                                <div class="event-status @statusClass">@evt.Status</div>
+                                <div class="event-actions-btn">
+                                    <a href="@Url.Action("Edit", "Organizer", new { id = evt.EventId })"
+                                       class="btn btn-sm btn-light" title="Edit Event">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <div class="dropdown d-inline">
+                                        <button class="btn btn-sm btn-light dropdown-toggle" type="button"
+                                                data-bs-toggle="dropdown">
+                                            <i class="bi bi-three-dots"></i>
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li>
+                                                <a class="dropdown-item" href="@Url.Action("Details", "Event", new { id = evt.EventId })">
+                                                    <i class="bi bi-eye me-2"></i>View Details
+                                                </a>
+                                            </li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li>
+                                                <a class="dropdown-item text-danger" href="#"
+                                                   onclick="confirmDelete(@evt.EventId); return false;">
+                                                    <i class="bi bi-trash me-2"></i>Delete
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="event-content">
+                                <div class="event-header">
+                                    <h5 class="event-title">@evt.Title</h5>
+                                    <div class="event-category">
+                                        <span class="badge bg-primary">@evt.Category</span>
+                                    </div>
+                                </div>
+                                <div class="event-info">
+                                    <div class="info-row">
+                                        <i class="bi bi-calendar"></i>
+                                        <span>@evt.EventDate.ToString("MMM dd, yyyy")</span>
+                                    </div>
+                                    <div class="info-row">
+                                        <i class="bi bi-clock"></i>
+                                        <span>@evt.EventTime.ToString(@"hh\:mm tt")</span>
+                                    </div>
+                                    <div class="info-row">
+                                        <i class="bi bi-geo-alt"></i>
+                                        <span>@evt.VenueName</span>
+                                    </div>
+                                </div>
+                                <div class="event-stats-container">
+                                    <div class="stat-row">
+                                        <div class="stat-item">
+                                            <span class="stat-label">Tickets Sold</span>
+                                            <span class="stat-value">@evt.TicketsSold / @evt.TotalTickets</span>
+                                        </div>
+                                        <div class="stat-item">
+                                            <span class="stat-label">Revenue</span>
+                                            <span class="stat-value revenue">Rs. @evt.Revenue.ToString("N0")</span>
+                                        </div>
+                                    </div>
+                                    <div class="progress-container">
+                                        <div class="progress">
+                                            <div class="progress-bar @(evt.Status == "active" ? "bg-success" : "bg-secondary")"
+                                                 style="width: @progressPercent.ToString("F0")%"></div>
+                                        </div>
+                                        <small class="progress-text">@progressPercent.ToString("F0")% sold</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="col-12">
+                    <div class="no-events-container">
+                        <div class="no-events-content">
+                            <div class="no-events-icon">
+                                <i class="bi bi-calendar-x"></i>
+                            </div>
+                            <h5>No events yet</h5>
+                            <p>Create your first event to get started</p>
+                            <a href="@Url.Action("Create", "Organizer")" class="btn btn-primary">
+                                <i class="bi bi-plus-circle me-2"></i>Create Event
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- No Results Found (Hidden by default) -->
+        <div class="row d-none" id="noResults">
+            <div class="col-12">
+                <div class="no-events-container">
+                    <div class="no-events-content">
+                        <div class="no-events-icon">
+                            <i class="bi bi-search"></i>
+                        </div>
+                        <h5>No events found</h5>
+                        <p>Try adjusting your search or filters</p>
+                        <button class="btn btn-outline-primary" onclick="clearFilters()">
+                            Clear Filters
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Delete Form (Hidden) -->
+<form id="deleteForm" asp-action="Delete" asp-controller="Organizer" method="post" class="d-none">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="id" id="deleteEventId" />
+</form>
+
+@section Scripts {
+    <script src="~/js/organizer-my-events.js" asp-append-version="true"></script>
+    <script>
+        function confirmDelete(eventId) {
+            if (confirm('Are you sure you want to delete this event? This action cannot be undone.')) {
+                document.getElementById('deleteEventId').value = eventId;
+                document.getElementById('deleteForm').submit();
+            }
+        }
+
+        function clearFilters() {
+            document.getElementById('searchEvents').value = '';
+            document.getElementById('statusFilter').value = 'all';
+            document.getElementById('categoryFilter').value = 'all';
+            document.getElementById('sortFilter').value = 'date_desc';
+
+            // Trigger filter event
+            const event = new Event('input');
+            document.getElementById('searchEvents').dispatchEvent(event);
+        }
+    </script>
+}

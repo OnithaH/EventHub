@@ -1,4 +1,4 @@
-using EventHub.Data;
+﻿using EventHub.Data;
 using EventHub.Services.Interfaces;
 using EventHub.Models.Entities;
 using Microsoft.AspNetCore.Mvc;
@@ -31,12 +31,13 @@ namespace EventHub.Controllers
         {
             try
             {
-                // Get featured events with venue information (limit to 6)
+                // Get featured events - LATEST CREATED FIRST (simple logic)
                 var featuredEvents = await _context.Events
                     .Include(e => e.Venue)
                     .Include(e => e.Organizer)
-                    .Where(e => e.IsActive && e.EventDate > DateTime.Now)
-                    .OrderBy(e => e.EventDate)
+                    .Where(e => e.IsActive && e.EventDate > DateTime.UtcNow) // ⭐ FIXED: Use UtcNow
+                    .OrderByDescending(e => e.CreatedAt) // ⭐ CHANGED: Latest created first
+                    .ThenBy(e => e.EventDate) // Then by event date
                     .Take(6)
                     .Select(e => new {
                         EventID = e.Id,
@@ -54,11 +55,18 @@ namespace EventHub.Controllers
 
                 ViewBag.FeaturedEvents = featuredEvents;
 
-                // Get statistics for hero section
-                ViewBag.TotalEvents = await _context.Events.CountAsync(e => e.IsActive && e.EventDate > DateTime.Now);
-                ViewBag.TotalUsers = await _context.Users.CountAsync(u => u.IsActive);
-                ViewBag.TotalBookings = await _context.Bookings.CountAsync();
-                ViewBag.TotalOrganizers = await _context.Users.CountAsync(u => u.Role == UserRole.Organizer && u.IsActive);
+                // Get statistics - FIXED: Use UtcNow
+                ViewBag.TotalEvents = await _context.Events
+                    .CountAsync(e => e.IsActive && e.EventDate > DateTime.UtcNow);
+
+                ViewBag.TotalUsers = await _context.Users
+                    .CountAsync(u => u.IsActive);
+
+                ViewBag.TotalBookings = await _context.Bookings
+                    .CountAsync();
+
+                ViewBag.TotalOrganizers = await _context.Users
+                    .CountAsync(u => u.Role == UserRole.Organizer && u.IsActive);
 
                 _logger.LogInformation("Homepage loaded successfully with {EventCount} featured events", featuredEvents.Count());
                 return View();
@@ -90,8 +98,6 @@ namespace EventHub.Controllers
                     return RedirectToAction("Index");
                 }
 
-                // Here you would implement newsletter subscription logic
-                // For now, we'll just log it
                 _logger.LogInformation("Newsletter subscription request for email: {Email}", email);
 
                 TempData["SuccessMessage"] = "Thank you for subscribing! You'll receive updates about amazing events.";
@@ -116,7 +122,6 @@ namespace EventHub.Controllers
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
 
-        // Helper method to validate email
         private bool IsValidEmail(string email)
         {
             try
