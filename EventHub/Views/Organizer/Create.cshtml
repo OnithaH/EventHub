@@ -15,13 +15,6 @@
             <div class="header-text">
                 <h1 class="page-title"><i class="bi bi-plus-circle me-3"></i>Create New Event</h1>
                 <p class="page-subtitle">Fill in the details below to create your event</p>
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="@Url.Action("Index", "Home")">Home</a></li>
-                        <li class="breadcrumb-item"><a href="@Url.Action("Dashboard", "Organizer")">Dashboard</a></li>
-                        <li class="breadcrumb-item active">Create Event</li>
-                    </ol>
-                </nav>
             </div>
         </div>
     </div>
@@ -30,54 +23,53 @@
 <!-- Create Event Form -->
 <section class="create-event-section py-5">
     <div class="container">
-        <form asp-action="Create" asp-controller="Organizer" method="post" enctype="multipart/form-data"
-              id="createEventForm">
+        <!-- CRITICAL: Form tag without novalidate or needs-validation -->
+        <form asp-action="Create" asp-controller="Organizer" method="post"
+              enctype="multipart/form-data" id="createEventForm">
             @Html.AntiForgeryToken()
+
+            <!-- Display validation summary if any -->
+            <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
 
             <div class="row g-4">
                 <!-- Left Column - Form Fields -->
                 <div class="col-lg-8">
-
                     <!-- Basic Information -->
                     <div class="form-section">
                         <div class="section-header">
                             <h5 class="section-title">
                                 <i class="bi bi-info-circle me-2"></i>Basic Information
                             </h5>
-                            <p class="section-subtitle">Essential details about your event</p>
                         </div>
                         <div class="section-content">
                             <div class="row g-3">
                                 <div class="col-12">
-                                    <label asp-for="Title" class="form-label required">Event Title</label>
-                                    <input asp-for="Title" class="form-control" placeholder="Enter a compelling event title"
-                                           maxlength="100" required />
+                                    <label asp-for="Title" class="form-label">Event Title *</label>
+                                    <input asp-for="Title" class="form-control"
+                                           placeholder="Enter event title" maxlength="200" />
                                     <span asp-validation-for="Title" class="text-danger"></span>
                                     <small class="text-muted">
-                                        <span id="titleCount">0</span>/100 characters
+                                        <span id="titleCount">0</span>/200 characters
                                     </small>
                                 </div>
 
                                 <div class="col-md-6">
-                                    <label asp-for="Category" class="form-label required">Category</label>
-                                    <select asp-for="Category" class="form-select" required>
+                                    <label asp-for="Category" class="form-label">Category *</label>
+                                    <select asp-for="Category" class="form-select">
                                         <option value="">Select category</option>
-                                        <option value="Music">Music & Concerts</option>
-                                        <option value="Technology">Technology & Innovation</option>
-                                        <option value="Business">Business & Networking</option>
-                                        <option value="Arts">Arts & Culture</option>
-                                        <option value="Sports">Sports & Fitness</option>
-                                        <option value="Food">Food & Drink</option>
-                                        <option value="Education">Education & Learning</option>
-                                        <option value="Entertainment">Entertainment</option>
-                                        <option value="Health">Health & Wellness</option>
-                                        <option value="Family">Family & Kids</option>
+                                        <option value="Music">Music</option>
+                                        <option value="Sports">Sports</option>
+                                        <option value="Theatre">Theatre</option>
+                                        <option value="Conference">Conference</option>
+                                        <option value="Workshop">Workshop</option>
+                                        <option value="Festival">Festival</option>
+                                        <option value="Other">Other</option>
                                     </select>
                                     <span asp-validation-for="Category" class="text-danger"></span>
                                 </div>
 
                                 <div class="col-md-6">
-                                    <label class="form-label">Event Status</label>
+                                    <label asp-for="IsActive" class="form-label">Status *</label>
                                     <select asp-for="IsActive" class="form-select">
                                         <option value="true">Active (Publish immediately)</option>
                                         <option value="false">Draft (Save without publishing)</option>
@@ -85,9 +77,9 @@
                                 </div>
 
                                 <div class="col-12">
-                                    <label asp-for="Description" class="form-label required">Event Description</label>
+                                    <label asp-for="Description" class="form-label">Event Description *</label>
                                     <textarea asp-for="Description" class="form-control" rows="5"
-                                              placeholder="Describe your event in detail..." maxlength="1000" required></textarea>
+                                              placeholder="Describe your event" maxlength="1000"></textarea>
                                     <span asp-validation-for="Description" class="text-danger"></span>
                                     <small class="text-muted">
                                         <span id="descriptionCount">0</span>/1000 characters
@@ -103,39 +95,55 @@
                             <h5 class="section-title">
                                 <i class="bi bi-calendar-event me-2"></i>Date & Time
                             </h5>
-                            <p class="section-subtitle">When will your event take place?</p>
                         </div>
                         <div class="section-content">
                             <div class="row g-3">
                                 <div class="col-md-6">
-                                    <label asp-for="EventDate" class="form-label required">Event Date</label>
-                                    <input asp-for="EventDate" type="date" class="form-control" required />
+                                    <label asp-for="EventDate" class="form-label">Event Date *</label>
+                                    <input asp-for="EventDate" type="date" class="form-control" />
                                     <span asp-validation-for="EventDate" class="text-danger"></span>
                                 </div>
 
                                 <div class="col-md-6">
-                                    <label asp-for="EventTime" class="form-label required">Event Time</label>
-                                    <input asp-for="EventTime" type="time" class="form-control" required />
+                                    <label asp-for="EventTime" class="form-label">Event Time *</label>
+                                    <input asp-for="EventTime" type="time" class="form-control" />
                                     <span asp-validation-for="EventTime" class="text-danger"></span>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Venue Information -->
+                    <!-- Venue Section -->
                     <div class="form-section">
                         <div class="section-header">
                             <h5 class="section-title">
                                 <i class="bi bi-geo-alt me-2"></i>Venue Information
                             </h5>
-                            <p class="section-subtitle">Where will your event be held?</p>
                         </div>
                         <div class="section-content">
                             <div class="row g-3">
+                                <!-- Venue Selection Type -->
                                 <div class="col-12">
-                                    <label asp-for="VenueId" class="form-label required">Select Venue</label>
-                                    <select asp-for="VenueId" class="form-select" required>
-                                        <option value="">Choose a venue...</option>
+                                    <div class="btn-group w-100" role="group">
+                                        <input type="radio" class="btn-check" name="venueType" id="existingVenue"
+                                               value="existing" checked autocomplete="off">
+                                        <label class="btn btn-outline-primary" for="existingVenue">
+                                            <i class="bi bi-building me-2"></i>Select Existing Venue
+                                        </label>
+
+                                        <input type="radio" class="btn-check" name="venueType" id="newVenue"
+                                               value="new" autocomplete="off">
+                                        <label class="btn btn-outline-primary" for="newVenue">
+                                            <i class="bi bi-plus-circle me-2"></i>Create New Venue
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- Existing Venue Dropdown -->
+                                <div class="col-12" id="existingVenueSection">
+                                    <label asp-for="VenueId" class="form-label">Select Venue *</label>
+                                    <select asp-for="VenueId" class="form-select" id="venueDropdown">
+                                        <option value="">-- Select a venue --</option>
                                         @if (ViewBag.Venues != null)
                                         {
                                             foreach (var venue in ViewBag.Venues)
@@ -147,55 +155,87 @@
                                         }
                                     </select>
                                     <span asp-validation-for="VenueId" class="text-danger"></span>
-                                    <small class="text-muted">
-                                        Don't see your venue? Contact admin to add new venues.
-                                    </small>
+                                </div>
+
+                                <!-- New Venue Fields (Hidden by default) -->
+                                <div id="newVenueSection" style="display: none;">
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label for="newVenueName" class="form-label">Venue Name *</label>
+                                            <input type="text" class="form-control" id="newVenueName"
+                                                   name="NewVenueName" placeholder="Enter venue name">
+                                            <span class="text-danger" id="newVenueNameError"></span>
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            <label for="newVenueLocation" class="form-label">Location/City *</label>
+                                            <input type="text" class="form-control" id="newVenueLocation"
+                                                   name="NewVenueLocation" placeholder="Enter location">
+                                            <span class="text-danger" id="newVenueLocationError"></span>
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            <label for="newVenueCapacity" class="form-label">Capacity *</label>
+                                            <input type="number" class="form-control" id="newVenueCapacity"
+                                                   name="NewVenueCapacity" placeholder="100" min="1">
+                                            <span class="text-danger" id="newVenueCapacityError"></span>
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            <label for="newVenueAddress" class="form-label">Full Address</label>
+                                            <input type="text" class="form-control" id="newVenueAddress"
+                                                   name="NewVenueAddress" placeholder="Street address (optional)">
+                                        </div>
+
+                                        <div class="col-12">
+                                            <div class="alert alert-info">
+                                                <i class="bi bi-info-circle me-2"></i>
+                                                A new venue will be created and saved for future use.
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Ticket Pricing -->
+                    <!-- Pricing & Tickets -->
                     <div class="form-section">
                         <div class="section-header">
                             <h5 class="section-title">
-                                <i class="bi bi-ticket-perforated me-2"></i>Ticket Pricing
+                                <i class="bi bi-ticket-perforated me-2"></i>Pricing & Tickets
                             </h5>
-                            <p class="section-subtitle">Set up your ticket pricing and availability</p>
                         </div>
                         <div class="section-content">
                             <div class="row g-3">
                                 <div class="col-md-6">
-                                    <label asp-for="TicketPrice" class="form-label required">Ticket Price (Rs.)</label>
-                                    <input asp-for="TicketPrice" type="number" class="form-control"
-                                           placeholder="0.00" min="0" step="0.01" required />
+                                    <label asp-for="TicketPrice" class="form-label">Ticket Price (Rs.) *</label>
+                                    <input asp-for="TicketPrice" type="number" step="0.01" min="0"
+                                           class="form-control" placeholder="0.00" />
                                     <span asp-validation-for="TicketPrice" class="text-danger"></span>
-                                    <small class="text-muted">Enter 0 for free events</small>
                                 </div>
 
                                 <div class="col-md-6">
-                                    <label asp-for="AvailableTickets" class="form-label required">Total Tickets Available</label>
-                                    <input asp-for="AvailableTickets" type="number" class="form-control"
-                                           placeholder="Number of tickets" min="1" required />
+                                    <label asp-for="AvailableTickets" class="form-label">Available Tickets *</label>
+                                    <input asp-for="AvailableTickets" type="number" min="1"
+                                           class="form-control" placeholder="100" />
                                     <span asp-validation-for="AvailableTickets" class="text-danger"></span>
-                                    <small class="text-muted">Maximum capacity for your event</small>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Event Image -->
+                    <!-- Image Upload -->
                     <div class="form-section">
                         <div class="section-header">
                             <h5 class="section-title">
                                 <i class="bi bi-image me-2"></i>Event Image
                             </h5>
-                            <p class="section-subtitle">Upload an attractive event poster</p>
                         </div>
                         <div class="section-content">
                             <div class="image-upload-area" id="imageUploadArea">
-                                <input type="file" id="eventImage" name="eventImage" accept="image/*"
-                                       class="d-none" />
+                                <input type="file" id="eventImage" name="eventImage"
+                                       accept="image/*" style="display: none;" />
                                 <div class="upload-placeholder">
                                     <i class="bi bi-cloud-upload"></i>
                                     <h6>Click to upload or drag and drop</h6>
@@ -213,7 +253,8 @@
 
                     <!-- Form Actions -->
                     <div class="form-actions">
-                        <button type="button" class="btn btn-outline-secondary" onclick="window.history.back()">
+                        <button type="button" class="btn btn-outline-secondary"
+                                onclick="window.location.href='@Url.Action("Dashboard", "Organizer")'">
                             <i class="bi bi-x-circle me-2"></i>Cancel
                         </button>
                         <button type="submit" name="IsActive" value="false" class="btn btn-outline-primary">
@@ -225,18 +266,17 @@
                     </div>
                 </div>
 
-                <!-- Right Column - Preview -->
+                <!-- Right Column - Preview (Optional, can be removed for testing) -->
                 <div class="col-lg-4">
                     <div class="preview-card sticky-top">
                         <div class="preview-header">
                             <h6 class="preview-title">
                                 <i class="bi bi-eye me-2"></i>Event Preview
                             </h6>
-                            <small class="text-muted">How your event will appear to customers</small>
                         </div>
                         <div class="preview-content">
                             <div class="preview-image">
-                                <img id="previewCardImage" src="/images/events/default-event.jpg" alt="Event Preview" />
+                                <img id="previewCardImage" src="/images/events/default-event.jpg" alt="Preview" />
                                 <div class="preview-badge">
                                     <span id="previewCategory">Category</span>
                                 </div>
@@ -263,7 +303,7 @@
                                 </div>
                                 <div class="preview-price">
                                     <span class="price-label">Starting from</span>
-                                    <span class="price-value">Rs. <span id="previewPrice">0</span></span>
+                                    <span class="price-value">Rs. <span id="previewPrice">0.00</span></span>
                                 </div>
                             </div>
                         </div>
@@ -279,4 +319,6 @@
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
     <script src="~/js/organizer-create-event.js" asp-append-version="true"></script>
+
+
 }

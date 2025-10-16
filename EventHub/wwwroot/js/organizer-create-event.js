@@ -2,6 +2,58 @@
 // EventHub Create Event JavaScript - FINAL FIX
 // Compatible with jQuery Validation Unobtrusive
 // ==========================================
+// Toggle between existing and new venue
+document.addEventListener('DOMContentLoaded', function () {
+    const existingVenueRadio = document.getElementById('existingVenue');
+    const newVenueRadio = document.getElementById('newVenue');
+    const existingVenueSection = document.getElementById('existingVenueSection');
+    const newVenueSection = document.getElementById('newVenueSection');
+    const venueDropdown = document.getElementById('venueDropdown');
+
+    function toggleVenueSections() {
+        if (newVenueRadio && newVenueRadio.checked) {
+            existingVenueSection.style.display = 'none';
+            newVenueSection.style.display = 'block';
+
+            // Clear and disable dropdown
+            venueDropdown.value = '';
+            venueDropdown.removeAttribute('required');
+
+            // Make new venue fields required
+            document.getElementById('newVenueName').setAttribute('required', 'required');
+            document.getElementById('newVenueLocation').setAttribute('required', 'required');
+            document.getElementById('newVenueCapacity').setAttribute('required', 'required');
+        } else {
+            existingVenueSection.style.display = 'block';
+            newVenueSection.style.display = 'none';
+
+            // Make dropdown required
+            venueDropdown.setAttribute('required', 'required');
+
+            // Clear and remove required from new venue fields
+            document.getElementById('newVenueName').value = '';
+            document.getElementById('newVenueLocation').value = '';
+            document.getElementById('newVenueCapacity').value = '';
+            document.getElementById('newVenueAddress').value = '';
+
+            document.getElementById('newVenueName').removeAttribute('required');
+            document.getElementById('newVenueLocation').removeAttribute('required');
+            document.getElementById('newVenueCapacity').removeAttribute('required');
+        }
+    }
+
+    // Add event listeners
+    if (existingVenueRadio) {
+        existingVenueRadio.addEventListener('change', toggleVenueSections);
+    }
+    if (newVenueRadio) {
+        newVenueRadio.addEventListener('change', toggleVenueSections);
+    }
+
+    // Initialize on page load
+    toggleVenueSections();
+});
+
 
 document.addEventListener('DOMContentLoaded', function () {
     initializeCreateEventForm();

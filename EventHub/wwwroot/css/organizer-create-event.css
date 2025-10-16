@@ -427,3 +427,35 @@
     .form-section:nth-child(4) {
         animation-delay: 0.3s;
     }
+
+
+
+
+
+/* Venue Toggle Buttons */
+.btn-check:checked + .btn-outline-primary {
+    background-color: #6366f1;
+    color: white;
+}
+
+#newVenueSection {
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+#newVenueSection .alert-info {
+    background-color: #e0f2fe;
+    border-color: #bae6fd;
+    color: #075985;
+}

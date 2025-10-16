@@ -42,19 +42,17 @@ namespace EventHub.Models.Entities
 
         public bool IsActive { get; set; } = true;
 
-        // Foreign Keys
         [Required]
         public int VenueId { get; set; }
 
         [Required]
         public int OrganizerId { get; set; }
 
-        // Navigation properties
         [ForeignKey("VenueId")]
-        public virtual Venue Venue { get; set; } = null!;
+        public virtual Venue? Venue { get; set; }
 
         [ForeignKey("OrganizerId")]
-        public virtual User Organizer { get; set; } = null!;
+        public virtual User? Organizer { get; set; }
 
         public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
     }

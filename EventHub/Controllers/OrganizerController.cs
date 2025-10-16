@@ -215,64 +215,119 @@ namespace EventHub.Controllers
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(Event eventModel, IFormFile? eventImage)
+        public async Task<IActionResult> Create(Event eventModel, IFormFile? eventImage,
+            string? NewVenueName, string? NewVenueLocation, int? NewVenueCapacity, string? NewVenueAddress)
         {
-            if (!IsOrganizer())
+            try
             {
-                return Forbid();
+                if (!IsOrganizer())
+                {
+                    return Forbid();
+                }
+
+                var organizerId = GetCurrentOrganizerId();
+
+                // Remove navigation properties from validation
+                ModelState.Remove("Organizer");
+                ModelState.Remove("Venue");
+
+                // 🔧 FIX: Convert EventDate to UTC
+                if (eventModel.EventDate.Kind == DateTimeKind.Unspecified)
+                {
+                    eventModel.EventDate = DateTime.SpecifyKind(eventModel.EventDate, DateTimeKind.Utc);
+                }
+
+                // Handle new venue creation
+                if (!string.IsNullOrEmpty(NewVenueName))
+                {
+                    if (string.IsNullOrEmpty(NewVenueLocation))
+                    {
+                        ModelState.AddModelError("NewVenueLocation", "Location is required");
+                    }
+                    if (!NewVenueCapacity.HasValue || NewVenueCapacity <= 0)
+                    {
+                        ModelState.AddModelError("NewVenueCapacity", "Capacity must be greater than 0");
+                    }
+
+                    if (!ModelState.IsValid)
+                    {
+                        ViewBag.Venues = await _context.Venues
+                            .OrderBy(v => v.Name)
+                            .Select(v => new { v.Id, v.Name, v.Location, v.Capacity })
+                            .ToListAsync();
+                        return View(eventModel);
+                    }
+
+                    var newVenue = new Venue
+                    {
+                        Name = NewVenueName,
+                        Location = NewVenueLocation!,
+                        Capacity = NewVenueCapacity!.Value,
+                        Address = NewVenueAddress,
+                        CreatedAt = DateTime.UtcNow  
+                    };
+
+                    _context.Venues.Add(newVenue);
+                    await _context.SaveChangesAsync();
+
+                    eventModel.VenueId = newVenue.Id;
+                }
+                else if (eventModel.VenueId <= 0)
+                {
+                    ModelState.AddModelError("VenueId", "Please select a venue or create a new one");
+                }
+
+                if (!ModelState.IsValid)
+                {
+                    ViewBag.Venues = await _context.Venues
+                        .OrderBy(v => v.Name)
+                        .Select(v => new { v.Id, v.Name, v.Location, v.Capacity })
+                        .ToListAsync();
+                    return View(eventModel);
+                }
+
+                // Handle image upload
+                if (eventImage != null && eventImage.Length > 0)
+                {
+                    var fileName = $"event-{Guid.NewGuid()}{Path.GetExtension(eventImage.FileName)}";
+                    var uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "images", "events");
+                    Directory.CreateDirectory(uploadsFolder);
+                    var filePath = Path.Combine(uploadsFolder, fileName);
+
+                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await eventImage.CopyToAsync(stream);
+                    }
+
+                    eventModel.ImageUrl = $"/images/events/{fileName}";
+                }
+                else
+                {
+                    eventModel.ImageUrl = "/images/events/default-event.jpg";
+                }
+
+                // Set event properties
+                eventModel.OrganizerId = organizerId;
+                eventModel.CreatedAt = DateTime.UtcNow;  // Already UTC
+                eventModel.TotalTickets = eventModel.AvailableTickets;
+
+                await _eventService.CreateEventAsync(eventModel);
+
+                TempData["SuccessMessage"] = "Event created successfully!";
+                return RedirectToAction(nameof(MyEvents));
             }
-
-            var organizerId = GetCurrentOrganizerId();
-
-            if (ModelState.IsValid)
+            catch (Exception ex)
             {
-                try
-                {
-                    // Handle image upload
-                    if (eventImage != null && eventImage.Length > 0)
-                    {
-                        var fileName = $"event-{Guid.NewGuid()}{Path.GetExtension(eventImage.FileName)}";
-                        var filePath = Path.Combine(_webHostEnvironment.WebRootPath, "images", "events", fileName);
+                _logger.LogError(ex, "Error creating event");
+                ModelState.AddModelError("", "An error occurred while creating the event.");
 
-                        // Ensure directory exists
-                        Directory.CreateDirectory(Path.GetDirectoryName(filePath)!);
+                ViewBag.Venues = await _context.Venues
+                    .OrderBy(v => v.Name)
+                    .Select(v => new { v.Id, v.Name, v.Location, v.Capacity })
+                    .ToListAsync();
 
-                        using (var stream = new FileStream(filePath, FileMode.Create))
-                        {
-                            await eventImage.CopyToAsync(stream);
-                        }
-
-                        eventModel.ImageUrl = $"/images/events/{fileName}";
-                    }
-                    else
-                    {
-                        eventModel.ImageUrl = "/images/events/default-event.jpg";
-                    }
-
-                    eventModel.OrganizerId = organizerId;
-                    eventModel.CreatedAt = DateTime.UtcNow;
-                    eventModel.IsActive = true;
-                    eventModel.TotalTickets = eventModel.AvailableTickets;
-
-                    await _eventService.CreateEventAsync(eventModel);
-
-                    TempData["SuccessMessage"] = "Event created successfully!";
-                    return RedirectToAction(nameof(MyEvents));
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error creating event");
-                    ModelState.AddModelError("", "An error occurred while creating the event.");
-                }
+                return View(eventModel);
             }
-
-            // Reload venues if validation fails
-            ViewBag.Venues = await _context.Venues
-                .OrderBy(v => v.Name)
-                .Select(v => new { v.Id, v.Name, v.Location, v.Capacity })
-                .ToListAsync();
-
-            return View(eventModel);
         }
         #endregion
 
