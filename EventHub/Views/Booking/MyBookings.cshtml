@@ -1,0 +1,700 @@
+﻿@model EventHub.Models.ViewModels.MyBookingsViewModel
+@{
+    ViewData["Title"] = "My Bookings - EventHub";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles {
+    <style>
+        /* My Bookings Page Styles */
+        .page-header {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            padding: 2rem 0;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 2rem;
+        }
+
+        .page-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .page-subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin-bottom: 0;
+        }
+
+        .header-stats {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .stat-item {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+        }
+
+        .stat-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            opacity: 0.9;
+        }
+
+        /* Filters Card */
+        .filters-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .filters-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .filters-title {
+            font-weight: 600;
+            color: #1e293b;
+            margin: 0;
+        }
+
+        .search-input {
+            position: relative;
+        }
+
+            .search-input i {
+                position: absolute;
+                left: 1rem;
+                top: 50%;
+                transform: translateY(-50%);
+                color: #94a3b8;
+            }
+
+            .search-input .form-control {
+                padding-left: 3rem;
+                border: 2px solid #e2e8f0;
+                border-radius: 12px;
+            }
+
+                .search-input .form-control:focus {
+                    border-color: #6366f1;
+                    box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.1);
+                }
+
+        /* Tabs */
+        .custom-tabs {
+            border-bottom: 2px solid #e2e8f0;
+            margin-bottom: 2rem;
+        }
+
+            .custom-tabs .nav-link {
+                border: none;
+                color: #64748b;
+                font-weight: 600;
+                padding: 1rem 1.5rem;
+                transition: all 0.3s ease;
+                border-bottom: 3px solid transparent;
+            }
+
+                .custom-tabs .nav-link:hover {
+                    color: #6366f1;
+                    background: rgba(99, 102, 241, 0.05);
+                }
+
+                .custom-tabs .nav-link.active {
+                    color: #6366f1;
+                    background: transparent;
+                    border-bottom-color: #6366f1;
+                }
+
+        /* Booking Card */
+        .booking-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            transition: all 0.3s ease;
+            margin-bottom: 1.5rem;
+        }
+
+            .booking-card:hover {
+                transform: translateY(-4px);
+                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            }
+
+        .booking-card-body {
+            padding: 1.5rem;
+        }
+
+        .booking-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 1rem;
+        }
+
+        .booking-image {
+            width: 120px;
+            height: 120px;
+            border-radius: 12px;
+            object-fit: cover;
+            margin-right: 1.5rem;
+        }
+
+        .booking-placeholder {
+            width: 120px;
+            height: 120px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1.5rem;
+        }
+
+        .booking-details {
+            flex: 1;
+        }
+
+        .booking-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+        }
+
+        .booking-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            color: #64748b;
+            margin-bottom: 1rem;
+        }
+
+        .booking-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+            .booking-meta-item i {
+                color: #6366f1;
+            }
+
+        .booking-info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 12px;
+            margin-top: 1rem;
+        }
+
+        .info-item {
+            text-align: center;
+        }
+
+        .info-label {
+            font-size: 0.875rem;
+            color: #64748b;
+            margin-bottom: 0.25rem;
+        }
+
+        .info-value {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        /* Status Badges */
+        .status-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            display: inline-block;
+        }
+
+        .status-confirmed {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-cancelled {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .status-completed {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        /* Action Buttons */
+        .booking-actions {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .btn-action {
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            transition: all 0.3s ease;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+            .empty-state i {
+                font-size: 5rem;
+                color: #e2e8f0;
+                margin-bottom: 1rem;
+            }
+
+            .empty-state h4 {
+                color: #1e293b;
+                margin-bottom: 1rem;
+            }
+
+            .empty-state p {
+                color: #64748b;
+                margin-bottom: 2rem;
+            }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .booking-card-body
+
+        {
+            flex-direction: column;
+        }
+
+        .booking-image,
+        .booking-placeholder {
+            width: 100%;
+            height: 200px;
+            margin-right: 0;
+            margin-bottom: 1rem;
+        }
+
+        .header-stats {
+            width: 100%;
+            justify-content: space-between;
+        }
+
+        .stat-item {
+            flex: 1;
+            padding: 0.75rem;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+        }
+
+        }
+    </style>
+}
+
+<!-- Page Header -->
+<section class="page-header">
+    <div class="container-fluid">
+        <div class="header-content">
+            <div>
+                <h1 class="page-title">My Bookings</h1>
+                <p class="page-subtitle">View and manage all your event bookings</p>
+            </div>
+            <div class="header-stats">
+                <div class="stat-item">
+                    <span class="stat-value">@Model.TotalBookings</span>
+                    <span class="stat-label">Total Bookings</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">@Model.UpcomingCount</span>
+                    <span class="stat-label">Upcoming</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">@Model.CompletedCount</span>
+                    <span class="stat-label">Completed</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Main Content -->
+<section class="py-4">
+    <div class="container-fluid">
+        <!-- Filters -->
+        <div class="filters-card">
+            <div class="filters-header">
+                <h6 class="filters-title">Filter & Search</h6>
+                <button class="btn btn-outline-secondary btn-sm" onclick="clearFilters()">
+                    <i class="bi bi-arrow-clockwise me-1"></i>Clear All
+                </button>
+            </div>
+            <form method="get" asp-action="MyBookings" id="filterForm">
+                <div class="row g-3">
+                    <div class="col-lg-4 col-md-6">
+                        <label class="form-label">Search Bookings</label>
+                        <div class="search-input">
+                            <i class="bi bi-search"></i>
+                            <input type="text" class="form-control" name="searchTerm"
+                                   value="@Model.SearchTerm" placeholder="Search by event name or booking ID">
+                        </div>
+                    </div>
+                    <div class="col-lg-2 col-md-6">
+                        <label class="form-label">Status</label>
+                        <select class="form-select" name="statusFilter">
+                            <option value="">All Status</option>
+                            <option value="Confirmed" selected="@(Model.StatusFilter == "Confirmed")">Confirmed</option>
+                            <option value="Pending" selected="@(Model.StatusFilter == "Pending")">Pending</option>
+                            <option value="Cancelled" selected="@(Model.StatusFilter == "Cancelled")">Cancelled</option>
+                            <option value="Completed" selected="@(Model.StatusFilter == "Completed")">Completed</option>
+                        </select>
+                    </div>
+                    <div class="col-lg-2 col-md-6">
+                        <label class="form-label">Date Range</label>
+                        <select class="form-select" name="dateFilter">
+                            <option value="">All Dates</option>
+                            <option value="upcoming" selected="@(Model.DateFilter == "upcoming")">Upcoming</option>
+                            <option value="past" selected="@(Model.DateFilter == "past")">Past Events</option>
+                            <option value="today" selected="@(Model.DateFilter == "today")">Today</option>
+                            <option value="week" selected="@(Model.DateFilter == "week")">This Week</option>
+                            <option value="month" selected="@(Model.DateFilter == "month")">This Month</option>
+                        </select>
+                    </div>
+                    <div class="col-lg-2 col-md-6">
+                        <label class="form-label">Sort By</label>
+                        <select class="form-select" name="sortBy">
+                            <option value="date-desc" selected="@(Model.SortBy == "date-desc")">Newest First</option>
+                            <option value="date-asc" selected="@(Model.SortBy == "date-asc")">Oldest First</option>
+                            <option value="amount-desc" selected="@(Model.SortBy == "amount-desc")">Highest Amount</option>
+                            <option value="amount-asc" selected="@(Model.SortBy == "amount-asc")">Lowest Amount</option>
+                        </select>
+                    </div>
+                    <div class="col-lg-2 col-md-6">
+                        <label class="form-label">&nbsp;</label>
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-funnel me-1"></i>Apply Filters
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Tabs -->
+        <ul class="nav nav-tabs custom-tabs" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link active" data-bs-toggle="tab" href="#all-bookings">
+                    <i class="bi bi-list-ul me-2"></i>All Bookings
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#upcoming-bookings">
+                    <i class="bi bi-calendar-check me-2"></i>Upcoming (@Model.UpcomingCount)
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#past-bookings">
+                    <i class="bi bi-clock-history me-2"></i>Past Events
+                </a>
+            </li>
+        </ul>
+
+        <!-- Tab Content -->
+        <div class="tab-content">
+            <!-- All Bookings Tab -->
+            <div class="tab-pane fade show active" id="all-bookings">
+                @if (Model.Bookings != null && Model.Bookings.Any())
+                {
+                    foreach (var booking in Model.Bookings)
+                    {
+                        <div class="booking-card">
+                            <div class="booking-card-body d-flex">
+                                @if (!string.IsNullOrEmpty(booking.EventImageUrl))
+                                {
+                                    <img src="@booking.EventImageUrl" alt="@booking.EventTitle" class="booking-image">
+                                }
+                                else
+                                {
+                                    <div class="booking-placeholder">
+                                        <i class="bi bi-calendar-event display-4 text-muted"></i>
+                                    </div>
+                                }
+
+                                <div class="booking-details">
+                                    <div class="booking-header">
+                                        <div>
+                                            <h3 class="booking-title">@booking.EventTitle</h3>
+                                            <div class="booking-meta">
+                                                <div class="booking-meta-item">
+                                                    <i class="bi bi-calendar3"></i>
+                                                    <span>@booking.EventDate.ToString("MMM dd, yyyy 'at' hh:mm tt")</span>
+                                                </div>
+                                                <div class="booking-meta-item">
+                                                    <i class="bi bi-geo-alt"></i>
+                                                    <span>@booking.VenueName</span>
+                                                </div>
+                                                <div class="booking-meta-item">
+                                                    <i class="bi bi-ticket-perforated"></i>
+                                                    <span>@booking.Quantity Ticket(s)</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <span class="status-badge status-@booking.Status.ToString().ToLower()">
+                                            @booking.Status
+                                        </span>
+                                    </div>
+
+                                    <div class="booking-info-grid">
+                                        <div class="info-item">
+                                            <div class="info-label">Booking ID</div>
+                                            <div class="info-value">#@booking.BookingReference</div>
+                                        </div>
+                                        <div class="info-item">
+                                            <div class="info-label">Booking Date</div>
+                                            <div class="info-value">@booking.BookingDate.ToString("MMM dd, yyyy")</div>
+                                        </div>
+                                        <div class="info-item">
+                                            <div class="info-label">Total Amount</div>
+                                            <div class="info-value text-success">@booking.TotalAmount.ToString("C")</div>
+                                        </div>
+                                        <div class="info-item">
+                                            <div class="info-label">Payment Status</div>
+                                            <div class="info-value">@(booking.PaymentStatus ?? "Pending")</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="booking-actions mt-3">
+                                        <a href="@Url.Action("Details", "Booking", new { id = booking.Id })"
+                                           class="btn btn-primary btn-action">
+                                            <i class="bi bi-eye me-1"></i>View Details
+                                        </a>
+
+                                        @if (booking.Status == EventHub.Models.Entities.BookingStatus.Confirmed)
+                                        {
+                                            <a href="@Url.Action("ViewTickets", "Ticket", new { bookingId = booking.Id })"
+                                               class="btn btn-success btn-action">
+                                                <i class="bi bi-qr-code me-1"></i>View Tickets
+                                            </a>
+                                            <a href="@Url.Action("DownloadTickets", "Ticket", new { bookingId = booking.Id })"
+                                               class="btn btn-outline-primary btn-action">
+                                                <i class="bi bi-download me-1"></i>Download
+                                            </a>
+                                        }
+
+                                        @if (booking.Status == EventHub.Models.Entities.BookingStatus.Confirmed &&
+                                                                        booking.EventDate > DateTime.UtcNow.AddDays(7))
+                                        {
+                                            <button class="btn btn-outline-danger btn-action"
+                                                    onclick="cancelBooking(@booking.Id, '@booking.EventTitle')">
+                                                <i class="bi bi-x-circle me-1"></i>Cancel Booking
+                                            </button>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    <!-- Pagination -->
+                    @if (Model.TotalPages > 1)
+                    {
+                        <nav aria-label="Booking pagination">
+                            <ul class="pagination justify-content-center">
+                                <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                                    <a class="page-link" href="?page=@(Model.CurrentPage - 1)">Previous</a>
+                                </li>
+                                @for (int i = 1; i <= Model.TotalPages; i++)
+                                {
+                                    <li class="page-item @(Model.CurrentPage == i ? "active" : "")">
+                                        <a class="page-link" href="?page=@i">@i</a>
+                                    </li>
+                                }
+                                <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                                    <a class="page-link" href="?page=@(Model.CurrentPage + 1)">Next</a>
+                                </li>
+                            </ul>
+                        </nav>
+                    }
+                }
+                else
+                {
+                    <div class="empty-state">
+                        <i class="bi bi-ticket-perforated"></i>
+                        <h4>No Bookings Found</h4>
+                        <p>You haven't made any bookings yet. Start exploring amazing events!</p>
+                        <a href="@Url.Action("Index", "Event")" class="btn btn-primary btn-lg">
+                            <i class="bi bi-search me-2"></i>Browse Events
+                        </a>
+                    </div>
+                }
+            </div>
+
+            <!-- Upcoming Bookings Tab -->
+            <div class="tab-pane fade" id="upcoming-bookings">
+                @{
+                    var upcomingBookings = Model.Bookings?.Where(b => b.EventDate > DateTime.UtcNow).ToList();
+                }
+                @if (upcomingBookings != null && upcomingBookings.Any())
+                {
+                    <p class="text-muted">Showing @upcomingBookings.Count upcoming event(s)</p>
+                    @* Same booking card structure as "All Bookings" *@
+                }
+                else
+                {
+                    <div class="empty-state">
+                        <i class="bi bi-calendar-x"></i>
+                        <h4>No Upcoming Bookings</h4>
+                        <p>You don't have any upcoming events. Book your next adventure now!</p>
+                        <a href="@Url.Action("Index", "Event")" class="btn btn-primary btn-lg">
+                            <i class="bi bi-search me-2"></i>Find Events
+                        </a>
+                    </div>
+                }
+            </div>
+
+            <!-- Past Bookings Tab -->
+            <div class="tab-pane fade" id="past-bookings">
+                @{
+                    var pastBookings = Model.Bookings?.Where(b => b.EventDate <= DateTime.UtcNow).ToList();
+                }
+                @if (pastBookings != null && pastBookings.Any())
+                {
+                    <p class="text-muted">Showing @pastBookings.Count past event(s)</p>
+                    @* Same booking card structure as "All Bookings" *@
+                }
+                else
+                {
+                    <div class="empty-state">
+                        <i class="bi bi-clock-history"></i>
+                        <h4>No Past Bookings</h4>
+                        <p>Your booking history will appear here after attending events.</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        function clearFilters() {
+            document.getElementById('filterForm').reset();
+            window.location.href = '@Url.Action("MyBookings", "Booking")';
+        }
+
+        function cancelBooking(bookingId, eventTitle) {
+            Swal.fire({
+                title: 'Cancel Booking?',
+                html: `Are you sure you want to cancel your booking for <strong>${eventTitle}</strong>?<br><small class="text-muted">This action cannot be undone.</small>`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#6366f1',
+                confirmButtonText: 'Yes, Cancel Booking',
+                cancelButtonText: 'Keep Booking'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Submit cancel request
+                    fetch(`/Booking/Cancel/${bookingId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Booking Cancelled',
+                                text: 'Your booking has been successfully cancelled.',
+                                confirmButtonColor: '#6366f1'
+                            }).then(() => {
+                                window.location.reload();
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Cancellation Failed',
+                                text: data.message || 'Unable to cancel booking. Please try again.',
+                                confirmButtonColor: '#6366f1'
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'An error occurred. Please try again later.',
+                            confirmButtonColor: '#6366f1'
+                        });
+                    });
+                }
+            });
+        }
+
+        // Show success/error messages
+        @if (TempData["SuccessMessage"] != null)
+        {
+                <text>
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success!',
+                    text: '@TempData["SuccessMessage"]',
+                    confirmButtonColor: '#6366f1'
+                });
+                </text>
+        }
+
+        @if (TempData["ErrorMessage"] != null)
+        {
+                <text>
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Oops...',
+                    text: '@TempData["ErrorMessage"]',
+                    confirmButtonColor: '#6366f1'
+                });
+                </text>
+        }
+    </script>
+}

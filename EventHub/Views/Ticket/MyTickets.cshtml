@@ -1,0 +1,357 @@
+﻿@model EventHub.Models.ViewModels.MyTicketsViewModel
+@{
+    ViewData["Title"] = "My Digital Tickets - EventHub";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles {
+    <style>
+        /* My Tickets Page Styles */
+        .page-header {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            padding: 2rem 0;
+        }
+
+        .ticket-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            transition: all 0.3s ease;
+            margin-bottom: 2rem;
+            border: 3px solid transparent;
+        }
+
+            .ticket-card:hover {
+                transform: translateY(-8px);
+                box-shadow: 0 12px 28px rgba(0, 0, 0, 0.15);
+                border-color: #6366f1;
+            }
+
+        .ticket-header {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            padding: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .ticket-body {
+            padding: 2rem;
+        }
+
+        .qr-code-section {
+            text-align: center;
+            padding: 2rem;
+            background: #f8fafc;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+        }
+
+        .qr-code-img {
+            max-width: 250px;
+            width: 100%;
+            height: auto;
+            border: 4px solid white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            background: white;
+            padding: 1rem;
+        }
+
+        .ticket-info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .ticket-info-item {
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 12px;
+            border-left: 4px solid #6366f1;
+        }
+
+        .ticket-info-label {
+            font-size: 0.875rem;
+            color: #64748b;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+
+        .ticket-info-value {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .ticket-status {
+            display: inline-block;
+            padding: 0.5rem 1.5rem;
+            border-radius: 25px;
+            font-weight: 700;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+        }
+
+        .ticket-status-active {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .ticket-status-used {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .ticket-actions {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 1.5rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        @media print {
+            .page-header, .navbar, .ticket-actions, .filters-card
+
+        {
+            display: none !important;
+        }
+
+        .ticket-card {
+            page-break-inside: avoid;
+            box-shadow: none;
+            border: 2px solid #000;
+        }
+
+        }
+    </style>
+}
+
+<!-- Page Header -->
+<section class="page-header">
+    <div class="container-fluid">
+        <div class="header-content d-flex justify-content-between align-items-center flex-wrap">
+            <div>
+                <h1 class="page-title">My Digital Tickets</h1>
+                <p class="page-subtitle">Your QR-coded tickets for easy event entry</p>
+            </div>
+            <div class="header-stats d-flex gap-3">
+                <div class="stat-item">
+                    <span class="stat-value">@Model.TotalTickets</span>
+                    <span class="stat-label">Total Tickets</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">@Model.ActiveTickets</span>
+                    <span class="stat-label">Active</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">@Model.UsedTickets</span>
+                    <span class="stat-label">Used</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Main Content -->
+<section class="py-4">
+    <div class="container-fluid">
+        <!-- Filters -->
+        <div class="filters-card mb-4 p-4 bg-white rounded-4 shadow-sm">
+            <form method="get" asp-action="MyTickets">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold">Search Tickets</label>
+                        <input type="text" class="form-control" name="searchTerm"
+                               value="@Model.SearchTerm" placeholder="Event name or ticket number">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-bold">Status</label>
+                        <select class="form-select" name="statusFilter">
+                            <option value="">All Status</option>
+                            <option value="Active" selected="@(Model.StatusFilter == "Active")">Active</option>
+                            <option value="Used" selected="@(Model.StatusFilter == "Used")">Used</option>
+                            <option value="Cancelled" selected="@(Model.StatusFilter == "Cancelled")">Cancelled</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-bold">Event Date</label>
+                        <select class="form-select" name="dateFilter">
+                            <option value="">All Dates</option>
+                            <option value="upcoming">Upcoming</option>
+                            <option value="past">Past Events</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <button type="submit" class="btn btn-primary me-2">
+                            <i class="bi bi-funnel me-1"></i>Apply
+                        </button>
+                        <button type="button" class="btn btn-outline-primary" onclick="window.print()">
+                            <i class="bi bi-printer me-1"></i>Print All
+                        </button>
+                        <a href="@Url.Action("DownloadAll", "Ticket")" class="btn btn-outline-success">
+                            <i class="bi bi-download me-1"></i>Download All
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Tickets Display -->
+        @if (Model.Tickets != null && Model.Tickets.Any())
+        {
+            <div class="row">
+                @foreach (var ticket in Model.Tickets)
+                {
+                    <div class="col-lg-6">
+                        <div class="ticket-card">
+                            <div class="ticket-header">
+                                <div>
+                                    <h5 class="mb-1">@ticket.EventTitle</h5>
+                                    <p class="mb-0 opacity-75">Ticket #@ticket.TicketNumber</p>
+                                </div>
+                                <span class="ticket-status ticket-status-@ticket.Status.ToString().ToLower()">
+                                    @ticket.Status
+                                </span>
+                            </div>
+
+                            <div class="ticket-body">
+                                <!-- QR Code Section -->
+                                <div class="qr-code-section">
+                                    <img src="data:image/png;base64,@ticket.QRCodeBase64"
+                                         alt="QR Code"
+                                         class="qr-code-img" />
+                                    <p class="mt-3 mb-0 text-muted small">
+                                        <i class="bi bi-info-circle me-1"></i>
+                                        Scan this QR code at the event entrance
+                                    </p>
+                                </div>
+
+                                <!-- Ticket Information -->
+                                <div class="ticket-info-grid">
+                                    <div class="ticket-info-item">
+                                        <div class="ticket-info-label">Event Date</div>
+                                        <div class="ticket-info-value">
+                                            <i class="bi bi-calendar3 text-primary me-2"></i>
+                                            @ticket.EventDate.ToString("MMM dd, yyyy")
+                                        </div>
+                                        <div class="text-muted small mt-1">
+                                            @ticket.EventDate.ToString("hh:mm tt")
+                                        </div>
+                                    </div>
+
+                                    <div class="ticket-info-item">
+                                        <div class="ticket-info-label">Venue</div>
+                                        <div class="ticket-info-value">
+                                            <i class="bi bi-geo-alt text-danger me-2"></i>
+                                            @ticket.VenueName
+                                        </div>
+                                        <div class="text-muted small mt-1">@ticket.VenueLocation</div>
+                                    </div>
+
+                                    <div class="ticket-info-item">
+                                        <div class="ticket-info-label">Customer</div>
+                                        <div class="ticket-info-value">
+                                            <i class="bi bi-person text-success me-2"></i>
+                                            @ticket.CustomerName
+                                        </div>
+                                    </div>
+
+                                    <div class="ticket-info-item">
+                                        <div class="ticket-info-label">Booking Ref</div>
+                                        <div class="ticket-info-value">
+                                            <i class="bi bi-hash text-info me-2"></i>
+                                            @ticket.BookingReference
+                                        </div>
+                                    </div>
+                                </div>
+
+                                @if (ticket.Status == EventHub.Models.Entities.TicketStatus.Used && ticket.UsedDate.HasValue)
+                                {
+                                    <div class="alert alert-info mt-3">
+                                        <i class="bi bi-check-circle me-2"></i>
+                                        This ticket was used on @ticket.UsedDate.Value.ToString("MMM dd, yyyy 'at' hh:mm tt")
+                                    </div>
+                                }
+
+                                <!-- Ticket Actions -->
+                                <div class="ticket-actions">
+                                    <a href="@Url.Action("Download", "Ticket", new { id = ticket.Id })"
+                                       class="btn btn-primary">
+                                        <i class="bi bi-download me-2"></i>Download PDF
+                                    </a>
+                                    <button class="btn btn-outline-primary" onclick="printTicket(@ticket.Id)">
+                                        <i class="bi bi-printer me-2"></i>Print
+                                    </button>
+                                    <a href="@Url.Action("Details", "Booking", new { id = ticket.BookingId })"
+                                       class="btn btn-outline-secondary">
+                                        <i class="bi bi-eye me-2"></i>View Booking
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- Pagination -->
+            @if (Model.TotalPages > 1)
+            {
+                <nav>
+                    <ul class="pagination justify-content-center">
+                        @for (int i = 1; i <= Model.TotalPages; i++)
+                        {
+                            <li class="page-item @(Model.CurrentPage == i ? "active" : "")">
+                                <a class="page-link" href="?page=@i">@i</a>
+                            </li>
+                        }
+                    </ul>
+                </nav>
+            }
+        }
+        else
+        {
+            <div class="empty-state">
+                <i class="bi bi-qr-code display-1 text-muted mb-4"></i>
+                <h3>No Tickets Found</h3>
+                <p class="text-muted">You don't have any tickets yet. Book an event to get your digital tickets!</p>
+                <a href="@Url.Action("Index", "Event")" class="btn btn-primary btn-lg mt-3">
+                    <i class="bi bi-search me-2"></i>Browse Events
+                </a>
+            </div>
+        }
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        function printTicket(ticketId) {
+            window.print();
+        }
+
+        @if (TempData["SuccessMessage"] != null)
+        {
+                <text>
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success!',
+                    text: '@TempData["SuccessMessage"]',
+                    confirmButtonColor: '#6366f1'
+                });
+                </text>
+        }
+    </script>
+}

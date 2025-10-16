@@ -1,6 +1,6 @@
 ﻿using EventHub.Data;
 using EventHub.Models.Entities;
-using EventHub.Models.ViewModels; // Add this line
+using EventHub.Models.ViewModels;
 using EventHub.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -69,10 +69,10 @@ namespace EventHub.Controllers
                     TotalTicketsPurchased = await GetTotalTicketsAsync(userId),
                     TotalAmountSpent = await GetTotalAmountSpentAsync(userId),
 
-                    // Get data collections - will be populated with real data later
+                    // Get data collections
                     UpcomingEvents = await GetUpcomingEventsAsync(userId),
                     RecentBookings = await GetRecentBookingsAsync(userId),
-                    RecommendedEvents = new List<RecommendedEventDto>() // Placeholder for now
+                    RecommendedEvents = await GetRecommendedEventsAsync(userId)
                 };
 
                 return View(viewModel);
@@ -105,7 +105,7 @@ namespace EventHub.Controllers
             {
                 return await _context.Bookings
                     .Where(b => b.CustomerId == customerId &&
-                               b.Event.EventDate > DateTime.Now &&
+                               b.Event.EventDate > DateTime.UtcNow &&
                                b.Status == BookingStatus.Confirmed)
                     .CountAsync();
             }
@@ -159,30 +159,24 @@ namespace EventHub.Controllers
         {
             try
             {
-                var upcomingBookings = await _context.Bookings
+                return await _context.Bookings
+                    .Where(b => b.CustomerId == customerId &&
+                               b.Event.EventDate > DateTime.UtcNow &&
+                               b.Status == BookingStatus.Confirmed)
                     .Include(b => b.Event)
                         .ThenInclude(e => e.Venue)
-                    .Where(b => b.CustomerId == customerId &&
-                               b.Event.EventDate > DateTime.Now &&
-                               b.Status == BookingStatus.Confirmed)
                     .OrderBy(b => b.Event.EventDate)
                     .Take(6)
+                    .Select(b => new UpcomingEventDto
+                    {
+                        EventId = b.Event.Id,
+                        Title = b.Event.Title,
+                        EventDate = b.Event.EventDate,
+                        VenueName = b.Event.Venue.Name,
+                        ImageUrl = b.Event.ImageUrl,
+                        TicketsBooked = b.Quantity
+                    })
                     .ToListAsync();
-
-                return upcomingBookings.Select(b => new UpcomingEventDto
-                {
-                    EventId = b.Event.Id,
-                    Title = b.Event.Title,
-                    EventDate = b.Event.EventDate,
-                    Category = b.Event.Category,
-                    VenueName = b.Event.Venue?.Name ?? "TBA",
-                    VenueLocation = b.Event.Venue?.Location ?? "TBA",
-                    TicketPrice = b.Event.TicketPrice,
-                    ImageUrl = b.Event.ImageUrl,
-                    BookingId = b.Id,
-                    TicketQuantity = b.Quantity,
-                    BookingStatus = b.Status.ToString()
-                }).ToList();
             }
             catch (Exception ex)
             {
@@ -198,31 +192,73 @@ namespace EventHub.Controllers
         {
             try
             {
-                var recentBookings = await _context.Bookings
-                    .Include(b => b.Event)
+                return await _context.Bookings
                     .Where(b => b.CustomerId == customerId)
+                    .Include(b => b.Event)
                     .OrderByDescending(b => b.BookingDate)
                     .Take(10)
+                    .Select(b => new RecentBookingDto
+                    {
+                        BookingId = b.Id,
+                        EventTitle = b.Event.Title,
+                        BookingDate = b.BookingDate,
+                        Quantity = b.Quantity,
+                        TotalAmount = b.TotalAmount,
+                        Status = b.Status.ToString(),
+                        EventImageUrl = b.Event.ImageUrl
+                    })
                     .ToListAsync();
-
-                return recentBookings.Select(b => new RecentBookingDto
-                {
-                    BookingId = b.Id,
-                    EventId = b.Event.Id,
-                    EventTitle = b.Event.Title,
-                    EventCategory = b.Event.Category,
-                    BookingDate = b.BookingDate,
-                    EventDate = b.Event.EventDate,
-                    Quantity = b.Quantity,
-                    TotalAmount = b.TotalAmount,
-                    Status = b.Status.ToString(),
-                    EventImageUrl = b.Event.ImageUrl
-                }).ToList();
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error getting recent bookings for customer {CustomerId}", customerId);
                 return new List<RecentBookingDto>();
+            }
+        }
+
+        /// <summary>
+        /// Get recommended events for customer based on their booking history
+        /// </summary>
+        private async Task<List<RecommendedEventDto>> GetRecommendedEventsAsync(int customerId)
+        {
+            try
+            {
+                // Get categories the customer has booked before
+                var bookedCategories = await _context.Bookings
+                    .Where(b => b.CustomerId == customerId)
+                    .Include(b => b.Event)
+                    .Select(b => b.Event.Category)
+                    .Distinct()
+                    .ToListAsync();
+
+                // Get upcoming events in those categories
+                var recommendedEvents = await _context.Events
+                    .Where(e => e.IsActive &&
+                               e.EventDate > DateTime.UtcNow &&
+                               bookedCategories.Contains(e.Category))
+                    .Include(e => e.Venue)
+                    .OrderBy(e => e.EventDate)
+                    .Take(6)
+                    .Select(e => new RecommendedEventDto
+                    {
+                        EventId = e.Id,
+                        Title = e.Title,
+                        EventDate = e.EventDate,
+                        Category = e.Category,
+                        VenueName = e.Venue.Name,
+                        VenueLocation = e.Venue.Location,
+                        TicketPrice = e.TicketPrice,
+                        AvailableTickets = e.AvailableTickets,
+                        ImageUrl = e.ImageUrl
+                    })
+                    .ToListAsync();
+
+                return recommendedEvents;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting recommended events for customer {CustomerId}", customerId);
+                return new List<RecommendedEventDto>();
             }
         }
 
