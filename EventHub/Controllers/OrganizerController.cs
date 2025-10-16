@@ -231,6 +231,12 @@ namespace EventHub.Controllers
                 ModelState.Remove("Organizer");
                 ModelState.Remove("Venue");
 
+                // ✅ FIX: Remove VenueId validation if creating new venue
+                if (!string.IsNullOrEmpty(NewVenueName))
+                {
+                    ModelState.Remove("VenueId");
+                }
+
                 // 🔧 FIX: Convert EventDate to UTC
                 if (eventModel.EventDate.Kind == DateTimeKind.Unspecified)
                 {
@@ -240,6 +246,7 @@ namespace EventHub.Controllers
                 // Handle new venue creation
                 if (!string.IsNullOrEmpty(NewVenueName))
                 {
+                    // Validate new venue fields
                     if (string.IsNullOrEmpty(NewVenueLocation))
                     {
                         ModelState.AddModelError("NewVenueLocation", "Location is required");
@@ -258,13 +265,14 @@ namespace EventHub.Controllers
                         return View(eventModel);
                     }
 
+                    // Create new venue
                     var newVenue = new Venue
                     {
                         Name = NewVenueName,
                         Location = NewVenueLocation!,
                         Capacity = NewVenueCapacity!.Value,
                         Address = NewVenueAddress,
-                        CreatedAt = DateTime.UtcNow  
+                        CreatedAt = DateTime.UtcNow
                     };
 
                     _context.Venues.Add(newVenue);
@@ -308,7 +316,7 @@ namespace EventHub.Controllers
 
                 // Set event properties
                 eventModel.OrganizerId = organizerId;
-                eventModel.CreatedAt = DateTime.UtcNow;  // Already UTC
+                eventModel.CreatedAt = DateTime.UtcNow;
                 eventModel.TotalTickets = eventModel.AvailableTickets;
 
                 await _eventService.CreateEventAsync(eventModel);

@@ -63,7 +63,7 @@
                             </div>
                             <div class="meta-item">
                                 <i class="bi bi-clock"></i>
-                                <span>@Model.EventTime.ToString(@"hh\:mm tt")</span>
+                                <span>@Model.EventTime.ToString(@"hh\:mm")</span>
                             </div>
                             <div class="meta-item">
                                 <i class="bi bi-geo-alt"></i>
@@ -130,10 +130,10 @@
                             <p class="organizer-email">
                                 <i class="bi bi-envelope me-2"></i>@Model.Organizer?.Email
                             </p>
-                            @if (!string.IsNullOrEmpty(Model.Organizer?.PhoneNumber))
+                            @if (!string.IsNullOrEmpty(Model.Organizer?.Phone))
                             {
                                 <p class="organizer-phone">
-                                    <i class="bi bi-telephone me-2"></i>@Model.Organizer?.PhoneNumber
+                                    <i class="bi bi-telephone me-2"></i>@Model.Organizer?.Phone
                                 </p>
                             }
                         </div>
