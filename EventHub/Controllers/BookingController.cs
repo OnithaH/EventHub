@@ -387,64 +387,11 @@ namespace EventHub.Controllers
             return View(model);
         }
 
-        /// <summary>
-        /// Display checkout page for a booking
-        /// GET: /Booking/Checkout/5
-        /// </summary>
-        public async Task<IActionResult> Checkout(int id)
-        {
-            try
-            {
-                var userIdString = HttpContext.Session.GetString("UserId");
-                if (string.IsNullOrEmpty(userIdString))
-                {
-                    TempData["ErrorMessage"] = "Please log in to complete checkout.";
-                    return RedirectToAction("Login", "Account");
-                }
-
-                var customerId = int.Parse(userIdString);
-
-                // Get booking details
-                var booking = await _context.Bookings
-                    .Include(b => b.Event)
-                        .ThenInclude(e => e.Venue)
-                    .Include(b => b.Customer)
-                    .FirstOrDefaultAsync(b => b.Id == id &&
-                                            b.CustomerId == customerId);
-
-                if (booking == null)
-                {
-                    TempData["ErrorMessage"] = "Booking not found.";
-                    return RedirectToAction("MyBookings");
-                }
-
-                if (booking.Status != BookingStatus.Pending)
-                {
-                    TempData["ErrorMessage"] = "This booking has already been processed.";
-                    return RedirectToAction("Details", new { id });
-                }
-
-                // Calculate amounts
-                var subtotal = booking.TotalAmount;
-                var serviceFee = subtotal * 0.05m; // 5% service fee
-                var totalAmount = subtotal + serviceFee;
-
-                // Get customer info
-                var customer = booking.Customer;
-
-                var viewModel = new CheckoutViewModel
-                {
-                    BookingId = booking.Id,
-                    EventId = booking.Event.Id,
-                    EventTitle = booking.Event.Title,
-                    EventDate = booking.Event.EventDate,
-// Add this method to your BookingController.cs
-
                     /// <summary>
                     /// Display checkout page for a booking
                     /// GET: /Booking/Checkout/5
                     /// </summary>
-public async Task<IActionResult> Checkout(int id)
+        public async Task<IActionResult> Checkout(int id)
         {
             try
             {

@@ -1,5 +1,86 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
+﻿
+@model EventHub.Models.ViewModels.PaymentSuccessViewModel
 @{
+    ViewData["Title"] = "Payment Successful - EventHub";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/payment-success.css" asp-append-version="true" />
+}
+<section class="success-container">
+    <div class="success-card">
+        <div class="success-icon">
+            <i class="bi bi-check-lg text-white" style="font-size: 3rem;"></i>
+        </div>
+
+        <h1 class="text-success mb-3">Payment Successful!</h1>
+        <p class="lead mb-4">Thank you for your booking. Your payment has been processed successfully.</p>
+
+        <div class="alert alert-success">
+            <h4 class="alert-heading">Booking Confirmation</h4>
+            <hr>
+            <p><strong>Booking Reference:</strong> #@Model.BookingReference</p>
+            <p><strong>Event:</strong> @Model.EventTitle</p>
+            <p><strong>Date:</strong> @Model.EventDate.ToString("MMM dd, yyyy 'at' hh:mm tt")</p>
+            <p><strong>Venue:</strong> @Model.VenueName</p>
+            <p><strong>Tickets:</strong> @Model.TicketCount</p>
+            <p class="mb-0"><strong>Amount Paid:</strong> <span class="text-success fw-bold">@Model.AmountPaid.ToString("C")</span></p>
+        </div>
+
+        @if (Model.LoyaltyPointsEarned > 0)
+        {
+            <div class="alert alert-info">
+                <i class="bi bi-star-fill me-2"></i>
+                You earned <strong>@Model.LoyaltyPointsEarned</strong> loyalty points!
+            </div>
+        }
+
+        <div class="d-grid gap-2 mt-4">
+            <a href="@Url.Action("ViewTickets", "Ticket", new { bookingId = Model.BookingId })"
+               class="btn btn-success btn-lg">
+                <i class="bi bi-qr-code me-2"></i>View My Tickets
+            </a>
+            <a href="@Url.Action("MyBookings", "Booking")" class="btn btn-outline-primary">
+                <i class="bi bi-ticket-perforated me-2"></i>View All Bookings
+            </a>
+            <a href="@Url.Action("Index", "Event")" class="btn btn-outline-secondary">
+                <i class="bi bi-search me-2"></i>Browse More Events
+            </a>
+        </div>
+
+        <p class="text-muted mt-4 mb-0">
+            <small>
+                <i class="bi bi-envelope me-1"></i>
+                A confirmation email has been sent to your registered email address
+            </small>
+        </p>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        // Create confetti effect
+        function createConfetti() {
+            for (let i = 0; i < 50; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + '%';
+                    confetti.style.animationDelay = Math.random() * 3 + 's';
+                    confetti.style.background = ['#10b981', '#6366f1', '#f59e0b'][Math.floor(Math.random() * 3)];
+                    document.body.appendChild(confetti);
+                    setTimeout(() => confetti.remove(), 3000);
+                }, i * 30);
+            }
+        }
+        createConfetti();
+
+        // Auto redirect to tickets after 10 seconds
+        setTimeout(() => {
+            if (confirm('View your tickets now?')) {
+                window.location.href = '@Url.Action("ViewTickets", "Ticket", new { bookingId = Model.BookingId })';
+            }
+        }, 10000);
+    </script>
 }
