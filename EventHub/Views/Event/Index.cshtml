@@ -1,0 +1,249 @@
+﻿@model IEnumerable<EventHub.Models.Entities.Event>
+
+@{
+    ViewData["Title"] = "Browse Events - EventHub";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/event-listing.css" asp-append-version="true" />
+}
+
+<!-- Page Header -->
+<section class="page-header">
+    <div class="container">
+        <h1 class="page-title">Discover Amazing Events</h1>
+        <p class="page-subtitle">Find and book tickets for the best events in Sri Lanka</p>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="@Url.Action("Index", "Home")">Home</a></li>
+                <li class="breadcrumb-item active">Events</li>
+            </ol>
+        </nav>
+    </div>
+</section>
+
+<!-- Filters Section -->
+<section class="filters-section py-4">
+    <div class="container">
+        <div class="filters-card">
+            <form method="get" asp-action="Index" asp-controller="Event" id="filterForm">
+                <!-- Search Bar -->
+                <div class="search-container mb-4">
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="bi bi-search"></i>
+                        </span>
+                        <input type="text" class="form-control" name="search"
+                               value="@ViewBag.CurrentSearch"
+                               placeholder="Search events by name, description...">
+                        <button class="btn btn-search-primary" type="submit">
+                            Search
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Advanced Filters -->
+                <div class="advanced-filters">
+                    <div class="row g-3">
+                        <div class="col-lg-3 col-md-6">
+                            <label class="filter-label">
+                                <i class="bi bi-grid-3x3-gap me-1"></i>Category
+                            </label>
+                            <select class="form-select" name="category" onchange="this.form.submit()">
+                                <option value="">All Categories</option>
+                                <option value="music" selected="@(ViewBag.CurrentCategory == "music")">Music</option>
+                                <option value="sports" selected="@(ViewBag.CurrentCategory == "sports")">Sports</option>
+                                <option value="arts" selected="@(ViewBag.CurrentCategory == "arts")">Arts & Culture</option>
+                                <option value="business" selected="@(ViewBag.CurrentCategory == "business")">Business</option>
+                                <option value="food" selected="@(ViewBag.CurrentCategory == "food")">Food & Drink</option>
+                                <option value="technology" selected="@(ViewBag.CurrentCategory == "technology")">Technology</option>
+                                <option value="health" selected="@(ViewBag.CurrentCategory == "health")">Health & Wellness</option>
+                                <option value="education" selected="@(ViewBag.CurrentCategory == "education")">Education</option>
+                            </select>
+                        </div>
+                        <div class="col-lg-3 col-md-6">
+                            <label class="filter-label">
+                                <i class="bi bi-calendar3 me-1"></i>Date
+                            </label>
+                            <input type="date" class="form-control" name="date"
+                                   value="@ViewBag.CurrentDate"
+                                   onchange="this.form.submit()">
+                        </div>
+                        <div class="col-lg-3 col-md-6">
+                            <label class="filter-label">
+                                <i class="bi bi-geo-alt me-1"></i>Location
+                            </label>
+                            <input type="text" class="form-control" name="location"
+                                   value="@ViewBag.CurrentLocation"
+                                   placeholder="City or venue">
+                        </div>
+                        <div class="col-lg-3 col-md-6">
+                            <label class="filter-label">
+                                <i class="bi bi-currency-dollar me-1"></i>Price Range
+                            </label>
+                            <select class="form-select" name="priceRange" onchange="this.form.submit()">
+                                <option value="">Any Price</option>
+                                <option value="0-1000" selected="@(ViewBag.CurrentPriceRange == "0-1000")">Under Rs. 1,000</option>
+                                <option value="1000-5000" selected="@(ViewBag.CurrentPriceRange == "1000-5000")">Rs. 1,000 - 5,000</option>
+                                <option value="5000-10000" selected="@(ViewBag.CurrentPriceRange == "5000-10000")">Rs. 5,000 - 10,000</option>
+                                <option value="10000+" selected="@(ViewBag.CurrentPriceRange == "10000+")">Above Rs. 10,000</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <div class="d-flex gap-2">
+                                <a href="@Url.Action("Index", "Event")" class="btn btn-clear-filters">
+                                    <i class="bi bi-x-circle me-1"></i>Clear Filters
+                                </a>
+                            </div>
+                        </div>
+                        <div class="col-md-6 text-md-end">
+                            <div class="view-options">
+                                <label class="filter-label me-2">View:</label>
+                                <div class="btn-group" role="group">
+                                    <button type="button" class="btn btn-view active" data-view="grid" onclick="changeView('grid')">
+                                        <i class="bi bi-grid"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-view" data-view="list" onclick="changeView('list')">
+                                        <i class="bi bi-list"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+
+<!-- Results Section -->
+<section class="results-section py-4">
+    <div class="container">
+        <!-- Results Header -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="results-info">
+                    <h5>
+                        @if (Model != null && Model.Any())
+                        {
+                            <text>Showing @Model.Count() event(s)</text>
+                        }
+                        else
+                        {
+                            <text>No events found</text>
+                        }
+                    </h5>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="sort-options text-md-end">
+                    <label class="filter-label me-2">Sort by:</label>
+                    <select class="form-select d-inline-block" style="width: auto;" onchange="location.href=this.value">
+                        <option value="@Url.Action("Index", "Event", new { category = ViewBag.CurrentCategory, search = ViewBag.CurrentSearch, date = ViewBag.CurrentDate, location = ViewBag.CurrentLocation, sort = "date" })" selected="@(ViewBag.CurrentSort == "date" || ViewBag.CurrentSort == null)">Date (Earliest First)</option>
+                        <option value="@Url.Action("Index", "Event", new { category = ViewBag.CurrentCategory, search = ViewBag.CurrentSearch, date = ViewBag.CurrentDate, location = ViewBag.CurrentLocation, sort = "date-desc" })" selected="@(ViewBag.CurrentSort == "date-desc")">Date (Latest First)</option>
+                        <option value="@Url.Action("Index", "Event", new { category = ViewBag.CurrentCategory, search = ViewBag.CurrentSearch, date = ViewBag.CurrentDate, location = ViewBag.CurrentLocation, sort = "price" })" selected="@(ViewBag.CurrentSort == "price")">Price (Low to High)</option>
+                        <option value="@Url.Action("Index", "Event", new { category = ViewBag.CurrentCategory, search = ViewBag.CurrentSearch, date = ViewBag.CurrentDate, location = ViewBag.CurrentLocation, sort = "price-desc" })" selected="@(ViewBag.CurrentSort == "price-desc")">Price (High to Low)</option>
+                        <option value="@Url.Action("Index", "Event", new { category = ViewBag.CurrentCategory, search = ViewBag.CurrentSearch, date = ViewBag.CurrentDate, location = ViewBag.CurrentLocation, sort = "name" })" selected="@(ViewBag.CurrentSort == "name")">Name (A-Z)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Events Container -->
+        <div id="eventsContainer" class="events-grid">
+            @if (Model != null && Model.Any())
+            {
+                @foreach (var evt in Model)
+                {
+                    var ticketsSold = evt.TotalTickets - evt.AvailableTickets;
+                    var soldPercentage = evt.TotalTickets > 0 ? (double)ticketsSold / evt.TotalTickets * 100 : 0;
+                    var availabilityClass = evt.AvailableTickets > 50 ? "high" : evt.AvailableTickets > 0 ? "medium" : "low";
+
+                    <div class="event-card">
+                        <div class="event-card-image">
+                            <img src="@(evt.ImageUrl ?? "/images/events/default-event.jpg")" alt="@evt.Title">
+                            <div class="event-date-badge">
+                                <div class="badge-month">@evt.EventDate.ToString("MMM")</div>
+                                <div class="badge-day">@evt.EventDate.Day</div>
+                            </div>
+                            <div class="category-badge">@evt.Category</div>
+                        </div>
+                        <div class="event-card-content">
+                            <h5 class="event-card-title">@evt.Title</h5>
+                            <p class="event-card-description">
+                                @(evt.Description.Length > 100 ? evt.Description.Substring(0, 100) + "..." : evt.Description)
+                            </p>
+                            <div class="event-card-meta">
+                                <div class="meta-item">
+                                    <i class="bi bi-calendar"></i>
+                                    <span>@evt.EventDate.ToString("MMM dd, yyyy")</span>
+                                </div>
+                                <div class="meta-item">
+                                    <i class="bi bi-clock"></i>
+                                    <span>@evt.EventTime.ToString(@"hh\:mm")</span>
+                                </div>
+                                <div class="meta-item">
+                                    <i class="bi bi-geo-alt"></i>
+                                    <span>@(evt.Venue?.Name ?? "TBA")</span>
+                                </div>
+                            </div>
+                            <div class="availability-section">
+                                <div class="availability-text @availabilityClass">
+                                    <i class="bi bi-ticket-perforated"></i>
+                                    @evt.AvailableTickets / @evt.TotalTickets available
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: @soldPercentage.ToString("F0")%"></div>
+                                </div>
+                            </div>
+                            <div class="event-card-footer">
+                                <div class="price-section">
+                                    <span class="price-label">From</span>
+                                    <span class="price-value">Rs. @evt.TicketPrice.ToString("N0")</span>
+                                </div>
+                                <a href="@Url.Action("Details", "Event", new { id = evt.Id })" class="btn btn-view-details">
+                                    View Details
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="no-results-state">
+                    <div class="no-results-icon">
+                        <i class="bi bi-calendar-x"></i>
+                    </div>
+                    <h3>No Events Found</h3>
+                    <p>We couldn't find any events matching your criteria. Try adjusting your filters.</p>
+                    <a href="@Url.Action("Index", "Event")" class="btn btn-primary">View All Events</a>
+                </div>
+            }
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        // Grid/List view toggle
+        function changeView(view) {
+            const container = document.getElementById('eventsContainer');
+            const buttons = document.querySelectorAll('.btn-view');
+
+            buttons.forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`[data-view="${view}"]`).classList.add('active');
+
+            if (view === 'list') {
+                container.classList.remove('events-grid');
+                container.classList.add('events-list');
+            } else {
+                container.classList.remove('events-list');
+                container.classList.add('events-grid');
+            }
+        }
+    </script>
+}
