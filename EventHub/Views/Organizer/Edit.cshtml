@@ -35,23 +35,23 @@
         {
             <div class="alert alert-warning" role="alert">
                 <i class="bi bi-exclamation-triangle me-2"></i>
-                <strong>Note:</strong> This event has @ViewBag.BookingCount booking(s).
+                <strong>Note:</strong> This event has @ViewBag.BookingCount booking(s). 
                 Be careful when making changes as it may affect existing bookings.
             </div>
         }
 
-        <form asp-action="Edit" asp-controller="Organizer" asp-route-id="@Model.Id" method="post"
+        <form asp-action="Edit" asp-controller="Organizer" asp-route-id="@Model.Id" method="post" 
               enctype="multipart/form-data" id="createEventForm" class="needs-validation" novalidate>
             @Html.AntiForgeryToken()
             <input asp-for="Id" type="hidden" />
             <input asp-for="CreatedAt" type="hidden" />
             <input asp-for="OrganizerId" type="hidden" />
             <input asp-for="TotalTickets" type="hidden" />
-
+            
             <div class="row g-4">
                 <!-- Left Column - Form Fields -->
                 <div class="col-lg-8">
-
+                    
                     <!-- Basic Information -->
                     <div class="form-section">
                         <div class="section-header">
@@ -64,7 +64,7 @@
                             <div class="row g-3">
                                 <div class="col-12">
                                     <label asp-for="Title" class="form-label required">Event Title</label>
-                                    <input asp-for="Title" class="form-control" placeholder="Enter a compelling event title"
+                                    <input asp-for="Title" class="form-control" placeholder="Enter a compelling event title" 
                                            maxlength="100" required />
                                     <span asp-validation-for="Title" class="text-danger"></span>
                                     <small class="text-muted">
@@ -100,7 +100,7 @@
 
                                 <div class="col-12">
                                     <label asp-for="Description" class="form-label required">Event Description</label>
-                                    <textarea asp-for="Description" class="form-control" rows="5"
+                                    <textarea asp-for="Description" class="form-control" rows="5" 
                                               placeholder="Describe your event in detail..." maxlength="1000" required></textarea>
                                     <span asp-validation-for="Description" class="text-danger"></span>
                                     <small class="text-muted">
@@ -123,14 +123,14 @@
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <label asp-for="EventDate" class="form-label required">Event Date</label>
-                                    <input asp-for="EventDate" type="date" class="form-control"
+                                    <input asp-for="EventDate" type="date" class="form-control" 
                                            value="@Model.EventDate.ToString("yyyy-MM-dd")" required />
                                     <span asp-validation-for="EventDate" class="text-danger"></span>
                                 </div>
 
                                 <div class="col-md-6">
                                     <label asp-for="EventTime" class="form-label required">Event Time</label>
-                                    <input asp-for="EventTime" type="time" class="form-control"
+                                    <input asp-for="EventTime" type="time" class="form-control" 
                                            value="@Model.EventTime.ToString(@"hh\:mm")" required />
                                     <span asp-validation-for="EventTime" class="text-danger"></span>
                                 </div>
@@ -180,14 +180,14 @@
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <label asp-for="TicketPrice" class="form-label required">Ticket Price (Rs.)</label>
-                                    <input asp-for="TicketPrice" type="number" class="form-control"
+                                    <input asp-for="TicketPrice" type="number" class="form-control" 
                                            placeholder="0.00" min="0" step="0.01" required />
                                     <span asp-validation-for="TicketPrice" class="text-danger"></span>
                                 </div>
 
                                 <div class="col-md-6">
                                     <label asp-for="AvailableTickets" class="form-label required">Available Tickets</label>
-                                    <input asp-for="AvailableTickets" type="number" class="form-control"
+                                    <input asp-for="AvailableTickets" type="number" class="form-control" 
                                            placeholder="Number of tickets" min="0" required />
                                     <span asp-validation-for="AvailableTickets" class="text-danger"></span>
                                     <small class="text-muted">
@@ -214,7 +214,7 @@
                                     <img src="@Model.ImageUrl" alt="Current event image" class="img-thumbnail" style="max-width: 300px;" />
                                 </div>
                             }
-
+                            
                             <div class="image-upload-area" id="imageUploadArea">
                                 <input type="file" id="eventImage" name="eventImage" accept="image/*" class="d-none" />
                                 <div class="upload-placeholder">
@@ -237,14 +237,14 @@
                         <button type="button" class="btn btn-outline-secondary" onclick="window.history.back()">
                             <i class="bi bi-x-circle me-2"></i>Cancel
                         </button>
-
+                        
                         @if (ViewBag.BookingCount == 0)
                         {
                             <button type="button" class="btn btn-danger" onclick="confirmDelete(@Model.Id)">
                                 <i class="bi bi-trash me-2"></i>Delete Event
                             </button>
                         }
-
+                        
                         <button type="submit" class="btn btn-primary">
                             <i class="bi bi-check-circle me-2"></i>Update Event
                         </button>
@@ -316,7 +316,5 @@
             }
         }
     </script>
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
 }
