@@ -33,23 +33,24 @@ namespace EventHub.Controllers
         {
             try
             {
-                _logger.LogInformation("ProcessPayment started for BookingId: {BookingId}", model.BookingId);
+                _logger.LogInformation("=== PAYMENT PROCESS STARTED === BookingId: {BookingId}", model.BookingId);
 
                 var userIdString = HttpContext.Session.GetString("UserId");
                 if (string.IsNullOrEmpty(userIdString))
                 {
                     _logger.LogWarning("User not logged in");
+                    TempData["ErrorMessage"] = "Please log in to complete payment.";
                     return RedirectToAction("Login", "Account");
                 }
 
                 var customerId = int.Parse(userIdString);
+                _logger.LogInformation("Customer ID: {CustomerId}", customerId);
 
-                // Get booking with all related data
+                // Get booking
                 var booking = await _context.Bookings
                     .Include(b => b.Event)
                     .Include(b => b.Customer)
-                    .FirstOrDefaultAsync(b => b.Id == model.BookingId &&
-                                            b.CustomerId == customerId);
+                    .FirstOrDefaultAsync(b => b.Id == model.BookingId && b.CustomerId == customerId);
 
                 if (booking == null)
                 {
@@ -58,20 +59,22 @@ namespace EventHub.Controllers
                     return RedirectToAction("MyBookings", "Booking");
                 }
 
-                // Check if already processed
+                _logger.LogInformation("Booking found. Current Status: {Status}", booking.Status);
+
+                // Check status
                 if (booking.Status != BookingStatus.Pending)
                 {
-                    _logger.LogWarning("Booking already processed: {BookingId}, Status: {Status}", model.BookingId, booking.Status);
-                    TempData["ErrorMessage"] = "This booking has already been processed.";
-                    return RedirectToAction("MyBookings", "Booking");
+                    _logger.LogWarning("Booking already processed. Status: {Status}", booking.Status);
+                    TempData["InfoMessage"] = "This booking has already been processed.";
+                    return RedirectToAction("Details", "Booking", new { id = model.BookingId });
                 }
 
-                // Create payment record
+                // Create payment
                 var payment = new Payment
                 {
                     BookingId = booking.Id,
                     Amount = model.Amount,
-                    PaymentMethod = model.PaymentMethod,
+                    PaymentMethod = model.PaymentMethod ?? "CreditCard",
                     PaymentDate = DateTime.UtcNow,
                     Status = PaymentStatus.Completed,
                     TransactionId = $"TXN{DateTime.UtcNow.Ticks}",
@@ -81,12 +84,12 @@ namespace EventHub.Controllers
                 _context.Payments.Add(payment);
                 _logger.LogInformation("Payment record created: {TransactionId}", payment.TransactionId);
 
-                // Update booking status
+                // Update booking
                 booking.Status = BookingStatus.Confirmed;
                 booking.BookingReference = $"BK{booking.Id:D6}";
-                _logger.LogInformation("Booking confirmed: {BookingReference}", booking.BookingReference);
+                _logger.LogInformation("Booking status updated to Confirmed: {Reference}", booking.BookingReference);
 
-                // Generate tickets with QR codes
+                // Generate tickets
                 for (int i = 0; i < booking.Quantity; i++)
                 {
                     var ticketNumber = $"TKT{booking.Id:D6}-{i + 1:D3}";
@@ -102,43 +105,46 @@ namespace EventHub.Controllers
                     };
 
                     _context.Tickets.Add(ticket);
-                    _logger.LogInformation("Ticket created: {TicketNumber}", ticketNumber);
+                    _logger.LogInformation("Ticket {Index} created: {TicketNumber}", i + 1, ticketNumber);
                 }
 
-                // Update customer loyalty points
+                // Update loyalty points
                 var pointsEarned = (int)model.Amount;
                 booking.Customer.LoyaltyPoints += pointsEarned;
-                _logger.LogInformation("Loyalty points added: {Points} for Customer: {CustomerId}", pointsEarned, customerId);
+                _logger.LogInformation("Loyalty points added: {Points}", pointsEarned);
 
                 // Update available tickets
                 booking.Event.AvailableTickets -= booking.Quantity;
+                _logger.LogInformation("Event available tickets reduced by {Quantity}", booking.Quantity);
 
-                // Save all changes
+                // SAVE ALL CHANGES
                 await _context.SaveChangesAsync();
-                _logger.LogInformation("Payment processed successfully. Payment ID: {PaymentId}", payment.Id);
+                _logger.LogInformation("=== ALL CHANGES SAVED TO DATABASE ===");
 
-                // Redirect to success page
+                TempData["SuccessMessage"] = $"Payment successful! Booking confirmed: {booking.BookingReference}";
+
+                // REDIRECT TO SUCCESS PAGE
+                _logger.LogInformation("Redirecting to Success page with PaymentId: {PaymentId}", payment.Id);
                 return RedirectToAction("Success", new { id = payment.Id });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error processing payment for BookingId: {BookingId}", model.BookingId);
-                TempData["ErrorMessage"] = "An error occurred while processing your payment. Please try again.";
+                _logger.LogError(ex, "=== ERROR IN PAYMENT PROCESS === BookingId: {BookingId}", model.BookingId);
+                TempData["ErrorMessage"] = $"Payment failed: {ex.Message}";
                 return RedirectToAction("Checkout", "Booking", new { id = model.BookingId });
             }
         }
 
-        /// <summary>
-        /// Display payment success page
-        /// GET: /Payment/Success/5
-        /// </summary>
         public async Task<IActionResult> Success(int id)
         {
             try
             {
+                _logger.LogInformation("=== SUCCESS PAGE REQUESTED === PaymentId: {PaymentId}", id);
+
                 var userIdString = HttpContext.Session.GetString("UserId");
                 if (string.IsNullOrEmpty(userIdString))
                 {
+                    _logger.LogWarning("User not logged in on success page");
                     return RedirectToAction("Login", "Account");
                 }
 
@@ -152,14 +158,17 @@ namespace EventHub.Controllers
                         .ThenInclude(b => b.Tickets)
                     .Include(p => p.Booking)
                         .ThenInclude(b => b.Customer)
-                    .FirstOrDefaultAsync(p => p.Id == id &&
-                                            p.Booking.CustomerId == customerId);
+                    .FirstOrDefaultAsync(p => p.Id == id && p.Booking.CustomerId == customerId);
 
                 if (payment == null)
                 {
+                    _logger.LogWarning("Payment not found: {PaymentId}", id);
                     TempData["ErrorMessage"] = "Payment not found.";
                     return RedirectToAction("MyBookings", "Booking");
                 }
+
+                _logger.LogInformation("Payment found. Booking: {BookingId}, Reference: {Reference}",
+                    payment.Booking.Id, payment.Booking.BookingReference);
 
                 var viewModel = new PaymentSuccessViewModel
                 {
@@ -175,12 +184,13 @@ namespace EventHub.Controllers
                     CustomerEmail = payment.Booking.Customer.Email
                 };
 
+                _logger.LogInformation("=== SUCCESS VIEW MODEL CREATED ===");
                 return View(viewModel);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error loading payment success page");
-                TempData["ErrorMessage"] = "Unable to load payment confirmation.";
+                _logger.LogError(ex, "Error in Success page");
+                TempData["ErrorMessage"] = "Unable to load confirmation page.";
                 return RedirectToAction("MyBookings", "Booking");
             }
         }

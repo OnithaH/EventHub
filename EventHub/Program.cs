@@ -90,7 +90,7 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts(); // Enable HSTS in production
 }
 
-// Security headers middleware
+// Security headers middleware - UPDATED FOR .NET 8.0
 app.Use(async (context, next) =>
 {
     // Add security headers
@@ -99,14 +99,16 @@ app.Use(async (context, next) =>
     context.Response.Headers.Append("X-XSS-Protection", "1; mode=block");
     context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
 
-    // Content Security Policy - FIXED
+    // Content Security Policy - OPTIMIZED FOR .NET 8.0
     var csp = "default-src 'self'; " +
               "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://code.jquery.com; " +
               "style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://fonts.googleapis.com; " +
-              "img-src 'self' data: https:; " +
-              "font-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://fonts.gstatic.com; " +
-              "connect-src 'self' wss://localhost:* https://localhost:*; " +
-              "frame-ancestors 'none';";
+              "img-src 'self' data: https: http:; " +  // Allow all HTTPS/HTTP images
+              "font-src 'self' data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://fonts.gstatic.com; " +
+              "connect-src 'self' wss: ws: https://localhost:* http://localhost:*; " +  // Allow all WebSocket connections
+              "frame-ancestors 'none'; " +
+              "base-uri 'self'; " +
+              "form-action 'self';";
 
     context.Response.Headers.Append("Content-Security-Policy", csp);
 
