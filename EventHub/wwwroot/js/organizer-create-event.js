@@ -1,9 +1,4 @@
-﻿// ==========================================
-// EventHub Create Event JavaScript - FINAL FIX
-// Compatible with jQuery Validation Unobtrusive
-// ==========================================
-// Toggle between existing and new venue
-document.addEventListener('DOMContentLoaded', function () {
+﻿document.addEventListener('DOMContentLoaded', function () {
     const existingVenueRadio = document.getElementById('existingVenue');
     const newVenueRadio = document.getElementById('newVenue');
     const existingVenueSection = document.getElementById('existingVenueSection');
