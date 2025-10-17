@@ -208,6 +208,13 @@ namespace EventHub.Controllers
                     return RedirectToAction("MyBookings", "Booking");
                 }
 
+                // Validate booking status
+                if (booking.Status != BookingStatus.Pending)
+                {
+                    TempData["ErrorMessage"] = "This booking has already been processed.";
+                    return RedirectToAction("MyBookings", "Booking");
+                }
+
                 // Create payment record
                 var payment = new Payment
                 {
@@ -215,53 +222,55 @@ namespace EventHub.Controllers
                     Amount = model.Amount,
                     PaymentMethod = model.PaymentMethod,
                     PaymentDate = DateTime.UtcNow,
-                    TransactionId = $"TXN{DateTime.UtcNow:yyyyMMddHHmmss}{booking.Id}",
-                    Status = PaymentStatus.Completed // Simulated successful payment
+                    Status = PaymentStatus.Completed,
+                    TransactionId = $"TXN{DateTime.UtcNow.Ticks}",
+                    PaymentDetails = $"Payment via {model.PaymentMethod}"
                 };
 
                 _context.Payments.Add(payment);
 
                 // Update booking status
                 booking.Status = BookingStatus.Confirmed;
+                booking.BookingReference = $"BK{booking.Id:D6}";
 
                 // Generate tickets with QR codes
                 for (int i = 0; i < booking.Quantity; i++)
                 {
-                    var ticketNumber = $"TK{DateTime.UtcNow:yyyyMMdd}{booking.Id:D6}{i + 1:D2}";
+                    var ticketNumber = $"TKT{booking.Id:D6}-{i + 1:D3}";
+
+                    // Generate QR code and store as string
+                    var qrCodeString = _qrCodeService.GenerateQRCode(ticketNumber);
 
                     var ticket = new Ticket
                     {
                         BookingId = booking.Id,
                         TicketNumber = ticketNumber,
+                        QRCode = qrCodeString,  // ✅ Store QR code Base64 string here
                         Status = TicketStatus.Active,
                         IssuedDate = DateTime.UtcNow
                     };
 
                     _context.Tickets.Add(ticket);
-                    await _context.SaveChangesAsync(); // Save to get ticket ID
-
-                    // Generate QR code
-                    var qrData = _qrCodeService.GenerateTicketQRData(
-                        ticket.Id, booking.Id, booking.Event.Id);
-                    ticket.QRCode = _qrCodeService.GenerateQRCode(qrData);
                 }
 
-                // Update loyalty points
+                // Update customer loyalty points (1 point per dollar)
                 booking.Customer.LoyaltyPoints += (int)model.Amount;
 
                 // Update available tickets
                 booking.Event.AvailableTickets -= booking.Quantity;
 
+                // Save all changes
                 await _context.SaveChangesAsync();
 
                 _logger.LogInformation("Payment processed successfully for booking {BookingId}", booking.Id);
 
+                // Redirect to success page
                 return RedirectToAction("Success", new { id = payment.Id });
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error processing payment");
-                TempData["ErrorMessage"] = "Payment processing failed. Please try again.";
+                TempData["ErrorMessage"] = "An error occurred while processing your payment. Please try again.";
                 return RedirectToAction("Checkout", "Booking", new { id = model.BookingId });
             }
         }
