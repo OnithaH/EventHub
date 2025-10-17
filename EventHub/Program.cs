@@ -98,18 +98,17 @@ app.Use(async (context, next) =>
     context.Response.Headers.Append("X-Frame-Options", "DENY");
     context.Response.Headers.Append("X-XSS-Protection", "1; mode=block");
     context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
-    //context.Response.Headers.Append("Content-Security-Policy", csp);
 
-    // Content Security Policy
+    // Content Security Policy - FIXED
     var csp = "default-src 'self'; " +
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; " +
-              "style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; " +
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://code.jquery.com; " +
+              "style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://fonts.googleapis.com; " +
               "img-src 'self' data: https:; " +
-              "font-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; " +
-              "connect-src 'self'; " +
+              "font-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://fonts.gstatic.com; " +
+              "connect-src 'self' wss://localhost:* https://localhost:*; " +
               "frame-ancestors 'none';";
 
-    context.Response.Headers.Add("Content-Security-Policy", csp);
+    context.Response.Headers.Append("Content-Security-Policy", csp);
 
     await next();
 });
