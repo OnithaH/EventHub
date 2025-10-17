@@ -1,0 +1,427 @@
+﻿/* ============================================
+   Booking Details Page Styles - ASP.NET Core 8.0
+   Location: wwwroot/css/booking-details.css
+   ============================================ */
+
+/* Page Container */
+.booking-details-container {
+    background: #f8fafc;
+    min-height: 100vh;
+    padding: 2rem 0;
+}
+
+/* Card Styles */
+.booking-card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+    .booking-card:hover {
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    }
+
+.booking-card-header {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    color: white;
+    padding: 1.5rem;
+    border-bottom: none;
+}
+
+    .booking-card-header h4 {
+        margin: 0;
+        font-weight: 600;
+    }
+
+    .booking-card-header i {
+        font-size: 1.2rem;
+    }
+
+/* Status Badge */
+.status-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 25px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    display: inline-block;
+}
+
+.status-confirmed {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.status-pending {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.status-cancelled {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+/* Info Grid */
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    padding: 1.5rem;
+}
+
+.info-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.info-label {
+    font-size: 0.875rem;
+    color: #64748b;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.info-value {
+    font-size: 1.125rem;
+    color: #1e293b;
+    font-weight: 500;
+}
+
+    .info-value.highlight {
+        color: #6366f1;
+        font-weight: 700;
+        font-size: 1.5rem;
+    }
+
+    .info-value i {
+        margin-right: 0.5rem;
+        color: #6366f1;
+    }
+
+/* Event Image */
+.event-image-container {
+    width: 100%;
+    height: 300px;
+    overflow: hidden;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+}
+
+    .event-image-container img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.3s ease;
+    }
+
+    .event-image-container:hover img {
+        transform: scale(1.05);
+    }
+
+/* Event Title */
+.event-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 1.5rem;
+}
+
+/* Payment Info */
+.payment-info-card {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+}
+
+.payment-amount {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: white;
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.action-btn {
+    padding: 0.875rem 1.5rem;
+    border-radius: 12px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+}
+
+    .action-btn i {
+        margin-right: 0.5rem;
+        font-size: 1.1rem;
+    }
+
+.action-btn-primary {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    color: white;
+}
+
+    .action-btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(99, 102, 241, 0.3);
+        color: white;
+    }
+
+.action-btn-success {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+}
+
+    .action-btn-success:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(16, 185, 129, 0.3);
+        color: white;
+    }
+
+.action-btn-outline {
+    background: white;
+    border: 2px solid #e2e8f0;
+    color: #64748b;
+}
+
+    .action-btn-outline:hover {
+        background: #f8fafc;
+        border-color: #6366f1;
+        color: #6366f1;
+    }
+
+.action-btn-danger {
+    background: white;
+    border: 2px solid #ef4444;
+    color: #ef4444;
+}
+
+    .action-btn-danger:hover {
+        background: #ef4444;
+        color: white;
+    }
+
+/* Sidebar Card */
+.sidebar-card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    margin-bottom: 1.5rem;
+    position: sticky;
+    top: 100px;
+}
+
+.sidebar-card-header {
+    background: #f8fafc;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid #e2e8f0;
+    border-radius: 16px 16px 0 0;
+}
+
+    .sidebar-card-header h5 {
+        margin: 0;
+        font-weight: 600;
+        color: #1e293b;
+    }
+
+.sidebar-card-body {
+    padding: 1.5rem;
+}
+
+/* Customer Info */
+.customer-info p {
+    margin-bottom: 0.75rem;
+    color: #475569;
+}
+
+.customer-info strong {
+    color: #1e293b;
+    font-weight: 600;
+}
+
+.loyalty-badge {
+    display: inline-flex;
+    align-items: center;
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 25px;
+    font-weight: 700;
+    font-size: 1rem;
+}
+
+    .loyalty-badge i {
+        margin-right: 0.5rem;
+    }
+
+/* Ticket Count Badge */
+.ticket-count {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    font-weight: 600;
+    margin-top: 1rem;
+}
+
+    .ticket-count i {
+        font-size: 1.5rem;
+        margin-right: 0.75rem;
+    }
+
+/* Transaction ID */
+.transaction-id {
+    font-family: 'Courier New', monospace;
+    background: #f1f5f9;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    display: inline-block;
+    font-size: 0.875rem;
+    color: #475569;
+    letter-spacing: 0.5px;
+}
+
+/* Alert Box */
+.booking-alert {
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+    border: 1px solid #93c5fd;
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+}
+
+    .booking-alert i {
+        font-size: 1.5rem;
+        color: #2563eb;
+        margin-right: 1rem;
+    }
+
+    .booking-alert p {
+        margin: 0;
+        color: #1e40af;
+    }
+
+/* Responsive */
+@media (max-width: 992px) {
+    .sidebar-card {
+        position: relative;
+        top: 0;
+    }
+
+    .info-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .event-title {
+        font-size: 1.5rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .booking-details-container {
+        padding: 1rem 0;
+    }
+
+    .booking-card-header {
+        padding: 1rem;
+    }
+
+    .event-image-container {
+        height: 200px;
+    }
+
+    .payment-amount {
+        font-size: 2rem;
+    }
+
+    .action-btn {
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+    }
+}
+
+/* Print Styles */
+@media print {
+    .sidebar-card,
+    .action-buttons,
+    .navbar,
+    .footer {
+        display: none !important;
+    }
+
+    .booking-card {
+        box-shadow: none;
+        border: 1px solid #000;
+        page-break-inside: avoid;
+    }
+
+    .booking-card-header {
+        background: #f8fafc !important;
+        color: #000 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+}
+
+/* Loading Animation */
+.loading-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Success Checkmark Animation */
+.success-checkmark {
+    display: inline-block;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    position: relative;
+    animation: scaleIn 0.5s ease;
+}
+
+    .success-checkmark::after {
+        content: '✓';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: white;
+        font-size: 3rem;
+        font-weight: bold;
+    }
+
+@keyframes scaleIn {
+    from {
+        transform: scale(0);
+    }
+
+    to {
+        transform: scale(1);
+    }
+}

@@ -16,107 +16,115 @@ namespace EventHub.Controllers
         public PaymentController(
             ApplicationDbContext context,
             IQRCodeService qrCodeService,
-            ILogger<PaymentController> logger)
+            ILogger<PaymentController> _logger)
         {
             _context = context;
             _qrCodeService = qrCodeService;
-            _logger = logger;
+            this._logger = _logger;
         }
 
         /// <summary>
-        /// Display payment history
-        /// GET: /Payment/History
+        /// Process payment - COMPLETE VERSION
+        /// POST: /Payment/ProcessPayment
         /// </summary>
-        public async Task<IActionResult> History(string searchTerm = "", string dateFilter = "", int page = 1)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ProcessPayment(CheckoutViewModel model)
         {
             try
             {
-                var userIdString = HttpContext.Session.GetString("UserId");
-                var userRole = HttpContext.Session.GetString("UserRole");
+                _logger.LogInformation("ProcessPayment started for BookingId: {BookingId}", model.BookingId);
 
-                if (string.IsNullOrEmpty(userIdString) || userRole != "Customer")
+                var userIdString = HttpContext.Session.GetString("UserId");
+                if (string.IsNullOrEmpty(userIdString))
                 {
-                    TempData["ErrorMessage"] = "Please log in to view payment history.";
+                    _logger.LogWarning("User not logged in");
                     return RedirectToAction("Login", "Account");
                 }
 
                 var customerId = int.Parse(userIdString);
 
-                // Query payments
-                var query = _context.Payments
-                    .Include(p => p.Booking)
-                        .ThenInclude(b => b.Event)
-                    .Where(p => p.Booking.CustomerId == customerId);
+                // Get booking with all related data
+                var booking = await _context.Bookings
+                    .Include(b => b.Event)
+                    .Include(b => b.Customer)
+                    .FirstOrDefaultAsync(b => b.Id == model.BookingId &&
+                                            b.CustomerId == customerId);
 
-                // Apply filters
-                if (!string.IsNullOrWhiteSpace(searchTerm))
+                if (booking == null)
                 {
-                    query = query.Where(p =>
-                        p.Booking.Event.Title.Contains(searchTerm) ||
-                        p.Booking.BookingReference.Contains(searchTerm));
+                    _logger.LogWarning("Booking not found: {BookingId}", model.BookingId);
+                    TempData["ErrorMessage"] = "Booking not found.";
+                    return RedirectToAction("MyBookings", "Booking");
                 }
 
-                var now = DateTime.UtcNow;
-                query = dateFilter switch
+                // Check if already processed
+                if (booking.Status != BookingStatus.Pending)
                 {
-                    "today" => query.Where(p => p.PaymentDate.Date == now.Date),
-                    "week" => query.Where(p => p.PaymentDate >= now.AddDays(-7)),
-                    "month" => query.Where(p => p.PaymentDate >= now.AddMonths(-1)),
-                    "year" => query.Where(p => p.PaymentDate >= now.AddYears(-1)),
-                    _ => query
+                    _logger.LogWarning("Booking already processed: {BookingId}, Status: {Status}", model.BookingId, booking.Status);
+                    TempData["ErrorMessage"] = "This booking has already been processed.";
+                    return RedirectToAction("MyBookings", "Booking");
+                }
+
+                // Create payment record
+                var payment = new Payment
+                {
+                    BookingId = booking.Id,
+                    Amount = model.Amount,
+                    PaymentMethod = model.PaymentMethod,
+                    PaymentDate = DateTime.UtcNow,
+                    Status = PaymentStatus.Completed,
+                    TransactionId = $"TXN{DateTime.UtcNow.Ticks}",
+                    PaymentDetails = $"Payment via {model.PaymentMethod}"
                 };
 
-                // Statistics
-                var allPayments = await query.ToListAsync();
-                var totalPayments = allPayments.Count;
-                var successfulPayments = allPayments.Count(p => p.Status == PaymentStatus.Completed);
-                var failedPayments = allPayments.Count(p => p.Status == PaymentStatus.Failed);
-                var totalAmountPaid = allPayments
-                    .Where(p => p.Status == PaymentStatus.Completed)
-                    .Sum(p => p.Amount);
+                _context.Payments.Add(payment);
+                _logger.LogInformation("Payment record created: {TransactionId}", payment.TransactionId);
 
-                // Pagination
-                var pageSize = 10;
-                var totalPages = (int)Math.Ceiling(allPayments.Count / (double)pageSize);
+                // Update booking status
+                booking.Status = BookingStatus.Confirmed;
+                booking.BookingReference = $"BK{booking.Id:D6}";
+                _logger.LogInformation("Booking confirmed: {BookingReference}", booking.BookingReference);
 
-                var payments = allPayments
-                    .OrderByDescending(p => p.PaymentDate)
-                    .Skip((page - 1) * pageSize)
-                    .Take(pageSize)
-                    .Select(p => new PaymentDisplayDto
+                // Generate tickets with QR codes
+                for (int i = 0; i < booking.Quantity; i++)
+                {
+                    var ticketNumber = $"TKT{booking.Id:D6}-{i + 1:D3}";
+                    var qrCodeString = _qrCodeService.GenerateQRCode(ticketNumber);
+
+                    var ticket = new Ticket
                     {
-                        Id = p.Id,
-                        BookingId = p.Booking.Id,
-                        BookingReference = p.Booking.BookingReference ?? $"BK{p.Booking.Id:D6}",
-                        Amount = p.Amount,
-                        PaymentDate = p.PaymentDate,
-                        PaymentMethod = p.PaymentMethod,
-                        Status = p.Status.ToString(),
-                        EventTitle = p.Booking.Event.Title,
-                        EventDate = p.Booking.Event.EventDate
-                    })
-                    .ToList();
+                        BookingId = booking.Id,
+                        TicketNumber = ticketNumber,
+                        QRCode = qrCodeString,
+                        Status = TicketStatus.Active,
+                        IssuedDate = DateTime.UtcNow
+                    };
 
-                var viewModel = new PaymentHistoryViewModel
-                {
-                    Payments = payments,
-                    TotalPayments = totalPayments,
-                    SuccessfulPayments = successfulPayments,
-                    FailedPayments = failedPayments,
-                    TotalAmountPaid = totalAmountPaid,
-                    SearchTerm = searchTerm,
-                    DateFilter = dateFilter,
-                    CurrentPage = page,
-                    TotalPages = totalPages
-                };
+                    _context.Tickets.Add(ticket);
+                    _logger.LogInformation("Ticket created: {TicketNumber}", ticketNumber);
+                }
 
-                return View(viewModel);
+                // Update customer loyalty points
+                var pointsEarned = (int)model.Amount;
+                booking.Customer.LoyaltyPoints += pointsEarned;
+                _logger.LogInformation("Loyalty points added: {Points} for Customer: {CustomerId}", pointsEarned, customerId);
+
+                // Update available tickets
+                booking.Event.AvailableTickets -= booking.Quantity;
+
+                // Save all changes
+                await _context.SaveChangesAsync();
+                _logger.LogInformation("Payment processed successfully. Payment ID: {PaymentId}", payment.Id);
+
+                // Redirect to success page
+                return RedirectToAction("Success", new { id = payment.Id });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error loading payment history");
-                TempData["ErrorMessage"] = "Unable to load payment history.";
-                return RedirectToAction("Dashboard", "Customer");
+                _logger.LogError(ex, "Error processing payment for BookingId: {BookingId}", model.BookingId);
+                TempData["ErrorMessage"] = "An error occurred while processing your payment. Please try again.";
+                return RedirectToAction("Checkout", "Booking", new { id = model.BookingId });
             }
         }
 
@@ -163,7 +171,7 @@ namespace EventHub.Controllers
                     EventDate = payment.Booking.Event.EventDate,
                     VenueName = payment.Booking.Event.Venue.Name,
                     TicketCount = payment.Booking.Tickets.Count,
-                    LoyaltyPointsEarned = (int)payment.Amount, // 1 point per dollar
+                    LoyaltyPointsEarned = (int)payment.Amount,
                     CustomerEmail = payment.Booking.Customer.Email
                 };
 
@@ -178,100 +186,95 @@ namespace EventHub.Controllers
         }
 
         /// <summary>
-        /// Process payment
-        /// POST: /Payment/ProcessPayment
+        /// Display payment history
+        /// GET: /Payment/History
         /// </summary>
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ProcessPayment(CheckoutViewModel model)
+        public async Task<IActionResult> History(string searchTerm = "", string dateFilter = "", int page = 1)
         {
             try
             {
                 var userIdString = HttpContext.Session.GetString("UserId");
-                if (string.IsNullOrEmpty(userIdString))
+                var userRole = HttpContext.Session.GetString("UserRole");
+
+                if (string.IsNullOrEmpty(userIdString) || userRole != "Customer")
                 {
+                    TempData["ErrorMessage"] = "Please log in to view payment history.";
                     return RedirectToAction("Login", "Account");
                 }
 
                 var customerId = int.Parse(userIdString);
 
-                // Get booking
-                var booking = await _context.Bookings
-                    .Include(b => b.Event)
-                    .Include(b => b.Customer)
-                    .FirstOrDefaultAsync(b => b.Id == model.BookingId &&
-                                            b.CustomerId == customerId);
+                var query = _context.Payments
+                    .Include(p => p.Booking)
+                        .ThenInclude(b => b.Event)
+                    .Where(p => p.Booking.CustomerId == customerId);
 
-                if (booking == null)
+                if (!string.IsNullOrWhiteSpace(searchTerm))
                 {
-                    TempData["ErrorMessage"] = "Booking not found.";
-                    return RedirectToAction("MyBookings", "Booking");
+                    query = query.Where(p =>
+                        p.Booking.Event.Title.Contains(searchTerm) ||
+                        p.Booking.BookingReference.Contains(searchTerm));
                 }
 
-                // Validate booking status
-                if (booking.Status != BookingStatus.Pending)
+                var now = DateTime.UtcNow;
+                query = dateFilter switch
                 {
-                    TempData["ErrorMessage"] = "This booking has already been processed.";
-                    return RedirectToAction("MyBookings", "Booking");
-                }
-
-                // Create payment record
-                var payment = new Payment
-                {
-                    BookingId = booking.Id,
-                    Amount = model.Amount,
-                    PaymentMethod = model.PaymentMethod,
-                    PaymentDate = DateTime.UtcNow,
-                    Status = PaymentStatus.Completed,
-                    TransactionId = $"TXN{DateTime.UtcNow.Ticks}",
-                    PaymentDetails = $"Payment via {model.PaymentMethod}"
+                    "today" => query.Where(p => p.PaymentDate.Date == now.Date),
+                    "week" => query.Where(p => p.PaymentDate >= now.AddDays(-7)),
+                    "month" => query.Where(p => p.PaymentDate >= now.AddMonths(-1)),
+                    "year" => query.Where(p => p.PaymentDate >= now.AddYears(-1)),
+                    _ => query
                 };
 
-                _context.Payments.Add(payment);
+                var allPayments = await query.ToListAsync();
+                var totalPayments = allPayments.Count;
+                var successfulPayments = allPayments.Count(p => p.Status == PaymentStatus.Completed);
+                var failedPayments = allPayments.Count(p => p.Status == PaymentStatus.Failed);
+                var totalAmountPaid = allPayments
+                    .Where(p => p.Status == PaymentStatus.Completed)
+                    .Sum(p => p.Amount);
 
-                // Update booking status
-                booking.Status = BookingStatus.Confirmed;
-                booking.BookingReference = $"BK{booking.Id:D6}";
+                var pageSize = 10;
+                var totalPages = (int)Math.Ceiling(allPayments.Count / (double)pageSize);
 
-                // Generate tickets with QR codes
-                for (int i = 0; i < booking.Quantity; i++)
-                {
-                    var ticketNumber = $"TKT{booking.Id:D6}-{i + 1:D3}";
-
-                    // Generate QR code and store as string
-                    var qrCodeString = _qrCodeService.GenerateQRCode(ticketNumber);
-
-                    var ticket = new Ticket
+                var payments = allPayments
+                    .OrderByDescending(p => p.PaymentDate)
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .Select(p => new PaymentDisplayDto
                     {
-                        BookingId = booking.Id,
-                        TicketNumber = ticketNumber,
-                        QRCode = qrCodeString,  // ✅ Store QR code Base64 string here
-                        Status = TicketStatus.Active,
-                        IssuedDate = DateTime.UtcNow
-                    };
+                        Id = p.Id,
+                        BookingId = p.Booking.Id,
+                        BookingReference = p.Booking.BookingReference ?? $"BK{p.Booking.Id:D6}",
+                        Amount = p.Amount,
+                        PaymentDate = p.PaymentDate,
+                        PaymentMethod = p.PaymentMethod,
+                        Status = p.Status.ToString(),
+                        EventTitle = p.Booking.Event.Title,
+                        EventDate = p.Booking.Event.EventDate
+                    })
+                    .ToList();
 
-                    _context.Tickets.Add(ticket);
-                }
+                var viewModel = new PaymentHistoryViewModel
+                {
+                    Payments = payments,
+                    TotalPayments = totalPayments,
+                    SuccessfulPayments = successfulPayments,
+                    FailedPayments = failedPayments,
+                    TotalAmountPaid = totalAmountPaid,
+                    SearchTerm = searchTerm,
+                    DateFilter = dateFilter,
+                    CurrentPage = page,
+                    TotalPages = totalPages
+                };
 
-                // Update customer loyalty points (1 point per dollar)
-                booking.Customer.LoyaltyPoints += (int)model.Amount;
-
-                // Update available tickets
-                booking.Event.AvailableTickets -= booking.Quantity;
-
-                // Save all changes
-                await _context.SaveChangesAsync();
-
-                _logger.LogInformation("Payment processed successfully for booking {BookingId}", booking.Id);
-
-                // Redirect to success page
-                return RedirectToAction("Success", new { id = payment.Id });
+                return View(viewModel);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error processing payment");
-                TempData["ErrorMessage"] = "An error occurred while processing your payment. Please try again.";
-                return RedirectToAction("Checkout", "Booking", new { id = model.BookingId });
+                _logger.LogError(ex, "Error loading payment history");
+                TempData["ErrorMessage"] = "Unable to load payment history.";
+                return RedirectToAction("Dashboard", "Customer");
             }
         }
 
@@ -305,7 +308,6 @@ namespace EventHub.Controllers
                     return RedirectToAction("History");
                 }
 
-                // TODO: Generate PDF receipt
                 var receiptContent = $"EVENTHUB PAYMENT RECEIPT\n" +
                                    $"======================\n" +
                                    $"Receipt #: {payment.TransactionId}\n" +
