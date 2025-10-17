@@ -459,3 +459,39 @@
     border-color: #bae6fd;
     color: #075985;
 }
+
+/* ✅ FIX: Improved Sticky Preview Behavior */
+@media (min-width: 992px) {
+    .preview-card {
+        position: sticky;
+        top: 2rem; /* Keep some space from top */
+        max-height: calc(100vh - 4rem); /* Prevent overflow */
+        overflow-y: auto; /* Allow scrolling within preview if needed */
+        z-index: 100;
+        align-self: flex-start; /* ✅ IMPORTANT: Prevents jumping to top */
+    }
+
+        /* ✅ NEW: Smooth scroll behavior */
+        .preview-card::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .preview-card::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 10px;
+        }
+
+        .preview-card::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+
+            .preview-card::-webkit-scrollbar-thumb:hover {
+                background: #94a3b8;
+            }
+}
+
+/* ✅ FIX: Ensure parent container allows proper sticky behavior */
+.create-event-section .row {
+    align-items: flex-start; /* ✅ Prevents preview from jumping */
+}

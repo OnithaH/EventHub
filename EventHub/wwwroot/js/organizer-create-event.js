@@ -57,6 +57,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 document.addEventListener('DOMContentLoaded', function () {
     initializeCreateEventForm();
+    restoreFormState();
 });
 
 function initializeCreateEventForm() {
@@ -64,6 +65,7 @@ function initializeCreateEventForm() {
     setupImageUpload();
     setupLivePreview();
     setMinDate();
+    saveFormStateOnChange();
     // DO NOT call setupFormValidation() - jQuery handles it
 }
 

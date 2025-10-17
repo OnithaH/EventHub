@@ -31,17 +31,33 @@
 </head>
 
 <body>
-    @{
-        // Get session data for authentication - YOUR WAY
-        var userId = Context.Session.GetString("UserId");
-        var userEmail = Context.Session.GetString("UserEmail");
-        var userName = Context.Session.GetString("UserName");
-        var userRole = Context.Session.GetString("UserRole");
-        var isLoggedIn = !string.IsNullOrEmpty(userId);
-        var isCustomer = userRole == "Customer";
-        var isOrganizer = userRole == "Organizer";
-        var isAdmin = userRole == "Admin";
-    }
+    <body>
+        @{
+            // Get session data for authentication - YOUR WAY
+            var userId = Context.Session.GetString("UserId");
+            var userEmail = Context.Session.GetString("UserEmail");
+            var userName = Context.Session.GetString("UserName");
+            var userRole = Context.Session.GetString("UserRole");
+            var isLoggedIn = !string.IsNullOrEmpty(userId);
+            var isCustomer = userRole == "Customer";
+            var isOrganizer = userRole == "Organizer";
+            var isAdmin = userRole == "Admin";
+
+            // ✅ NEW: Get current controller and action for active nav highlighting
+            var currentController = ViewContext.RouteData.Values["Controller"]?.ToString();
+            var currentAction = ViewContext.RouteData.Values["Action"]?.ToString();
+
+            // ✅ NEW: Helper function to check if nav item is active
+            bool IsActive(string controller, string action = null)
+            {
+                if (action == null)
+                {
+                    return currentController?.Equals(controller, StringComparison.OrdinalIgnoreCase) == true;
+                }
+                return currentController?.Equals(controller, StringComparison.OrdinalIgnoreCase) == true &&
+                currentAction?.Equals(action, StringComparison.OrdinalIgnoreCase) == true;
+            }
+        }
 
     <!-- EventHub Header - Dynamic Navigation -->
     <nav class="navbar navbar-expand-lg eventhub-navbar">
@@ -66,7 +82,8 @@
                 <!-- Left Navigation -->
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link eventhub-nav-link" asp-controller="Home" asp-action="Index">
+                        <a class="nav-link eventhub-nav-link @(IsActive("Home", "Index") ? "active" : "")"
+                            asp-controller="Home" asp-action="Index">
                             <i class="bi bi-house-fill me-1"></i>
                             Home
                         </a>
@@ -76,7 +93,8 @@
                     {
                         <!-- Events link for guests and customers -->
                         <li class="nav-item">
-                            <a class="nav-link eventhub-nav-link" asp-controller="Event" asp-action="Index">
+                            <a class="nav-link eventhub-nav-link @(IsActive("Event", "Index") ? "active" : "")"
+                                asp-controller="Event" asp-action="Index">
                                 <i class="bi bi-calendar3 me-1"></i>Events
                             </a>
                         </li>
@@ -136,52 +154,60 @@
                     {
                         <!-- Browse Events for organizers -->
                         <li class="nav-item">
-                            <a class="nav-link eventhub-nav-link" asp-controller="Event" asp-action="Index">
+                            <a class="nav-link eventhub-nav-link @(IsActive("Event", "Index") ? "active" : "")"
+                                asp-controller="Event" asp-action="Index">
                                 <i class="bi bi-calendar-event me-1"></i>Browse Events
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link eventhub-nav-link" asp-controller="Organizer" asp-action="MyEvents">
+                            <a class="nav-link eventhub-nav-link @(IsActive("Organizer", "MyEvents") ? "active" : "")"
+                                asp-controller="Organizer" asp-action="MyEvents">
                                 <i class="bi bi-calendar3 me-1"></i>My Events
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link eventhub-nav-link" asp-controller="Organizer" asp-action="Create">
+                            <a class="nav-link eventhub-nav-link @(IsActive("Organizer", "Create") ? "active" : "")"
+                                asp-controller="Organizer" asp-action="Create">
                                 <i class="bi bi-plus-circle me-1"></i>Create Event
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link eventhub-nav-link" asp-controller="Report" asp-action="Sales">
+                            <a class="nav-link eventhub-nav-link @(IsActive("Report", "Sales") ? "active" : "")"
+                                asp-controller="Report" asp-action="Sales">
                                 <i class="bi bi-bar-chart me-1"></i>Sales Reports
                             </a>
                         </li>
                     }
 
-                    <li class="nav-item">
-                        <a class="nav-link eventhub-nav-link" asp-controller="Home" asp-action="About">
-                            <i class="bi bi-info-circle me-1"></i>About
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link eventhub-nav-link" asp-controller="Home" asp-action="Contact">
-                            <i class="bi bi-telephone me-1"></i>Contact
-                        </a>
-                    </li>
+                        <li class="nav-item">
+                            <a class="nav-link eventhub-nav-link @(IsActive("Home", "About") ? "active" : "")"
+                               asp-controller="Home" asp-action="About">
+                                <i class="bi bi-info-circle me-1"></i>About
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link eventhub-nav-link @(IsActive("Home", "Contact") ? "active" : "")"
+                               asp-controller="Home" asp-action="Contact">
+                                <i class="bi bi-telephone me-1"></i>Contact
+                            </a>
+                        </li>
 
-                    @if (isCustomer)
-                    {
-                        <!-- Customer-specific navigation -->
-                        <li class="nav-item">
-                            <a class="nav-link eventhub-nav-link" asp-controller="Booking" asp-action="MyBookings">
-                                <i class="bi bi-ticket-perforated me-1"></i>My Bookings
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link eventhub-nav-link" asp-controller="Ticket" asp-action="MyTickets">
-                                <i class="bi bi-qr-code me-1"></i>My Tickets
-                            </a>
-                        </li>
-                    }
+                        @if (isCustomer)
+                        {
+                            <!-- Customer-specific navigation -->
+                            <li class="nav-item">
+                                <a class="nav-link eventhub-nav-link @(IsActive("Booking", "MyBookings") ? "active" : "")"
+                                   asp-controller="Booking" asp-action="MyBookings">
+                                    <i class="bi bi-ticket-perforated me-1"></i>My Bookings
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link eventhub-nav-link @(IsActive("Ticket", "MyTickets") ? "active" : "")"
+                                   asp-controller="Ticket" asp-action="MyTickets">
+                                    <i class="bi bi-qr-code me-1"></i>My Tickets
+                                </a>
+                            </li>
+                        }
                 </ul>
 
                 <!-- Right Navigation - User Authentication -->
@@ -320,7 +346,7 @@
         // EventHub JavaScript - Extracted from your HTML files
         document.addEventListener('DOMContentLoaded', function () {
             initializeNavigation();
-            setActiveNavigation();
+            //setActiveNavigation();
             // Initialize categories dropdown
             initializeCategoriesDropdown();
             handleCategorySelection();
@@ -340,31 +366,6 @@
                     navLinks.forEach(l => l.classList.remove('active'));
                     this.classList.add('active');
                 });
-            });
-        }
-
-        // Set active navigation
-        function setActiveNavigation() {
-            const currentPath = window.location.pathname;
-            const navLinks = document.querySelectorAll('.eventhub-nav-link');
-            const dropdownItems = document.querySelectorAll('.dropdown-item');
-
-            navLinks.forEach(link => link.classList.remove('active'));
-            dropdownItems.forEach(item => item.classList.remove('active'));
-
-            // Match current path with navigation links
-            navLinks.forEach(link => {
-                const href = link.getAttribute('href');
-                if (href === currentPath || currentPath.includes(href)) {
-                    link.classList.add('active');
-                }
-            });
-
-            dropdownItems.forEach(item => {
-                const href = item.getAttribute('href');
-                if (href === currentPath || currentPath.includes(href)) {
-                    item.classList.add('active');
-                }
             });
         }
 

@@ -370,7 +370,36 @@ body {
     .custom-toggler:focus {
         box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25);
     }
+/* ✅ ENHANCED: Navigation link active states */
+.eventhub-nav-link {
+    color: #64748b !important;
+    font-weight: 500;
+    font-size: 0.95rem;
+    padding: 0.5rem 1rem !important;
+    margin: 0 0.25rem;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    position: relative; /* ✅ For better active state */
+}
 
+    .eventhub-nav-link:hover {
+        color: #6366f1 !important;
+        background-color: rgba(99, 102, 241, 0.1);
+    }
+
+    /* ✅ FIX: More specific active state */
+    .eventhub-nav-link.active {
+        color: #6366f1 !important;
+        background-color: rgba(99, 102, 241, 0.15);
+        font-weight: 600;
+    }
+
+/* ✅ NEW: Remove any conflicting Bootstrap active states */
+.nav-item .nav-link.active:not(.eventhub-nav-link) {
+    background-color: transparent !important;
+}
 /* Mobile Responsiveness */
 @media (max-width: 991.98px) {
     .eventhub-dropdown {

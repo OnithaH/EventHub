@@ -561,7 +561,8 @@ namespace EventHub.Controllers
 
                 if (eventModel == null)
                 {
-                    return NotFound();
+                    TempData["ErrorMessage"] = "Event not found.";
+                    return RedirectToAction(nameof(MyEvents));
                 }
 
                 var organizerId = GetCurrentOrganizerId();
@@ -570,15 +571,20 @@ namespace EventHub.Controllers
                     return Forbid();
                 }
 
-                // Check if event has bookings
-                var hasBookings = await _context.Bookings.AnyAsync(b => b.EventId == id);
-                if (hasBookings)
+                // ✅ FIX: Check if event has ANY confirmed bookings (not just any bookings)
+                var hasConfirmedBookings = await _context.Bookings
+                    .AnyAsync(b => b.EventId == id && b.Status == BookingStatus.Confirmed);
+
+                if (hasConfirmedBookings)
                 {
-                    TempData["ErrorMessage"] = "Cannot delete event with existing bookings. Please cancel bookings first.";
+                    var bookingCount = await _context.Bookings
+                        .CountAsync(b => b.EventId == id && b.Status == BookingStatus.Confirmed);
+
+                    TempData["ErrorMessage"] = $"Cannot delete event with {bookingCount} confirmed booking(s). Please contact customers first or cancel the event instead.";
                     return RedirectToAction(nameof(MyEvents));
                 }
 
-                // Delete event image if exists
+                // ✅ Delete event image if exists (BEFORE deleting the event)
                 if (!string.IsNullOrEmpty(eventModel.ImageUrl) &&
                     eventModel.ImageUrl != "/images/events/default-event.jpg")
                 {
@@ -587,18 +593,22 @@ namespace EventHub.Controllers
                     if (System.IO.File.Exists(imagePath))
                     {
                         System.IO.File.Delete(imagePath);
+                        _logger.LogInformation("Deleted event image: {ImagePath}", imagePath);
                     }
                 }
 
-                await _eventService.DeleteEventAsync(id);
+                // ✅ FIX: Actually DELETE the event, don't just mark as inactive
+                _context.Events.Remove(eventModel);
+                await _context.SaveChangesAsync();
 
+                _logger.LogInformation("Event {EventId} deleted by organizer {OrganizerId}", id, organizerId);
                 TempData["SuccessMessage"] = "Event deleted successfully!";
                 return RedirectToAction(nameof(MyEvents));
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error deleting event");
-                TempData["ErrorMessage"] = "An error occurred while deleting the event.";
+                _logger.LogError(ex, "Error deleting event {EventId}", id);
+                TempData["ErrorMessage"] = "An error occurred while deleting the event. Please try again.";
                 return RedirectToAction(nameof(MyEvents));
             }
         }

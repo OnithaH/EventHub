@@ -69,7 +69,102 @@ function setupCharacterCounters() {
         });
     }
 }
+/**
+ * ✅ NEW: Save form state on every change
+ */
+function saveFormStateOnChange() {
+    const form = document.getElementById('createEventForm');
+    if (!form) return;
 
+    const inputs = form.querySelectorAll('input, select, textarea');
+    inputs.forEach(input => {
+        input.addEventListener('input', function () {
+            saveCurrentFormState();
+        });
+        input.addEventListener('change', function () {
+            saveCurrentFormState();
+        });
+    });
+}
+
+/**
+ * ✅ NEW: Save current form state to sessionStorage
+ */
+function saveCurrentFormState() {
+    const form = document.getElementById('createEventForm');
+    if (!form) return;
+
+    const formData = new FormData(form);
+    formState = {};
+
+    for (let [key, value] of formData.entries()) {
+        formState[key] = value;
+    }
+
+    // Save preview image if exists
+    const previewImg = document.getElementById('previewImage');
+    if (previewImg && previewImg.src && !previewImg.src.includes('default-event.jpg')) {
+        formState['preview ImageSrc'] = previewImg.src;
+    }
+
+    sessionStorage.setItem('createEventFormState', JSON.stringify(formState));
+}
+
+/**
+ * ✅ NEW: Restore form state from sessionStorage
+ */
+function restoreFormState() {
+    const savedState = sessionStorage.getItem('createEventFormState');
+    if (!savedState) return;
+
+    try {
+        formState = JSON.parse(savedState);
+
+        // Restore form fields
+        Object.keys(formState).forEach(key => {
+            if (key === 'previewImageSrc') return; // Handle separately
+
+            const element = document.querySelector(`[name="${key}"]`);
+            if (element) {
+                element.value = formState[key];
+
+                // Trigger preview update
+                if (element.tagName === 'INPUT' || element.tagName === 'SELECT' || element.tagName === 'TEXTAREA') {
+                    updatePreviewField(element);
+                }
+            }
+        });
+
+        // Restore preview image
+        if (formState['previewImageSrc']) {
+            const previewImg = document.getElementById('previewImage');
+            const placeholder = document.querySelector('.upload-placeholder');
+            const preview = document.getElementById('imagePreview');
+
+            if (previewImg) {
+                previewImg.src = formState['previewImageSrc'];
+                placeholder?.classList.add('d-none');
+                preview?.classList.remove('d-none');
+                updatePreviewImage(formState['previewImageSrc']);
+            }
+        }
+
+        // Update character counters
+        const titleInput = document.querySelector('[name="Title"]');
+        if (titleInput) {
+            const titleCount = document.getElementById('titleCount');
+            if (titleCount) titleCount.textContent = titleInput.value.length;
+        }
+
+        const descInput = document.querySelector('[name="Description"]');
+        if (descInput) {
+            const descCount = document.getElementById('descriptionCount');
+            if (descCount) descCount.textContent = descInput.value.length;
+        }
+    } catch (error) {
+        console.error('Error restoring form state:', error);
+    }
+}
 /**
  * Setup image upload functionality
  */
@@ -83,13 +178,11 @@ function setupImageUpload() {
 
     if (!uploadArea || !fileInput) return;
 
-    // Click to upload
     uploadArea.addEventListener('click', function (e) {
         if (e.target.closest('.remove-image')) return;
         fileInput.click();
     });
 
-    // Drag and drop
     uploadArea.addEventListener('dragover', function (e) {
         e.preventDefault();
         this.style.borderColor = '#6366f1';
@@ -106,54 +199,45 @@ function setupImageUpload() {
         e.preventDefault();
         this.style.borderColor = '#cbd5e1';
         this.style.background = '#f8fafc';
-
         const files = e.dataTransfer.files;
         if (files.length > 0) {
-            fileInput.files = files;
             handleImageSelect(files[0]);
         }
     });
 
-    // File input change
     fileInput.addEventListener('change', function () {
         if (this.files && this.files[0]) {
             handleImageSelect(this.files[0]);
         }
     });
 
-    // Remove image
     removeBtn?.addEventListener('click', function (e) {
         e.stopPropagation();
         fileInput.value = '';
+        uploadedImageData = null;
         placeholder?.classList.remove('d-none');
         preview?.classList.add('d-none');
-        // Restore original image in preview
-        const currentImage = document.querySelector('.current-image img');
-        if (currentImage) {
-            updatePreviewImage(currentImage.src);
-        }
+        updatePreviewImage('/images/events/default-event.jpg');
+        saveCurrentFormState();
     });
 
     function handleImageSelect(file) {
-        // Validate file type
         if (!file.type.match('image.*')) {
             alert('Please select an image file');
             return;
         }
-
-        // Validate file size (10MB)
         if (file.size > 10 * 1024 * 1024) {
             alert('Image size should be less than 10MB');
             return;
         }
-
-        // Read and display image
         const reader = new FileReader();
         reader.onload = function (e) {
-            previewImage.src = e.target.result;
+            uploadedImageData = e.target.result; // ✅ Save to global state
+            previewImage.src = uploadedImageData;
             placeholder?.classList.add('d-none');
             preview?.classList.remove('d-none');
-            updatePreviewImage(e.target.result);
+            updatePreviewImage(uploadedImageData);
+            saveCurrentFormState(); // ✅ Save state with image
         };
         reader.readAsDataURL(file);
     }
@@ -164,14 +248,16 @@ function setupImageUpload() {
  */
 function setupFormValidation() {
     const form = document.getElementById('createEventForm');
-
     if (!form) return;
 
-    // Bootstrap validation
     form.addEventListener('submit', function (event) {
         if (!form.checkValidity()) {
             event.preventDefault();
             event.stopPropagation();
+            saveCurrentFormState(); // Save before validation fails
+        } else {
+            // Clear saved state on successful submission
+            sessionStorage.removeItem('createEventFormState');
         }
         form.classList.add('was-validated');
     }, false);
