@@ -1,6 +1,4 @@
-﻿
-
-@model EventHub.Models.ViewModels.CheckoutViewModel
+﻿@model EventHub.Models.ViewModels.CheckoutViewModel
 @{
     ViewData["Title"] = "Checkout - EventHub";
     Layout = "~/Views/Shared/_Layout.cshtml";
@@ -73,8 +71,10 @@
                     </h3>
 
                     <form asp-action="ProcessPayment" asp-controller="Payment" method="post" id="paymentForm">
+                        @Html.AntiForgeryToken()
                         <input type="hidden" asp-for="BookingId" />
                         <input type="hidden" asp-for="Amount" />
+                        <input type="hidden" asp-for="EventId" />
 
                         <!-- Payment Method Selection -->
                         <div class="mb-4">
@@ -82,7 +82,7 @@
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <div class="payment-method-card" onclick="selectPaymentMethod('CreditCard')">
-                                        <input type="radio" name="PaymentMethod" value="CreditCard" id="credit" class="form-check-input me-2">
+                                        <input type="radio" asp-for="PaymentMethod" value="CreditCard" id="credit" checked class="form-check-input me-2">
                                         <label for="credit" class="form-check-label">
                                             <i class="bi bi-credit-card text-primary me-2"></i>
                                             <strong>Credit/Debit Card</strong>
@@ -91,7 +91,7 @@
                                 </div>
                                 <div class="col-md-6">
                                     <div class="payment-method-card" onclick="selectPaymentMethod('PayPal')">
-                                        <input type="radio" name="PaymentMethod" value="PayPal" id="paypal" class="form-check-input me-2">
+                                        <input type="radio" asp-for="PaymentMethod" value="PayPal" id="paypal" class="form-check-input me-2">
                                         <label for="paypal" class="form-check-label">
                                             <i class="bi bi-paypal text-primary me-2"></i>
                                             <strong>PayPal</strong>
@@ -102,7 +102,7 @@
                         </div>
 
                         <!-- Card Details (Show if Credit Card selected) -->
-                        <div id="cardDetails" style="display: none;">
+                        <div id="cardDetails">
                             <div class="row g-3 mb-3">
                                 <div class="col-12">
                                     <label class="form-label">Card Number</label>
@@ -192,7 +192,7 @@
 
                         <!-- Submit Button -->
                         <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-primary btn-lg">
+                            <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
                                 <i class="bi bi-lock-fill me-2"></i>
                                 Complete Payment - @Model.Amount.ToString("C")
                             </button>
@@ -215,47 +215,24 @@
             <!-- Right Column - Order Summary -->
             <div class="col-lg-4">
                 <div class="order-summary">
-                    <h4 class="mb-4">
-                        <i class="bi bi-receipt me-2"></i>Order Summary
-                    </h4>
+                    <h4 class="mb-4">Order Summary</h4>
 
-                    <!-- Event Info -->
                     <div class="mb-4">
-                        @if (!string.IsNullOrEmpty(Model.EventImageUrl))
-                        {
-                            <img src="@Model.EventImageUrl" class="img-fluid rounded mb-3"
-                                 alt="@Model.EventTitle">
-                        }
-                        <h5 class="mb-2">@Model.EventTitle</h5>
-                        <p class="mb-1">
-                            <i class="bi bi-calendar3 me-2"></i>
-                            @Model.EventDate.ToString("MMM dd, yyyy")
-                        </p>
-                        <p class="mb-1">
-                            <i class="bi bi-clock me-2"></i>
-                            @Model.EventDate.ToString("hh:mm tt")
-                        </p>
-                        <p class="mb-0">
-                            <i class="bi bi-geo-alt me-2"></i>
-                            @Model.VenueName
-                        </p>
+                        <h6>@Model.EventTitle</h6>
+                        <p class="small mb-0">@Model.EventDate.ToString("dddd, MMMM dd, yyyy")</p>
+                        <p class="small">@Model.VenueName</p>
                     </div>
 
-                    <hr class="border-light">
-
-                    <!-- Price Breakdown -->
                     <div class="summary-item">
-                        <span>Ticket Price</span>
-                        <span>@Model.TicketPrice.ToString("C")</span>
-                    </div>
-                    <div class="summary-item">
-                        <span>Quantity</span>
-                        <span>× @Model.Quantity</span>
-                    </div>
-                    <div class="summary-item">
-                        <span>Subtotal</span>
+                        <span>Tickets (x@Model.Quantity)</span>
                         <span>@Model.Subtotal.ToString("C")</span>
                     </div>
+
+                    <div class="summary-item">
+                        <span>Service Fee</span>
+                        <span>@Model.ServiceFee.ToString("C")</span>
+                    </div>
+
                     @if (Model.DiscountAmount > 0)
                     {
                         <div class="summary-item text-success">
@@ -263,32 +240,10 @@
                             <span>-@Model.DiscountAmount.ToString("C")</span>
                         </div>
                     }
-                    @if (Model.LoyaltyPointsUsed > 0)
-                    {
-                        <div class="summary-item text-success">
-                            <span>Loyalty Points</span>
-                            <span>-@Model.LoyaltyPointsDiscount.ToString("C")</span>
-                        </div>
-                    }
-                    <div class="summary-item">
-                        <span>Service Fee</span>
-                        <span>@Model.ServiceFee.ToString("C")</span>
-                    </div>
 
-                    <hr class="border-light">
-
-                    <!-- Total -->
-                    <div class="summary-total d-flex justify-content-between">
-                        <span>Total Amount</span>
-                        <span>@Model.Amount.ToString("C")</span>
-                    </div>
-
-                    <!-- Points to Earn -->
-                    <div class="mt-3 p-3 bg-white bg-opacity-10 rounded">
-                        <small>
-                            <i class="bi bi-star-fill me-2"></i>
-                            You'll earn <strong>@Model.PointsToEarn</strong> loyalty points with this purchase!
-                        </small>
+                    <div class="summary-total">
+                        <strong>Total:</strong>
+                        <strong>@Model.Amount.ToString("C")</strong>
                     </div>
                 </div>
             </div>
@@ -298,38 +253,40 @@
 
 @section Scripts {
     <script>
+                console.log('%c╔═══════════════════════════════════════════════════════════╗', 'color: blue; font-weight: bold;');
+        console.log('%c║          CHECKOUT PAGE LOADED                             ║', 'color: blue; font-weight: bold;');
+        console.log('%c╚═══════════════════════════════════════════════════════════╝', 'color: blue; font-weight: bold;');
+
+        // Log all form fields on page load
+        console.log('📋 FORM FIELDS ON PAGE LOAD:');
+        console.log('   BookingId:', document.querySelector('[name="BookingId"]')?.value || 'NOT FOUND');
+        console.log('   Amount:', document.querySelector('[name="Amount"]')?.value || 'NOT FOUND');
+        console.log('   PaymentMethod:', document.querySelector('[name="PaymentMethod"]:checked')?.value || 'NOT SELECTED');
+        console.log('   FirstName:', document.querySelector('[name="FirstName"]')?.value || 'EMPTY');
+        console.log('   Email:', document.querySelector('[name="Email"]')?.value || 'EMPTY');
+
         function selectPaymentMethod(method) {
-            // Remove selected class from all cards
+            console.log('💳 Payment method clicked:', method);
             document.querySelectorAll('.payment-method-card').forEach(card => {
                 card.classList.remove('selected');
             });
-
-            // Add selected class to clicked card
             event.currentTarget.classList.add('selected');
 
-            // Show/hide card details
-            const cardDetails = document.getElementById('cardDetails');
             if (method === 'CreditCard') {
-                cardDetails.style.display = 'block';
+                document.getElementById('cardDetails').style.display = 'block';
+                console.log('✅ Card details shown');
             } else {
-                cardDetails.style.display = 'none';
+                document.getElementById('cardDetails').style.display = 'none';
+                console.log('ℹ️ Card details hidden');
             }
         }
 
         function applyDiscount() {
-            const code = document.querySelector('[name="DiscountCode"]').value;
-            if (!code) {
-                Swal.fire('Error', 'Please enter a discount code', 'error');
-                return;
-            }
-
-            // TODO: Implement discount code validation
-            Swal.fire('Success', 'Discount code applied!', 'success');
+            Swal.fire('Info', 'Discount functionality coming soon', 'info');
         }
 
         function toggleLoyaltyPoints() {
-            const checkbox = document.getElementById('useLoyalty');
-            // TODO: Recalculate total amount
+            console.log('⭐ Loyalty points toggled');
         }
 
         // Card number formatting
@@ -348,31 +305,71 @@
             e.target.value = value;
         });
 
-        // Form validation before submit
+        // CRITICAL: Form submission debugging
         document.getElementById('paymentForm').addEventListener('submit', function(e) {
+            console.log('%c╔═══════════════════════════════════════════════════════════╗', 'color: green; font-weight: bold;');
+            console.log('%c║          FORM SUBMIT EVENT TRIGGERED                      ║', 'color: green; font-weight: bold;');
+            console.log('%c╚═══════════════════════════════════════════════════════════╝', 'color: green; font-weight: bold;');
+
+            // Log all form data
+            const formData = new FormData(this);
+            console.log('📤 FORM DATA BEING SENT:');
+            let hasData = false;
+            for (let [key, value] of formData.entries()) {
+                console.log(`   ${key}: ${value}`);
+                hasData = true;
+            }
+
+            if (!hasData) {
+                console.error('❌ NO FORM DATA FOUND!');
+            }
+
+            // Validate payment method
             const paymentMethod = document.querySelector('[name="PaymentMethod"]:checked');
+            console.log('💳 PAYMENT METHOD CHECK:');
+            console.log('   Selected:', paymentMethod ? paymentMethod.value : 'NONE');
+
             if (!paymentMethod) {
                 e.preventDefault();
+                console.error('❌ STOPPING SUBMISSION - No payment method selected');
                 Swal.fire('Error', 'Please select a payment method', 'error');
-                return;
+                return false;
             }
 
+            // Validate terms
             const terms = document.getElementById('terms');
+            console.log('📜 TERMS CHECK:');
+            console.log('   Accepted:', terms ? terms.checked : 'NOT FOUND');
+
             if (!terms.checked) {
                 e.preventDefault();
+                console.error('❌ STOPPING SUBMISSION - Terms not accepted');
                 Swal.fire('Error', 'Please accept the terms and conditions', 'error');
-                return;
+                return false;
             }
 
-            // Show loading
-            Swal.fire({
-                title: 'Processing Payment...',
-                html: 'Please wait while we process your payment',
-                allowOutsideClick: false,
-                didOpen: () => {
-                    Swal.showLoading();
-                }
-            });
+            // Check antiforgery token
+            const token = document.querySelector('[name="__RequestVerificationToken"]');
+            console.log('🔐 ANTIFORGERY TOKEN:');
+            console.log('   Present:', token ? 'YES' : 'NO');
+            console.log('   Value:', token ? token.value.substring(0, 20) + '...' : 'NOT FOUND');
+
+            // Disable button
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="bi bi-arrow-clockwise rotating me-2"></i>Processing...';
+
+            console.log('%c✅ ALL VALIDATIONS PASSED - SUBMITTING TO SERVER...', 'color: green; font-weight: bold;');
+            console.log('%c🚀 Form Action:', 'color: blue;', this.action);
+            console.log('%c🚀 Form Method:', 'color: blue;', this.method);
+
+            return true;
+        });
+
+        // Log when page is ready
+        window.addEventListener('load', function() {
+            console.log('%c✅ PAGE FULLY LOADED AND READY', 'color: green; font-weight: bold;');
         });
     </script>
+
 }

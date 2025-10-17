@@ -23,30 +23,67 @@ namespace EventHub.Controllers
             this._logger = _logger;
         }
 
-        /// <summary>
-        /// Process payment - COMPLETE VERSION
-        /// POST: /Payment/ProcessPayment
-        /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ProcessPayment(CheckoutViewModel model)
         {
+            _logger.LogInformation("╔═══════════════════════════════════════════════════════════╗");
+            _logger.LogInformation("║          PAYMENT PROCESS STARTED                          ║");
+            _logger.LogInformation("╚═══════════════════════════════════════════════════════════╝");
+
+            _logger.LogInformation("📋 RECEIVED DATA:");
+            _logger.LogInformation("   BookingId: {BookingId}", model.BookingId);
+            _logger.LogInformation("   Amount: {Amount}", model.Amount);
+            _logger.LogInformation("   PaymentMethod: {PaymentMethod}", model.PaymentMethod ?? "NULL/EMPTY");
+            _logger.LogInformation("   FirstName: {FirstName}", model.FirstName ?? "NULL");
+            _logger.LogInformation("   LastName: {LastName}", model.LastName ?? "NULL");
+            _logger.LogInformation("   Email: {Email}", model.Email ?? "NULL");
+            _logger.LogInformation("   Phone: {Phone}", model.Phone ?? "NULL");
+
+            _logger.LogInformation("🔍 MODEL STATE CHECK:");
+            _logger.LogInformation("   IsValid: {IsValid}", ModelState.IsValid);
+
+            if (!ModelState.IsValid)
+            {
+                _logger.LogError("❌ MODEL STATE IS INVALID - VALIDATION ERRORS:");
+                foreach (var error in ModelState)
+                {
+                    if (error.Value.Errors.Count > 0)
+                    {
+                        _logger.LogError("   ❗ Field: {Field}", error.Key);
+                        foreach (var err in error.Value.Errors)
+                        {
+                            _logger.LogError("      → {ErrorMessage}", err.ErrorMessage);
+                        }
+                    }
+                }
+
+                TempData["ErrorMessage"] = "Please fill all required fields correctly.";
+                _logger.LogWarning("⚠️ REDIRECTING BACK TO CHECKOUT DUE TO VALIDATION ERRORS");
+                return RedirectToAction("Checkout", "Booking", new { id = model.BookingId });
+            }
+
+            _logger.LogInformation("✅ MODEL STATE IS VALID - PROCEEDING");
+
             try
             {
-                _logger.LogInformation("=== PAYMENT PROCESS STARTED === BookingId: {BookingId}", model.BookingId);
-
+                // Check session
                 var userIdString = HttpContext.Session.GetString("UserId");
+                _logger.LogInformation("🔐 SESSION CHECK:");
+                _logger.LogInformation("   UserId from session: {UserId}", userIdString ?? "NULL/EMPTY");
+
                 if (string.IsNullOrEmpty(userIdString))
                 {
-                    _logger.LogWarning("User not logged in");
+                    _logger.LogWarning("❌ USER NOT LOGGED IN - REDIRECTING TO LOGIN");
                     TempData["ErrorMessage"] = "Please log in to complete payment.";
                     return RedirectToAction("Login", "Account");
                 }
 
                 var customerId = int.Parse(userIdString);
-                _logger.LogInformation("Customer ID: {CustomerId}", customerId);
+                _logger.LogInformation("✅ USER AUTHENTICATED - CustomerId: {CustomerId}", customerId);
 
                 // Get booking
+                _logger.LogInformation("📦 FETCHING BOOKING FROM DATABASE...");
                 var booking = await _context.Bookings
                     .Include(b => b.Event)
                     .Include(b => b.Customer)
@@ -54,20 +91,28 @@ namespace EventHub.Controllers
 
                 if (booking == null)
                 {
-                    _logger.LogWarning("Booking not found: {BookingId}", model.BookingId);
+                    _logger.LogError("❌ BOOKING NOT FOUND - BookingId: {BookingId}, CustomerId: {CustomerId}",
+                        model.BookingId, customerId);
                     TempData["ErrorMessage"] = "Booking not found.";
                     return RedirectToAction("MyBookings", "Booking");
                 }
 
-                _logger.LogInformation("Booking found. Current Status: {Status}", booking.Status);
+                _logger.LogInformation("✅ BOOKING FOUND:");
+                _logger.LogInformation("   Booking ID: {BookingId}", booking.Id);
+                _logger.LogInformation("   Event: {EventTitle}", booking.Event.Title);
+                _logger.LogInformation("   Current Status: {Status}", booking.Status);
+                _logger.LogInformation("   Quantity: {Quantity}", booking.Quantity);
+                _logger.LogInformation("   Amount: {Amount}", booking.TotalAmount);
 
                 // Check status
                 if (booking.Status != BookingStatus.Pending)
                 {
-                    _logger.LogWarning("Booking already processed. Status: {Status}", booking.Status);
+                    _logger.LogWarning("⚠️ BOOKING ALREADY PROCESSED - Status: {Status}", booking.Status);
                     TempData["InfoMessage"] = "This booking has already been processed.";
                     return RedirectToAction("Details", "Booking", new { id = model.BookingId });
                 }
+
+                _logger.LogInformation("✅ BOOKING STATUS IS PENDING - CREATING PAYMENT RECORD...");
 
                 // Create payment
                 var payment = new Payment
@@ -82,14 +127,20 @@ namespace EventHub.Controllers
                 };
 
                 _context.Payments.Add(payment);
-                _logger.LogInformation("Payment record created: {TransactionId}", payment.TransactionId);
+                _logger.LogInformation("💳 PAYMENT RECORD CREATED:");
+                _logger.LogInformation("   Transaction ID: {TransactionId}", payment.TransactionId);
+                _logger.LogInformation("   Method: {Method}", payment.PaymentMethod);
+                _logger.LogInformation("   Amount: {Amount}", payment.Amount);
 
                 // Update booking
                 booking.Status = BookingStatus.Confirmed;
                 booking.BookingReference = $"BK{booking.Id:D6}";
-                _logger.LogInformation("Booking status updated to Confirmed: {Reference}", booking.BookingReference);
+                _logger.LogInformation("📝 BOOKING UPDATED:");
+                _logger.LogInformation("   New Status: {Status}", booking.Status);
+                _logger.LogInformation("   Reference: {Reference}", booking.BookingReference);
 
                 // Generate tickets
+                _logger.LogInformation("🎫 GENERATING {Count} TICKETS...", booking.Quantity);
                 for (int i = 0; i < booking.Quantity; i++)
                 {
                     var ticketNumber = $"TKT{booking.Id:D6}-{i + 1:D3}";
@@ -105,31 +156,51 @@ namespace EventHub.Controllers
                     };
 
                     _context.Tickets.Add(ticket);
-                    _logger.LogInformation("Ticket {Index} created: {TicketNumber}", i + 1, ticketNumber);
+                    _logger.LogInformation("   ✅ Ticket {Index}/{Total} created: {TicketNumber}",
+                        i + 1, booking.Quantity, ticketNumber);
                 }
 
                 // Update loyalty points
                 var pointsEarned = (int)model.Amount;
                 booking.Customer.LoyaltyPoints += pointsEarned;
-                _logger.LogInformation("Loyalty points added: {Points}", pointsEarned);
+                _logger.LogInformation("⭐ LOYALTY POINTS UPDATED:");
+                _logger.LogInformation("   Points Earned: {Points}", pointsEarned);
+                _logger.LogInformation("   New Total: {Total}", booking.Customer.LoyaltyPoints);
 
                 // Update available tickets
                 booking.Event.AvailableTickets -= booking.Quantity;
-                _logger.LogInformation("Event available tickets reduced by {Quantity}", booking.Quantity);
+                _logger.LogInformation("📊 EVENT TICKETS UPDATED:");
+                _logger.LogInformation("   Tickets Sold: {Quantity}", booking.Quantity);
+                _logger.LogInformation("   Remaining: {Remaining}", booking.Event.AvailableTickets);
 
                 // SAVE ALL CHANGES
-                await _context.SaveChangesAsync();
-                _logger.LogInformation("=== ALL CHANGES SAVED TO DATABASE ===");
+                _logger.LogInformation("💾 SAVING ALL CHANGES TO DATABASE...");
+                var savedCount = await _context.SaveChangesAsync();
+                _logger.LogInformation("✅ DATABASE UPDATED - {Count} records saved", savedCount);
 
                 TempData["SuccessMessage"] = $"Payment successful! Booking confirmed: {booking.BookingReference}";
 
-                // REDIRECT TO SUCCESS PAGE
-                _logger.LogInformation("Redirecting to Success page with PaymentId: {PaymentId}", payment.Id);
+                _logger.LogInformation("🎉 PAYMENT COMPLETED SUCCESSFULLY!");
+                _logger.LogInformation("🔀 REDIRECTING TO SUCCESS PAGE - PaymentId: {PaymentId}", payment.Id);
+                _logger.LogInformation("╔═══════════════════════════════════════════════════════════╗");
+                _logger.LogInformation("║          PAYMENT PROCESS COMPLETED                        ║");
+                _logger.LogInformation("╚═══════════════════════════════════════════════════════════╝");
+
                 return RedirectToAction("Success", new { id = payment.Id });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "=== ERROR IN PAYMENT PROCESS === BookingId: {BookingId}", model.BookingId);
+                _logger.LogError("╔═══════════════════════════════════════════════════════════╗");
+                _logger.LogError("║          CRITICAL ERROR IN PAYMENT PROCESS                ║");
+                _logger.LogError("╚═══════════════════════════════════════════════════════════╝");
+                _logger.LogError("❌ Exception Type: {ExceptionType}", ex.GetType().Name);
+                _logger.LogError("❌ Error Message: {Message}", ex.Message);
+                _logger.LogError("❌ Stack Trace: {StackTrace}", ex.StackTrace);
+                if (ex.InnerException != null)
+                {
+                    _logger.LogError("❌ Inner Exception: {InnerException}", ex.InnerException.Message);
+                }
+
                 TempData["ErrorMessage"] = $"Payment failed: {ex.Message}";
                 return RedirectToAction("Checkout", "Booking", new { id = model.BookingId });
             }
@@ -137,19 +208,24 @@ namespace EventHub.Controllers
 
         public async Task<IActionResult> Success(int id)
         {
+            _logger.LogInformation("╔═══════════════════════════════════════════════════════════╗");
+            _logger.LogInformation("║          SUCCESS PAGE REQUESTED                           ║");
+            _logger.LogInformation("╚═══════════════════════════════════════════════════════════╝");
+            _logger.LogInformation("📄 Payment ID: {PaymentId}", id);
+
             try
             {
-                _logger.LogInformation("=== SUCCESS PAGE REQUESTED === PaymentId: {PaymentId}", id);
-
                 var userIdString = HttpContext.Session.GetString("UserId");
                 if (string.IsNullOrEmpty(userIdString))
                 {
-                    _logger.LogWarning("User not logged in on success page");
+                    _logger.LogWarning("❌ User not logged in on success page");
                     return RedirectToAction("Login", "Account");
                 }
 
                 var customerId = int.Parse(userIdString);
+                _logger.LogInformation("✅ Customer ID: {CustomerId}", customerId);
 
+                _logger.LogInformation("📦 FETCHING PAYMENT DATA...");
                 var payment = await _context.Payments
                     .Include(p => p.Booking)
                         .ThenInclude(b => b.Event)
@@ -162,13 +238,16 @@ namespace EventHub.Controllers
 
                 if (payment == null)
                 {
-                    _logger.LogWarning("Payment not found: {PaymentId}", id);
+                    _logger.LogError("❌ PAYMENT NOT FOUND - PaymentId: {PaymentId}", id);
                     TempData["ErrorMessage"] = "Payment not found.";
                     return RedirectToAction("MyBookings", "Booking");
                 }
 
-                _logger.LogInformation("Payment found. Booking: {BookingId}, Reference: {Reference}",
-                    payment.Booking.Id, payment.Booking.BookingReference);
+                _logger.LogInformation("✅ PAYMENT DATA LOADED:");
+                _logger.LogInformation("   Booking: {BookingId}", payment.Booking.Id);
+                _logger.LogInformation("   Reference: {Reference}", payment.Booking.BookingReference);
+                _logger.LogInformation("   Event: {Event}", payment.Booking.Event.Title);
+                _logger.LogInformation("   Tickets: {Count}", payment.Booking.Tickets.Count);
 
                 var viewModel = new PaymentSuccessViewModel
                 {
@@ -184,12 +263,13 @@ namespace EventHub.Controllers
                     CustomerEmail = payment.Booking.Customer.Email
                 };
 
-                _logger.LogInformation("=== SUCCESS VIEW MODEL CREATED ===");
+                _logger.LogInformation("✅ SUCCESS VIEW MODEL CREATED - RENDERING PAGE");
                 return View(viewModel);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error in Success page");
+                _logger.LogError("❌ ERROR IN SUCCESS PAGE: {Message}", ex.Message);
+                _logger.LogError("Stack Trace: {StackTrace}", ex.StackTrace);
                 TempData["ErrorMessage"] = "Unable to load confirmation page.";
                 return RedirectToAction("MyBookings", "Booking");
             }

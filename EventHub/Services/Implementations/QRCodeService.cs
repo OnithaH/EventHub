@@ -11,7 +11,7 @@ namespace EventHub.Services.Implementations
             using var qrCodeData = qrGenerator.CreateQrCode(data, QRCodeGenerator.ECCLevel.Q);
             using var qrCode = new PngByteQRCode(qrCodeData);
 
-            var qrCodeBytes = qrCode.GetGraphic(20);
+            var qrCodeBytes = qrCode.GetGraphic(5);
             return Convert.ToBase64String(qrCodeBytes);
         }
 
