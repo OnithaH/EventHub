@@ -403,78 +403,81 @@ namespace EventHub.Controllers
             }
 
             var organizerId = GetCurrentOrganizerId();
-            var existingEvent = await _context.Events.AsNoTracking().FirstOrDefaultAsync(e => e.Id == id);
+            var existingEvent = await _context.Events.AsNoTracking()
+                .FirstOrDefaultAsync(e => e.Id == id);
 
             if (existingEvent == null)
             {
                 return NotFound();
             }
 
-            if (existingEvent.OrganizerId != organizerId && HttpContext.Session.GetString("UserRole") != "Admin")
+            if (existingEvent.OrganizerId != organizerId &&
+                HttpContext.Session.GetString("UserRole") != "Admin")
             {
-                return Forbid();
+                TempData["ErrorMessage"] = "You can only edit your own events.";
+                return RedirectToAction(nameof(MyEvents));
             }
 
-            if (ModelState.IsValid)
+            try
             {
-                try
+                // 🔧 FIX: Calculate how many tickets have been sold
+                int ticketsSold = existingEvent.TotalTickets - existingEvent.AvailableTickets;
+
+                // 🔧 FIX: When updating TotalTickets, recalculate AvailableTickets
+                // AvailableTickets = NewTotalTickets - TicketsSold
+                eventModel.AvailableTickets = eventModel.TotalTickets - ticketsSold;
+
+                // Debug logging
+                _logger.LogInformation("📊 EVENT TICKETS UPDATE DEBUG:");
+                _logger.LogInformation("   Old Total: {OldTotal}, Old Available: {OldAvailable}",
+                    existingEvent.TotalTickets, existingEvent.AvailableTickets);
+                _logger.LogInformation("   Tickets Sold: {Sold}", ticketsSold);
+                _logger.LogInformation("   New Total: {NewTotal}, New Available: {NewAvailable}",
+                    eventModel.TotalTickets, eventModel.AvailableTickets);
+
+                // Handle image upload
+                if (eventImage != null && eventImage.Length > 0)
                 {
-                    // Handle image upload if new image provided
-                    if (eventImage != null && eventImage.Length > 0)
+                    var fileName = $"event-{Guid.NewGuid()}{Path.GetExtension(eventImage.FileName)}";
+                    var uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "images", "events");
+                    Directory.CreateDirectory(uploadsFolder);
+                    var filePath = Path.Combine(uploadsFolder, fileName);
+
+                    using (var stream = new FileStream(filePath, FileMode.Create))
                     {
-                        // Delete old image if it exists and is not default
-                        if (!string.IsNullOrEmpty(existingEvent.ImageUrl) &&
-                            existingEvent.ImageUrl != "/images/events/default-event.jpg")
-                        {
-                            var oldImagePath = Path.Combine(_webHostEnvironment.WebRootPath,
-                                existingEvent.ImageUrl.TrimStart('/'));
-                            if (System.IO.File.Exists(oldImagePath))
-                            {
-                                System.IO.File.Delete(oldImagePath);
-                            }
-                        }
-
-                        var fileName = $"event-{Guid.NewGuid()}{Path.GetExtension(eventImage.FileName)}";
-                        var filePath = Path.Combine(_webHostEnvironment.WebRootPath, "images", "events", fileName);
-
-                        Directory.CreateDirectory(Path.GetDirectoryName(filePath)!);
-
-                        using (var stream = new FileStream(filePath, FileMode.Create))
-                        {
-                            await eventImage.CopyToAsync(stream);
-                        }
-
-                        eventModel.ImageUrl = $"/images/events/{fileName}";
-                    }
-                    else
-                    {
-                        // Keep existing image
-                        eventModel.ImageUrl = existingEvent.ImageUrl;
+                        await eventImage.CopyToAsync(stream);
                     }
 
-                    eventModel.OrganizerId = existingEvent.OrganizerId;
-                    eventModel.CreatedAt = existingEvent.CreatedAt;
-
-                    await _eventService.UpdateEventAsync(eventModel);
-
-                    TempData["SuccessMessage"] = "Event updated successfully!";
-                    return RedirectToAction(nameof(MyEvents));
+                    eventModel.ImageUrl = $"/images/events/{fileName}";
                 }
-                catch (Exception ex)
+                else if (string.IsNullOrEmpty(eventModel.ImageUrl))
                 {
-                    _logger.LogError(ex, "Error updating event");
-                    ModelState.AddModelError("", "An error occurred while updating the event.");
+                    eventModel.ImageUrl = "/images/events/default-event.jpg";
                 }
+
+                // Update the event
+                _context.Events.Update(eventModel);
+                await _context.SaveChangesAsync();
+
+                _logger.LogInformation("✅ Event {EventId} updated successfully", id);
+                TempData["SuccessMessage"] = "Event updated successfully!";
+                return RedirectToAction(nameof(MyEvents));
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating event {EventId}", id);
+                ModelState.AddModelError("", "An error occurred while updating the event.");
 
-            ViewBag.Venues = await _context.Venues
-                .OrderBy(v => v.Name)
-                .Select(v => new { v.Id, v.Name, v.Location, v.Capacity })
-                .ToListAsync();
+                ViewBag.Venues = await _context.Venues
+                    .OrderBy(v => v.Name)
+                    .Select(v => new { v.Id, v.Name, v.Location, v.Capacity })
+                    .ToListAsync();
 
-            ViewBag.BookingCount = await _context.Bookings.CountAsync(b => b.EventId == id);
+                ViewBag.BookingCount = await _context.Bookings
+                    .CountAsync(b => b.EventId == id);
 
-            return View(eventModel);
+                return View(eventModel);
+            }
         }
         #endregion
 
