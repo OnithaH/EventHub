@@ -997,13 +997,15 @@ namespace EventHub.Controllers
 
                 var organizerId = GetCurrentOrganizerId();
 
-                // Get event
+                // Get event - ✅ FIXED: Added Customer include
                 var @event = await _context.Events
                     .Include(e => e.Venue)
                     .Include(e => e.Bookings)
                         .ThenInclude(b => b.Tickets)
                     .Include(e => e.Bookings)
                         .ThenInclude(b => b.Payment)
+                    .Include(e => e.Bookings)  // ✅ ADDED
+                        .ThenInclude(b => b.Customer)  // ✅ ADDED
                     .FirstOrDefaultAsync(e => e.Id == eventId && e.OrganizerId == organizerId);
 
                 if (@event == null)
@@ -1114,12 +1116,12 @@ namespace EventHub.Controllers
                     }
                 };
 
-                // Booking details
+                // Booking details - ✅ NOW WORKS: Customer is not null
                 var bookingDetails = bookings
                     .Select(b => new
                     {
                         bookingReference = b.BookingReference ?? $"BK{b.Id}",
-                        customerName = b.Customer.Name,
+                        customerName = b.Customer.Name,  // ✅ SAFE: Customer is now loaded
                         bookingDate = b.BookingDate,
                         quantity = b.Quantity,
                         ticketStatus = b.Tickets.Count > 0
