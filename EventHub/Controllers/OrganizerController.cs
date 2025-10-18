@@ -1,5 +1,6 @@
 ﻿using EventHub.Data;
 using EventHub.Models.Entities;
+using EventHub.Services.Implementations;
 using EventHub.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -14,6 +15,7 @@ namespace EventHub.Controllers
         private readonly IQRCodeService _qrCodeService;
         private readonly ILogger<OrganizerController> _logger;
         private readonly IWebHostEnvironment _webHostEnvironment;
+        private readonly IBlobStorageService _blobStorageService;
 
         public OrganizerController(
             ApplicationDbContext context,
@@ -21,7 +23,8 @@ namespace EventHub.Controllers
             IUserService userService,
             IQRCodeService qrCodeService,
             ILogger<OrganizerController> logger,
-            IWebHostEnvironment webHostEnvironment)
+            IWebHostEnvironment webHostEnvironment,
+            IBlobStorageService blobStorageService)
         {
             _context = context;
             _eventService = eventService;
@@ -29,6 +32,7 @@ namespace EventHub.Controllers
             _qrCodeService = qrCodeService;
             _logger = logger;
             _webHostEnvironment = webHostEnvironment;
+            _blobStorageService = blobStorageService;
         }
 
         #region Authorization Helper
@@ -297,25 +301,26 @@ namespace EventHub.Controllers
                     return View(eventModel);
                 }
 
-                // Handle image upload
                 if (eventImage != null && eventImage.Length > 0)
                 {
-                    var fileName = $"event-{Guid.NewGuid()}{Path.GetExtension(eventImage.FileName)}";
-                    var uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "images", "events");
-                    Directory.CreateDirectory(uploadsFolder);
-                    var filePath = Path.Combine(uploadsFolder, fileName);
-
-                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    try
                     {
-                        await eventImage.CopyToAsync(stream);
+                        // Upload new image to Blob Storage
+                        eventModel.ImageUrl = await _blobStorageService.UploadImageAsync(eventImage);
+                        _logger.LogInformation($"✅ Event image updated to: {eventModel.ImageUrl}");
                     }
-
-                    eventModel.ImageUrl = $"/images/events/{fileName}";
+                    catch (Exception ex)
+                    {
+                        _logger.LogError($"❌ Image upload failed: {ex.Message}");
+                        TempData["ErrorMessage"] = "Failed to upload image. Please try again.";
+                        return RedirectToAction(nameof(MyEvents));
+                    }
                 }
-                else
+                else if (string.IsNullOrEmpty(eventModel.ImageUrl))
                 {
-                    eventModel.ImageUrl = "/images/events/default-event.jpg";
+                    eventModel.ImageUrl = "https://eventhubstorageonitha.blob.core.windows.net/eventhub-images/default-event.jpg";
                 }
+
 
                 // Set event properties
                 eventModel.OrganizerId = organizerId;

@@ -1,3 +1,4 @@
+using Azure.Storage.Blobs;
 using EventHub.Data;
 using EventHub.Services.Interfaces;
 using EventHub.Services.Implementations;
@@ -33,6 +34,12 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
 builder.Services.AddScoped<IQRCodeService, QRCodeService>();
+
+// Azure Blob Storage
+var blobStorageConnectionString = builder.Configuration.GetConnectionString("AzureBlobStorageConnectionString");
+builder.Services.AddSingleton(new BlobServiceClient(blobStorageConnectionString));
+builder.Services.AddScoped<IBlobStorageService, BlobStorageService>();
+
 
 // Configure session with enhanced security
 builder.Services.AddDistributedMemoryCache();
