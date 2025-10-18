@@ -11,6 +11,7 @@ namespace EventHub.Controllers
         private readonly ApplicationDbContext _context;
         private readonly IEventService _eventService;
         private readonly IUserService _userService;
+        private readonly IQRCodeService _qrCodeService;
         private readonly ILogger<OrganizerController> _logger;
         private readonly IWebHostEnvironment _webHostEnvironment;
 
@@ -18,12 +19,14 @@ namespace EventHub.Controllers
             ApplicationDbContext context,
             IEventService eventService,
             IUserService userService,
+            IQRCodeService qrCodeService,
             ILogger<OrganizerController> logger,
             IWebHostEnvironment webHostEnvironment)
         {
             _context = context;
             _eventService = eventService;
             _userService = userService;
+            _qrCodeService = qrCodeService;
             _logger = logger;
             _webHostEnvironment = webHostEnvironment;
         }
@@ -231,13 +234,13 @@ namespace EventHub.Controllers
                 ModelState.Remove("Organizer");
                 ModelState.Remove("Venue");
 
-                // ✅ FIX: Remove VenueId validation if creating new venue
+                // Remove VenueId validation if creating new venue
                 if (!string.IsNullOrEmpty(NewVenueName))
                 {
                     ModelState.Remove("VenueId");
                 }
 
-                // 🔧 FIX: Convert EventDate to UTC
+                // Convert EventDate to UTC
                 if (eventModel.EventDate.Kind == DateTimeKind.Unspecified)
                 {
                     eventModel.EventDate = DateTime.SpecifyKind(eventModel.EventDate, DateTimeKind.Utc);
@@ -571,7 +574,7 @@ namespace EventHub.Controllers
                     return Forbid();
                 }
 
-                // ✅ FIX: Check if event has ANY confirmed bookings (not just any bookings)
+                // Check if event has ANY confirmed bookings
                 var hasConfirmedBookings = await _context.Bookings
                     .AnyAsync(b => b.EventId == id && b.Status == BookingStatus.Confirmed);
 
@@ -584,7 +587,7 @@ namespace EventHub.Controllers
                     return RedirectToAction(nameof(MyEvents));
                 }
 
-                // ✅ Delete event image if exists (BEFORE deleting the event)
+                // Delete event image if exists
                 if (!string.IsNullOrEmpty(eventModel.ImageUrl) &&
                     eventModel.ImageUrl != "/images/events/default-event.jpg")
                 {
@@ -597,7 +600,7 @@ namespace EventHub.Controllers
                     }
                 }
 
-                // ✅ FIX: Actually DELETE the event, don't just mark as inactive
+                // Delete the event
                 _context.Events.Remove(eventModel);
                 await _context.SaveChangesAsync();
 
@@ -613,5 +616,176 @@ namespace EventHub.Controllers
             }
         }
         #endregion
+
+        #region QR Scanner
+        /// <summary>
+        /// GET: QR Scanner Page
+        /// </summary>
+        public IActionResult QRScanner()
+        {
+            if (!IsOrganizer())
+            {
+                TempData["ErrorMessage"] = "Access denied. Only organizers can access the QR scanner.";
+                return RedirectToAction("Login", "Account");
+            }
+
+            return View();
+        }
+
+        /// <summary>
+        /// POST: Verify Ticket via QR Code
+        /// </summary>
+        [HttpPost]
+        public async Task<IActionResult> VerifyTicket([FromBody] VerifyTicketRequest request)
+        {
+            try
+            {
+                // Parse QR code data format: TicketID|BookingID|EventID|IssueDate
+                var parts = request.QRCodeData.Split('|');
+
+                if (parts.Length < 3)
+                {
+                    return Json(new { success = false, status = "invalid", message = "Invalid QR code format" });
+                }
+
+                if (!int.TryParse(parts[0], out int ticketId) ||
+                    !int.TryParse(parts[1], out int bookingId) ||
+                    !int.TryParse(parts[2], out int eventId))
+                {
+                    return Json(new { success = false, status = "invalid", message = "Invalid ticket data" });
+                }
+
+                // Fetch ticket with related data
+                var ticket = await _context.Tickets
+                    .Include(t => t.Booking)
+                        .ThenInclude(b => b.Customer)
+                    .Include(t => t.Booking)
+                        .ThenInclude(b => b.Event)
+                            .ThenInclude(e => e.Venue)
+                    .FirstOrDefaultAsync(t => t.Id == ticketId && t.BookingId == bookingId);
+
+                if (ticket == null)
+                {
+                    return Json(new
+                    {
+                        success = false,
+                        status = "invalid",
+                        message = "Ticket not found in system"
+                    });
+                }
+
+                // Check if ticket already used
+                if (ticket.Status == TicketStatus.Used)
+                {
+                    return Json(new
+                    {
+                        success = false,
+                        status = "used",
+                        message = "This ticket has already been used",
+                        ticketData = new
+                        {
+                            ticketId = ticket.TicketNumber,
+                            customerName = ticket.Booking.Customer.Name,
+                            eventTitle = ticket.Booking.Event.Title,
+                            usedDate = ticket.UsedDate?.ToString("MMM dd, yyyy hh:mm tt")
+                        }
+                    });
+                }
+
+                // Check if ticket is valid
+                if (ticket.Status != TicketStatus.Valid)
+                {
+                    return Json(new
+                    {
+                        success = false,
+                        status = "expired",
+                        message = "Ticket is not valid",
+                        ticketData = new
+                        {
+                            ticketId = ticket.TicketNumber,
+                            status = ticket.Status.ToString()
+                        }
+                    });
+                }
+
+                // Check if event date has passed
+                if (ticket.Booking.Event.EventDate.Date < DateTime.UtcNow.Date)
+                {
+                    return Json(new
+                    {
+                        success = false,
+                        status = "expired",
+                        message = "Event date has passed",
+                        ticketData = new
+                        {
+                            eventDate = ticket.Booking.Event.EventDate.ToString("MMM dd, yyyy")
+                        }
+                    });
+                }
+
+                // Mark ticket as used
+                ticket.Status = TicketStatus.Used;
+                ticket.UsedDate = DateTime.UtcNow;
+                await _context.SaveChangesAsync();
+
+                // Return success
+                return Json(new
+                {
+                    success = true,
+                    status = "valid",
+                    message = "Valid ticket - Entry allowed",
+                    ticketData = new
+                    {
+                        ticketId = ticket.TicketNumber,
+                        ticketType = ticket.SeatNumber ?? "General Admission",
+                        customerName = ticket.Booking.Customer.Name,
+                        customerEmail = ticket.Booking.Customer.Email,
+                        eventTitle = ticket.Booking.Event.Title,
+                        eventDate = ticket.Booking.Event.EventDate.ToString("MMM dd, yyyy"),
+                        venue = ticket.Booking.Event.Venue.Name,
+                        price = $"Rs. {ticket.Booking.TotalAmount / ticket.Booking.Quantity:N0}",
+                        purchaseDate = ticket.Booking.BookingDate.ToString("MMM dd, yyyy"),
+                        verificationTime = DateTime.UtcNow.ToString("hh:mm:ss tt")
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error verifying ticket");
+                return Json(new
+                {
+                    success = false,
+                    status = "error",
+                    message = "An error occurred while verifying the ticket"
+                });
+            }
+        }
+
+        /// <summary>
+        /// GET: Ticket Verification Details Page
+        /// </summary>
+        public async Task<IActionResult> TicketVerification(string ticketCode)
+        {
+            if (!IsOrganizer())
+            {
+                TempData["ErrorMessage"] = "Access denied.";
+                return RedirectToAction("Login", "Account");
+            }
+
+            if (string.IsNullOrEmpty(ticketCode))
+            {
+                TempData["ErrorMessage"] = "No ticket code provided";
+                return RedirectToAction("QRScanner");
+            }
+
+            ViewBag.TicketCode = ticketCode;
+            return View();
+        }
+        #endregion
+    }
+
+    public class VerifyTicketRequest
+    {
+        public string QRCodeData { get; set; } = string.Empty;
     }
 }

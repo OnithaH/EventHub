@@ -1,0 +1,514 @@
+﻿@{
+    ViewData["Title"] = "QR Ticket Scanner";
+    var userName = Context.Session.GetString("UserName") ?? "Organizer";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - EventHub</title>
+
+    <!-- Bootstrap & Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+
+    <!-- QR Scanner Library -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- Custom QR Scanner CSS -->
+    <link rel="stylesheet" href="~/css/qr-scanner.css" asp-append-version="true" />
+</head>
+
+<body>
+    <!-- Scanner Header with Green Theme -->
+    <nav class="navbar navbar-expand-lg scanner-navbar">
+        <div class="container-fluid px-4">
+            <!-- Brand with Scanner Icon -->
+            <a class="navbar-brand scanner-brand d-flex align-items-center" asp-controller="Organizer" asp-action="Dashboard">
+                <div class="brand-icon-scanner me-2">
+                    <i class="bi bi-qr-code-scan"></i>
+                </div>
+                <span class="brand-text-scanner">EventHub</span>
+                <span class="scanner-badge">QR Scanner</span>
+            </a>
+
+            <!-- Mobile Toggle -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <!-- Navigation -->
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link scanner-nav-link" asp-controller="Organizer" asp-action="Dashboard">
+                            <i class="bi bi-speedometer2 me-1"></i>Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle user-menu-scanner" href="#" id="userDropdown" role="button"
+                           data-bs-toggle="dropdown">
+                            <div class="user-avatar-scanner">
+                                <i class="bi bi-person-circle"></i>
+                            </div>
+                            <span class="user-name-scanner">@userName</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                                <a class="dropdown-item" asp-controller="Organizer" asp-action="Dashboard">
+                                    <i class="bi bi-speedometer2 me-2"></i>Dashboard
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" asp-controller="Account" asp-action="Profile">
+                                    <i class="bi bi-person me-2"></i>Profile
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form method="post" asp-controller="Account" asp-action="Logout">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="dropdown-item">
+                                        <i class="bi bi-box-arrow-right me-2"></i>Logout
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Scanner Header Section -->
+    <section class="scanner-header">
+        <div class="container">
+            <div class="scanner-header-content">
+                <h1 class="scanner-title">QR Ticket Scanner</h1>
+                <p class="scanner-subtitle">Verify event tickets with QR code scanning</p>
+                <div class="scanner-status">
+                    <div class="status-indicator"></div>
+                    <span id="scannerStatus">Scanner Ready</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Scanner Container -->
+    <section class="scanner-container">
+        <div class="container">
+            <div class="scanner-main">
+                <!-- Camera Container -->
+                <div class="camera-container" id="cameraContainer">
+                    <div id="qr-reader"></div>
+                    <div class="camera-overlay">
+                        <div class="scan-line"></div>
+                        <div class="scan-corners"></div>
+                    </div>
+                    <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+                        <div class="loading-spinner"></div>
+                        <p>Initializing camera...</p>
+                    </div>
+                </div>
+
+                <!-- Camera Permissions Card -->
+                <div class="permissions-card" id="permissionsCard" style="display: none;">
+                    <h6><i class="bi bi-camera-video me-2"></i>Camera Access Required</h6>
+                    <p>Please allow camera access to scan QR codes. Click "Start Scanner" and allow camera permissions when prompted.</p>
+                </div>
+
+                <!-- Scanner Controls -->
+                <div class="scanner-controls">
+                    <div class="control-group">
+                        <button class="btn btn-scanner btn-start" id="startButton" onclick="startScanner()">
+                            <i class="bi bi-play-circle"></i>
+                            Start Scanner
+                        </button>
+                        <button class="btn btn-scanner btn-stop" id="stopButton" onclick="stopScanner()" style="display: none;">
+                            <i class="bi bi-stop-circle"></i>
+                            Stop Scanner
+                        </button>
+                    </div>
+                    <div class="control-group">
+                        <button class="btn btn-scanner btn-switch" id="switchButton" onclick="switchCamera()" style="display: none;">
+                            <i class="bi bi-camera-reels"></i>
+                            Switch Camera
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Manual Input -->
+                <div class="manual-input">
+                    <h6>
+                        <i class="bi bi-keyboard"></i>
+                        Manual Ticket Code Entry
+                    </h6>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="manualCode"
+                               placeholder="Enter ticket code manually...">
+                        <button class="btn btn-outline-success" onclick="verifyManualCode()">
+                            <i class="bi bi-check-circle"></i>
+                            Verify
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Scan Results -->
+                <div class="scan-results" id="scanResults"></div>
+
+                <!-- Statistics -->
+                <div class="scan-stats">
+                    <h6 class="text-center mb-3">
+                        <i class="bi bi-graph-up me-2"></i>
+                        Scanning Session Statistics
+                    </h6>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <span class="stat-value" id="totalScans">0</span>
+                            <span class="stat-label">Total Scans</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value" id="validTickets">0</span>
+                            <span class="stat-label">Valid Tickets</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value" id="invalidTickets">0</span>
+                            <span class="stat-label">Invalid Tickets</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value" id="usedTickets">0</span>
+                            <span class="stat-label">Already Used</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        let html5QrcodeScanner = null;
+        let isScanning = false;
+        let availableCameras = [];
+        let currentCamera = 0;
+
+        const scanStats = {
+            totalScans: 0,
+            validTickets: 0,
+            invalidTickets: 0,
+            usedTickets: 0
+        };
+
+        document.addEventListener('DOMContentLoaded', function () {
+            getCameraDevices();
+            checkCameraPermissions();
+        });
+
+        async function getCameraDevices() {
+            try {
+                const devices = await Html5Qrcode.getCameras();
+                availableCameras = devices;
+
+                if (devices && devices.length > 0) {
+                    console.log(`Found ${devices.length} camera(s)`);
+                    if (devices.length > 1) {
+                        document.getElementById('switchButton').style.display = 'block';
+                    }
+                } else {
+                    showError('No cameras found on this device.');
+                }
+            } catch (err) {
+                console.error('Error getting cameras:', err);
+                showError('Unable to access camera devices.');
+            }
+        }
+
+        async function checkCameraPermissions() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                stream.getTracks().forEach(track => track.stop());
+                document.getElementById('permissionsCard').style.display = 'none';
+            } catch (err) {
+                document.getElementById('permissionsCard').style.display = 'block';
+            }
+        }
+
+        function startScanner() {
+            if (availableCameras.length === 0) {
+                showError('No cameras available. Please check your device.');
+                return;
+            }
+
+            document.getElementById('loadingOverlay').style.display = 'flex';
+            document.getElementById('scannerStatus').textContent = 'Initializing Scanner...';
+
+            const cameraId = availableCameras[currentCamera].id;
+
+            html5QrcodeScanner = new Html5Qrcode("qr-reader");
+
+            const config = {
+                fps: 10,
+                qrbox: { width: 250, height: 250 },
+                aspectRatio: 1.0
+            };
+
+            html5QrcodeScanner.start(
+                cameraId,
+                config,
+                onScanSuccess,
+                onScanFailure
+            ).then(() => {
+                isScanning = true;
+                document.getElementById('loadingOverlay').style.display = 'none';
+                document.getElementById('startButton').style.display = 'none';
+                document.getElementById('stopButton').style.display = 'block';
+                document.getElementById('scannerStatus').textContent = 'Scanner Active - Ready to Scan';
+                document.getElementById('permissionsCard').style.display = 'none';
+                playSound('start');
+            }).catch(err => {
+                console.error('Error starting scanner:', err);
+                document.getElementById('loadingOverlay').style.display = 'none';
+                showError('Failed to start camera. Please check permissions and try again.');
+            });
+        }
+
+        function stopScanner() {
+            if (html5QrcodeScanner && isScanning) {
+                html5QrcodeScanner.stop().then(() => {
+                    isScanning = false;
+                    document.getElementById('startButton').style.display = 'block';
+                    document.getElementById('stopButton').style.display = 'none';
+                    document.getElementById('scannerStatus').textContent = 'Scanner Stopped';
+                    playSound('stop');
+                }).catch(err => {
+                    console.error('Error stopping scanner:', err);
+                });
+            }
+        }
+
+        function switchCamera() {
+            if (availableCameras.length > 1) {
+                stopScanner();
+                setTimeout(() => {
+                    currentCamera = (currentCamera + 1) % availableCameras.length;
+                    startScanner();
+                }, 1000);
+            }
+        }
+
+        function onScanSuccess(decodedText, decodedResult) {
+            processTicketCode(decodedText);
+            playSound('scan');
+
+            if (navigator.vibrate) {
+                navigator.vibrate(200);
+            }
+        }
+
+        function onScanFailure(error) {
+            // Silent failure - happens frequently during scanning
+        }
+
+        function verifyManualCode() {
+            const code = document.getElementById('manualCode').value.trim();
+            if (code) {
+                processTicketCode(code);
+                document.getElementById('manualCode').value = '';
+            } else {
+                Swal.fire({
+                    title: 'Invalid Input',
+                    text: 'Please enter a ticket code.',
+                    icon: 'warning',
+                    confirmButtonColor: '#10b981'
+                });
+            }
+        }
+
+        async function processTicketCode(ticketCode) {
+            scanStats.totalScans++;
+
+            try {
+                const response = await fetch('@Url.Action("VerifyTicket", "Organizer")', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                    },
+                    body: JSON.stringify({ qrCodeData: ticketCode })
+                });
+
+                const result = await response.json();
+
+                if (result.status === 'valid') {
+                    scanStats.validTickets++;
+                    showTicketResult(ticketCode, result.ticketData, 'valid');
+                } else if (result.status === 'used') {
+                    scanStats.usedTickets++;
+                    showTicketResult(ticketCode, result.ticketData, 'used');
+                } else {
+                    scanStats.invalidTickets++;
+                    showTicketResult(ticketCode, result.ticketData, result.status);
+                }
+            } catch (error) {
+                console.error('Error verifying ticket:', error);
+                scanStats.invalidTickets++;
+                showTicketResult(ticketCode, null, 'error');
+            }
+
+            updateStatistics();
+        }
+
+        function showTicketResult(ticketCode, ticket, status) {
+            const resultsContainer = document.getElementById('scanResults');
+
+            let statusIcon, statusText, statusClass, borderColor;
+
+            switch (status) {
+                case 'valid':
+                    statusIcon = 'check-circle-fill';
+                    statusText = 'VALID TICKET';
+                    statusClass = 'result-valid';
+                    borderColor = '#10b981';
+                    playSound('valid');
+                    break;
+                case 'used':
+                    statusIcon = 'exclamation-triangle-fill';
+                    statusText = 'ALREADY USED';
+                    statusClass = 'result-used';
+                    borderColor = '#f59e0b';
+                    playSound('used');
+                    break;
+                case 'invalid':
+                case 'expired':
+                case 'error':
+                default:
+                    statusIcon = 'x-circle-fill';
+                    statusText = 'INVALID TICKET';
+                    statusClass = 'result-invalid';
+                    borderColor = '#ef4444';
+                    playSound('invalid');
+            }
+
+            const resultCard = `
+                <div class="result-card ${statusClass}" style="border-color: ${borderColor};">
+                    <div class="result-header">
+                        <i class="bi bi-${statusIcon}"></i>
+                        <h5>${statusText}</h5>
+                    </div>
+                    ${ticket ? `
+                        <div class="result-details">
+                            <div class="detail-row">
+                                <span class="detail-label">Customer:</span>
+                                <span class="detail-value">${ticket.customerName}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Event:</span>
+                                <span class="detail-value">${ticket.eventTitle}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Ticket ID:</span>
+                                <span class="detail-value">${ticket.ticketId}</span>
+                            </div>
+                            ${ticket.verificationTime ? `
+                                <div class="detail-row">
+                                    <span class="detail-label">Verified:</span>
+                                    <span class="detail-value">${ticket.verificationTime}</span>
+                                </div>
+                            ` : ''}
+                        </div>
+                    ` : `
+                        <div class="result-message">
+                            <p>Ticket code: ${ticketCode}</p>
+                        </div>
+                    `}
+                    <div class="result-timestamp">${new Date().toLocaleTimeString()}</div>
+                </div>
+            `;
+
+            resultsContainer.innerHTML = resultCard + resultsContainer.innerHTML;
+
+            // Limit to last 5 results
+            const cards = resultsContainer.querySelectorAll('.result-card');
+            if (cards.length > 5) {
+                cards[cards.length - 1].remove();
+            }
+        }
+
+        function updateStatistics() {
+            document.getElementById('totalScans').textContent = scanStats.totalScans;
+            document.getElementById('validTickets').textContent = scanStats.validTickets;
+            document.getElementById('invalidTickets').textContent = scanStats.invalidTickets;
+            document.getElementById('usedTickets').textContent = scanStats.usedTickets;
+        }
+
+        function playSound(type) {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+
+                let frequency, duration;
+
+                switch (type) {
+                    case 'valid':
+                        frequency = 800;
+                        duration = 200;
+                        break;
+                    case 'invalid':
+                    case 'expired':
+                        frequency = 300;
+                        duration = 500;
+                        break;
+                    case 'used':
+                        frequency = 500;
+                        duration = 300;
+                        break;
+                    case 'scan':
+                        frequency = 600;
+                        duration = 100;
+                        break;
+                    case 'start':
+                        frequency = 700;
+                        duration = 150;
+                        break;
+                    case 'stop':
+                        frequency = 400;
+                        duration = 150;
+                        break;
+                    default:
+                        return;
+                }
+
+                oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+                gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + duration / 1000);
+            } catch (err) {
+                console.log('Audio not supported');
+            }
+        }
+
+        function showError(message) {
+            Swal.fire({
+                title: 'Error',
+                text: message,
+                icon: 'error',
+                confirmButtonColor: '#ef4444'
+            });
+        }
+    </script>
+
+    @Html.AntiForgeryToken()
+</body>
+</html>

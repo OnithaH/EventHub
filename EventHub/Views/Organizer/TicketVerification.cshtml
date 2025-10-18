@@ -1,0 +1,404 @@
+﻿@{
+    ViewData["Title"] = "Ticket Verification Results";
+    var userName = Context.Session.GetString("UserName") ?? "Organizer";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - EventHub</title>
+
+    <!-- Bootstrap & Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- Custom Ticket Verification CSS -->
+    <link rel="stylesheet" href="~/css/ticket-verification.css" asp-append-version="true" />
+</head>
+
+<body>
+    <!-- Verification Header with Green Theme -->
+    <nav class="navbar navbar-expand-lg verification-navbar">
+        <div class="container-fluid px-4">
+            <!-- Brand -->
+            <a class="navbar-brand verification-brand d-flex align-items-center" asp-controller="Organizer" asp-action="Dashboard">
+                <div class="brand-icon-verification me-2">
+                    <i class="bi bi-shield-check"></i>
+                </div>
+                <span class="brand-text-verification">EventHub</span>
+                <span class="verification-badge">Verification</span>
+            </a>
+
+            <!-- Mobile Toggle -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <!-- Navigation -->
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link verification-nav-link" asp-controller="Organizer" asp-action="QRScanner">
+                            <i class="bi bi-qr-code-scan me-1"></i>Back to Scanner
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link verification-nav-link" asp-controller="Organizer" asp-action="Dashboard">
+                            <i class="bi bi-speedometer2 me-1"></i>Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle user-menu-verification" href="#" id="userDropdown" role="button"
+                           data-bs-toggle="dropdown">
+                            <div class="user-avatar-verification">
+                                <i class="bi bi-person-circle"></i>
+                            </div>
+                            <span class="user-name-verification">@userName</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                                <a class="dropdown-item" asp-controller="Organizer" asp-action="Dashboard">
+                                    <i class="bi bi-speedometer2 me-2"></i>Dashboard
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" asp-controller="Account" asp-action="Profile">
+                                    <i class="bi bi-person me-2"></i>Profile
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form method="post" asp-controller="Account" asp-action="Logout">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="dropdown-item">
+                                        <i class="bi bi-box-arrow-right me-2"></i>Logout
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Verification Header Section -->
+    <section class="verification-header">
+        <div class="container">
+            <div class="verification-header-content">
+                <h1 class="verification-title">Ticket Verification Results</h1>
+                <p class="verification-subtitle">Complete ticket validation and entry details</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Loading Spinner -->
+    <div class="loading-spinner" id="loadingSpinner">
+        <div class="spinner"></div>
+        <p>Verifying ticket...</p>
+    </div>
+
+    <!-- Verification Content -->
+    <section class="verification-content">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <!-- Verification Result Card -->
+                    <div class="result-card" id="resultCard" style="display: none;">
+                        <!-- Status Indicator -->
+                        <div class="status-indicator" id="statusIndicator">
+                            <div class="status-icon" id="statusIcon">
+                                <i class="bi bi-check-circle-fill"></i>
+                            </div>
+                            <h2 class="status-title" id="statusTitle">Valid Ticket</h2>
+                            <p class="status-message" id="statusMessage">This ticket is valid for entry</p>
+                        </div>
+
+                        <!-- Ticket Information -->
+                        <div class="ticket-info">
+                            <!-- Event Information -->
+                            <div class="info-section">
+                                <h5 class="info-title">
+                                    <i class="bi bi-calendar-event"></i>
+                                    Event Information
+                                </h5>
+                                <div class="info-grid">
+                                    <div class="info-item">
+                                        <span class="info-label">Event Name</span>
+                                        <span class="info-value" id="eventTitle">Loading...</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Event Date</span>
+                                        <span class="info-value" id="eventDate">Loading...</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Venue</span>
+                                        <span class="info-value" id="eventVenue">Loading...</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Customer Information -->
+                            <div class="info-section">
+                                <h5 class="info-title">
+                                    <i class="bi bi-person-fill"></i>
+                                    Customer Information
+                                </h5>
+                                <div class="info-grid">
+                                    <div class="info-item">
+                                        <span class="info-label">Name</span>
+                                        <span class="info-value" id="customerName">Loading...</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Email</span>
+                                        <span class="info-value" id="customerEmail">Loading...</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Ticket Details -->
+                            <div class="info-section">
+                                <h5 class="info-title">
+                                    <i class="bi bi-ticket-perforated-fill"></i>
+                                    Ticket Details
+                                </h5>
+                                <div class="info-grid">
+                                    <div class="info-item">
+                                        <span class="info-label">Ticket ID</span>
+                                        <span class="info-value" id="ticketId">Loading...</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Ticket Type</span>
+                                        <span class="info-value" id="ticketType">Loading...</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Price</span>
+                                        <span class="info-value" id="ticketPrice">Loading...</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Purchase Date</span>
+                                        <span class="info-value" id="purchaseDate">Loading...</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Verification Details -->
+                            <div class="info-section">
+                                <h5 class="info-title">
+                                    <i class="bi bi-clock-history"></i>
+                                    Verification Details
+                                </h5>
+                                <div class="info-grid">
+                                    <div class="info-item">
+                                        <span class="info-label">Verified By</span>
+                                        <span class="info-value" id="verifiedBy">@userName</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Verification Time</span>
+                                        <span class="info-value" id="verificationTime">Loading...</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Status</span>
+                                        <span class="info-value" id="ticketStatus">
+                                            <span class="status-badge" id="statusBadge">Valid</span>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="action-buttons">
+                            <button class="btn btn-verification btn-primary" onclick="printTicket()">
+                                <i class="bi bi-printer"></i>
+                                Print Details
+                            </button>
+                            <button class="btn btn-verification btn-success" onclick="allowEntry()">
+                                <i class="bi bi-check-lg"></i>
+                                Allow Entry
+                            </button>
+                            <a class="btn btn-verification btn-secondary" asp-controller="Organizer" asp-action="QRScanner">
+                                <i class="bi bi-arrow-left"></i>
+                                Back to Scanner
+                            </a>
+                        </div>
+
+                        <!-- Verification Log -->
+                        <div class="verification-log">
+                            <h6>
+                                <i class="bi bi-journal-text me-2"></i>
+                                Verification Log
+                            </h6>
+                            <div class="log-entries" id="logEntries">
+                                <!-- Log entries will be added here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Error State -->
+                    <div class="error-state" id="errorState" style="display: none;">
+                        <div class="error-icon">
+                            <i class="bi bi-exclamation-triangle-fill"></i>
+                        </div>
+                        <h3>Verification Failed</h3>
+                        <p id="errorMessage">Unable to verify ticket</p>
+                        <a class="btn btn-verification btn-primary" asp-controller="Organizer" asp-action="QRScanner">
+                            <i class="bi bi-arrow-left me-2"></i>Back to Scanner
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Get ticket code from URL parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const ticketCode = urlParams.get('ticketCode') || '@ViewBag.TicketCode';
+
+        document.addEventListener('DOMContentLoaded', function () {
+            if (ticketCode) {
+                verifyTicket(ticketCode);
+            } else {
+                showError('No ticket code provided');
+            }
+        });
+
+        async function verifyTicket(code) {
+            document.getElementById('loadingSpinner').style.display = 'flex';
+
+            try {
+                const response = await fetch('@Url.Action("VerifyTicket", "Organizer")', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': '@Html.AntiForgeryToken()'
+                    },
+                    body: JSON.stringify({ qrCodeData: code })
+                });
+
+                const result = await response.json();
+
+                document.getElementById('loadingSpinner').style.display = 'none';
+
+                if (result.success && result.ticketData) {
+                    displayTicketDetails(result.ticketData, result.status);
+                } else {
+                    showError(result.message || 'Ticket verification failed');
+                }
+            } catch (error) {
+                console.error('Error verifying ticket:', error);
+                document.getElementById('loadingSpinner').style.display = 'none';
+                showError('An error occurred while verifying the ticket');
+            }
+        }
+
+        function displayTicketDetails(ticket, status) {
+            // Update status indicator
+            const statusIcon = document.getElementById('statusIcon');
+            const statusTitle = document.getElementById('statusTitle');
+            const statusMessage = document.getElementById('statusMessage');
+            const statusIndicator = document.getElementById('statusIndicator');
+
+            if (status === 'valid') {
+                statusIcon.innerHTML = '<i class="bi bi-check-circle-fill"></i>';
+                statusTitle.textContent = 'VALID TICKET';
+                statusMessage.textContent = 'This ticket is valid for entry';
+                statusIndicator.className = 'status-indicator status-valid';
+            } else if (status === 'used') {
+                statusIcon.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i>';
+                statusTitle.textContent = 'TICKET ALREADY USED';
+                statusMessage.textContent = 'This ticket has been previously scanned';
+                statusIndicator.className = 'status-indicator status-used';
+            } else {
+                statusIcon.innerHTML = '<i class="bi bi-x-circle-fill"></i>';
+                statusTitle.textContent = 'INVALID TICKET';
+                statusMessage.textContent = 'This ticket is not valid';
+                statusIndicator.className = 'status-indicator status-invalid';
+            }
+
+            // Update ticket information
+            document.getElementById('eventTitle').textContent = ticket.eventTitle || 'N/A';
+            document.getElementById('eventDate').textContent = ticket.eventDate || 'N/A';
+            document.getElementById('eventVenue').textContent = ticket.venue || 'N/A';
+            document.getElementById('customerName').textContent = ticket.customerName || 'N/A';
+            document.getElementById('customerEmail').textContent = ticket.customerEmail || 'N/A';
+            document.getElementById('ticketId').textContent = ticket.ticketId || 'N/A';
+            document.getElementById('ticketType').textContent = ticket.ticketType || 'General Admission';
+            document.getElementById('ticketPrice').textContent = ticket.price || 'N/A';
+            document.getElementById('purchaseDate').textContent = ticket.purchaseDate || 'N/A';
+            document.getElementById('verificationTime').textContent = ticket.verificationTime || new Date().toLocaleTimeString();
+
+            // Update status badge
+            const statusBadge = document.getElementById('statusBadge');
+            if (status === 'valid') {
+                statusBadge.textContent = 'Valid';
+                statusBadge.className = 'status-badge badge-valid';
+            } else if (status === 'used') {
+                statusBadge.textContent = 'Used';
+                statusBadge.className = 'status-badge badge-used';
+            } else {
+                statusBadge.textContent = 'Invalid';
+                statusBadge.className = 'status-badge badge-invalid';
+            }
+
+            // Add log entry
+            addLogEntry(status, ticket.ticketId);
+
+            // Show result card
+            document.getElementById('resultCard').style.display = 'block';
+        }
+
+        function showError(message) {
+            document.getElementById('errorMessage').textContent = message;
+            document.getElementById('errorState').style.display = 'block';
+        }
+
+        function addLogEntry(status, ticketId) {
+            const logEntries = document.getElementById('logEntries');
+            const now = new Date();
+            const timeString = now.toLocaleTimeString();
+            const dateString = now.toLocaleDateString();
+
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerHTML = `
+                <div class="log-icon ${status === 'valid' ? 'log-success' : status === 'used' ? 'log-warning' : 'log-error'}">
+                    <i class="bi bi-${status === 'valid' ? 'check-circle' : status === 'used' ? 'exclamation-circle' : 'x-circle'}"></i>
+                </div>
+                <div class="log-details">
+                    <div class="log-action">${status === 'valid' ? 'Ticket Verified Successfully' : status === 'used' ? 'Ticket Already Used' : 'Ticket Verification Failed'}</div>
+                    <div class="log-time">${dateString} at ${timeString}</div>
+                    <div class="log-info">Ticket ID: ${ticketId}</div>
+                </div>
+            `;
+
+            logEntries.insertBefore(entry, logEntries.firstChild);
+        }
+
+        function printTicket() {
+            window.print();
+        }
+
+        function allowEntry() {
+            Swal.fire({
+                title: 'Entry Allowed',
+                text: 'Customer has been granted entry to the event',
+                icon: 'success',
+                confirmButtonColor: '#10b981',
+                confirmButtonText: 'Continue'
+            }).then(() => {
+                window.location.href = '@Url.Action("QRScanner", "Organizer")';
+            });
+        }
+    </script>
+</body>
+</html>
