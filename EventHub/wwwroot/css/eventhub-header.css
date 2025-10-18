@@ -309,7 +309,7 @@ body {
     }
 }
 
-/* User Menu - From user-header.html */
+/* User Menu  */
 .user-menu {
     display: flex;
     align-items: center;
@@ -337,6 +337,8 @@ body {
 }
 
 .user-dropdown {
+    position: absolute; 
+    z-index: 999999;
     border-radius: 1rem;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
     border: 1px solid #e2e8f0;
