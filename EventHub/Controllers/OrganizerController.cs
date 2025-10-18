@@ -692,8 +692,8 @@ namespace EventHub.Controllers
                     });
                 }
 
-                // Check if ticket is valid
-                if (ticket.Status != TicketStatus.Valid)
+                // Check if ticket is valid (use Active enum value)
+                if (ticket.Status != TicketStatus.Active)
                 {
                     return Json(new
                     {
