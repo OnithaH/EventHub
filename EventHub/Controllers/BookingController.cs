@@ -453,7 +453,7 @@ namespace EventHub.Controllers
                     Phone = customer.Phone ?? "",
                     AvailableLoyaltyPoints = customer.LoyaltyPoints,
                     LoyaltyPointsUsed = 0,
-                    PointsToEarn = (int)totalAmount // 1 point per dollar
+                    PointsToEarn = (int)(totalAmount / 100) 
                 };
 
                 return View(viewModel);

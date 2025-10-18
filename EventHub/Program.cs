@@ -3,9 +3,23 @@ using EventHub.Services.Interfaces;
 using EventHub.Services.Implementations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.HttpOverrides;
+using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
+
+var cultureInfo = new CultureInfo("en-LK"); // Sri Lanka - English
+cultureInfo.NumberFormat.CurrencySymbol = "Rs.";
+cultureInfo.NumberFormat.CurrencyDecimalDigits = 2;
+cultureInfo.NumberFormat.CurrencyDecimalSeparator = ".";
+cultureInfo.NumberFormat.CurrencyGroupSeparator = ",";
+cultureInfo.NumberFormat.CurrencyPositivePattern = 2; // Rs. 1,234.56 format
+
+CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
+CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
+
+
 // Add services to the container
 builder.Services.AddControllersWithViews();
 

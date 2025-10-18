@@ -246,12 +246,102 @@
             <!-- Upcoming Bookings Tab -->
             <div class="tab-pane fade" id="upcoming-bookings">
                 @{
-                    var upcomingBookings = Model.Bookings?.Where(b => b.EventDate > DateTime.UtcNow).ToList();
+                    var upcomingBookings = Model.Bookings?.Where(b => b.EventDate > DateTime.UtcNow).OrderBy(b => b.EventDate).ToList();
                 }
                 @if (upcomingBookings != null && upcomingBookings.Any())
                 {
-                    <p class="text-muted">Showing @upcomingBookings.Count upcoming event(s)</p>
-                    @* Same booking card structure as "All Bookings" *@
+                    <p class="text-muted mb-4">Showing @upcomingBookings.Count upcoming event(s)</p>
+
+                    @* RENDER THE BOOKING CARDS *@
+                    @foreach (var booking in upcomingBookings)
+                    {
+                        <div class="booking-card">
+                            <div class="booking-card-body d-flex">
+                                @if (!string.IsNullOrEmpty(booking.EventImageUrl))
+                                {
+                                    <img src="@booking.EventImageUrl" alt="@booking.EventTitle" class="booking-image">
+                                }
+                                else
+                                {
+                                    <div class="booking-placeholder">
+                                        <i class="bi bi-calendar-event display-4 text-muted"></i>
+                                    </div>
+                                }
+
+                                <div class="booking-details">
+                                    <div class="booking-header">
+                                        <div>
+                                            <h3 class="booking-title">@booking.EventTitle</h3>
+                                            <div class="booking-meta">
+                                                <div class="booking-meta-item">
+                                                    <i class="bi bi-calendar3"></i>
+                                                    <span>@booking.EventDate.ToString("MMM dd, yyyy 'at' hh:mm tt")</span>
+                                                </div>
+                                                <div class="booking-meta-item">
+                                                    <i class="bi bi-geo-alt"></i>
+                                                    <span>@booking.VenueName</span>
+                                                </div>
+                                                <div class="booking-meta-item">
+                                                    <i class="bi bi-ticket-perforated"></i>
+                                                    <span>@booking.Quantity Ticket(s)</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="booking-price">
+                                            Rs. @booking.TotalAmount.ToString("N0")
+                                        </div>
+                                    </div>
+
+                                    <div class="booking-info-row">
+                                        <div class="info-group">
+                                            <span class="info-label">Booking ID</span>
+                                            <span class="info-value">#@booking.BookingReference</span>
+                                        </div>
+                                        <div class="info-group">
+                                            <span class="info-label">Booking Date</span>
+                                            <span class="info-value">@booking.BookingDate.ToString("MMM dd, yyyy")</span>
+                                        </div>
+                                        <div class="info-group">
+                                            <span class="info-label">Status</span>
+                                            <div class="badge-status @(booking.Status == EventHub.Models.Entities.BookingStatus.Confirmed ? "badge-confirmed" :
+                                                                                                             booking.Status == EventHub.Models.Entities.BookingStatus.Pending ? "badge-pending" :
+                                                                                                             "badge-secondary")">
+                                        @booking.Status
+                                    </div>
+                                </div>
+                            </div>
+
+                                    <div class="booking-actions mt-3">
+                                        <a href="@Url.Action("Details", "Booking", new { id = booking.Id })"
+                                           class="btn btn-primary btn-action">
+                                            <i class="bi bi-eye me-1"></i>View Details
+                                        </a>
+
+                                @if (booking.Status == EventHub.Models.Entities.BookingStatus.Confirmed)
+                                        {
+                                            <a href="@Url.Action("ViewTickets", "Ticket", new { bookingId = booking.Id })"
+                                               class="btn btn-success btn-action">
+                                                <i class="bi bi-qr-code me-1"></i>View Tickets
+                                            </a>
+                                            <a href="@Url.Action("DownloadTickets", "Ticket", new { bookingId = booking.Id })"
+                                               class="btn btn-outline-primary btn-action">
+                                                <i class="bi bi-download me-1"></i>Download
+                                            </a>
+                                        }
+
+                                        @if (booking.Status == EventHub.Models.Entities.BookingStatus.Confirmed &&
+                                                                        booking.EventDate > DateTime.UtcNow.AddDays(7))
+                                        {
+                                            <button class="btn btn-outline-danger btn-action"
+                                                    onclick="cancelBooking(@booking.Id, '@booking.EventTitle')">
+                                                <i class="bi bi-x-circle me-1"></i>Cancel Booking
+                                            </button>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
                 }
                 else
                 {
@@ -269,12 +359,94 @@
             <!-- Past Bookings Tab -->
             <div class="tab-pane fade" id="past-bookings">
                 @{
-                    var pastBookings = Model.Bookings?.Where(b => b.EventDate <= DateTime.UtcNow).ToList();
+                    var pastBookings = Model.Bookings?.Where(b => b.EventDate <= DateTime.UtcNow).OrderByDescending(b => b.EventDate).ToList();
                 }
                 @if (pastBookings != null && pastBookings.Any())
                 {
-                    <p class="text-muted">Showing @pastBookings.Count past event(s)</p>
-                    @* Same booking card structure as "All Bookings" *@
+                    <p class="text-muted mb-4">Showing @pastBookings.Count past event(s)</p>
+
+                    @* RENDER THE BOOKING CARDS *@
+                    @foreach (var booking in pastBookings)
+                    {
+                        <div class="booking-card">
+                            <div class="booking-card-body d-flex">
+                                @if (!string.IsNullOrEmpty(booking.EventImageUrl))
+                                {
+                                    <img src="@booking.EventImageUrl" alt="@booking.EventTitle" class="booking-image">
+                                }
+                                else
+                                {
+                                    <div class="booking-placeholder">
+                                        <i class="bi bi-calendar-event display-4 text-muted"></i>
+                                    </div>
+                                }
+
+                                <div class="booking-details">
+                                    <div class="booking-header">
+                                        <div>
+                                            <h3 class="booking-title">@booking.EventTitle</h3>
+                                            <div class="booking-meta">
+                                                <div class="booking-meta-item">
+                                                    <i class="bi bi-calendar3"></i>
+                                                    <span>@booking.EventDate.ToString("MMM dd, yyyy 'at' hh:mm tt")</span>
+                                                </div>
+                                                <div class="booking-meta-item">
+                                                    <i class="bi bi-geo-alt"></i>
+                                                    <span>@booking.VenueName</span>
+                                                </div>
+                                                <div class="booking-meta-item">
+                                                    <i class="bi bi-ticket-perforated"></i>
+                                                    <span>@booking.Quantity Ticket(s)</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="booking-price">
+                                            Rs. @booking.TotalAmount.ToString("N0")
+                                        </div>
+                                    </div>
+
+                                    <div class="booking-info-row">
+                                        <div class="info-group">
+                                            <span class="info-label">Booking ID</span>
+                                            <span class="info-value">#@booking.BookingReference</span>
+                                        </div>
+                                        <div class="info-group">
+                                            <span class="info-label">Booking Date</span>
+                                            <span class="info-value">@booking.BookingDate.ToString("MMM dd, yyyy")</span>
+                                        </div>
+                                        <div class="info-group">
+                                            <span class="info-label">Status</span>
+                                            <div class="badge-status @(booking.Status == EventHub.Models.Entities.BookingStatus.Completed ? "badge-info" :
+                                                                                                             booking.Status == EventHub.Models.Entities.BookingStatus.Confirmed ? "badge-confirmed" :
+                                                                                                             "badge-secondary")">
+                                        @booking.Status
+                                    </div>
+                                </div>
+                            </div>
+
+                                    <div class="booking-actions mt-3">
+                                        <a href="@Url.Action("Details", "Booking", new { id = booking.Id })"
+                                           class="btn btn-primary btn-action">
+                                            <i class="bi bi-eye me-1"></i>View Details
+                                        </a>
+
+                                @if (booking.Status == EventHub.Models.Entities.BookingStatus.Confirmed ||
+                                                                booking.Status == EventHub.Models.Entities.BookingStatus.Completed)
+                                        {
+                                            <a href="@Url.Action("ViewTickets", "Ticket", new { bookingId = booking.Id })"
+                                               class="btn btn-success btn-action">
+                                                <i class="bi bi-qr-code me-1"></i>View Tickets
+                                            </a>
+                                            <a href="@Url.Action("DownloadTickets", "Ticket", new { bookingId = booking.Id })"
+                                               class="btn btn-outline-primary btn-action">
+                                                <i class="bi bi-download me-1"></i>Download
+                                            </a>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
                 }
                 else
                 {

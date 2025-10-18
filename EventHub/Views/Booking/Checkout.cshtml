@@ -3,61 +3,8 @@
     ViewData["Title"] = "Checkout - EventHub";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
-
 @section Styles {
-    <style>
-        .checkout-container {
-            background: #f8fafc;
-            padding: 3rem 0;
-        }
-
-        .checkout-card {
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-            padding: 2rem;
-        }
-
-        .order-summary {
-            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-            color: white;
-            border-radius: 16px;
-            padding: 2rem;
-            position: sticky;
-            top: 100px;
-        }
-
-        .summary-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 0.75rem 0;
-            border-bottom: 1px solid rgba(255,255,255,0.2);
-        }
-
-        .summary-total {
-            font-size: 1.5rem;
-            font-weight: 700;
-            padding-top: 1rem;
-        }
-
-        .payment-method-card {
-            border: 2px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 1.5rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-            .payment-method-card:hover {
-                border-color: #6366f1;
-                background: rgba(99, 102, 241, 0.05);
-            }
-
-            .payment-method-card.selected {
-                border-color: #6366f1;
-                background: rgba(99, 102, 241, 0.1);
-            }
-    </style>
+    <link rel="stylesheet" href="~/css/booking-checkout.css" asp-append-version="true" />
 }
 
 <section class="checkout-container">

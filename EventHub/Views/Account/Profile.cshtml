@@ -1,0 +1,337 @@
+﻿@model EventHub.Models.ViewModels.EditProfileViewModel
+@{
+    ViewData["Title"] = "Edit Profile";
+    var isCustomer = Model.Role == EventHub.Models.Entities.UserRole.Customer;
+    var isOrganizer = Model.Role == EventHub.Models.Entities.UserRole.Organizer;
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/edit-profile.css" asp-append-version="true" />
+}
+<section class="profile-page py-5">
+    <div class="container">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-lg-3 mb-4">
+                <div class="profile-sidebar">
+                    <div class="profile-header text-center">
+                        <div class="profile-avatar">
+                            <i class="bi bi-person-circle"></i>
+                        </div>
+                        <h5 class="mt-3">@Model.Name</h5>
+                        <p class="text-muted">@Model.Email</p>
+                        <span class="badge bg-primary">@Model.Role</span>
+                    </div>
+
+                    <div class="profile-stats mt-4">
+                        @if (isCustomer)
+                        {
+                            <div class="stat-item">
+                                <i class="bi bi-star-fill text-warning"></i>
+                                <div>
+                                    <strong>@Model.LoyaltyPoints</strong>
+                                    <small>Loyalty Points</small>
+                                </div>
+                            </div>
+                        }
+                        <div class="stat-item">
+                            <i class="bi bi-calendar-check text-success"></i>
+                            <div>
+                                <strong>@Model.CreatedAt.ToString("MMM yyyy")</strong>
+                                <small>Member Since</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="profile-nav mt-4">
+                        <a href="#basic-info" class="nav-item active" data-section="basic-info">
+                            <i class="bi bi-person"></i> Basic Information
+                        </a>
+                        @if (isCustomer)
+                        {
+                            <a href="#personal-info" class="nav-item" data-section="personal-info">
+                                <i class="bi bi-info-circle"></i> Personal Details
+                            </a>
+                        }
+                        @if (isOrganizer)
+                        {
+                            <a href="#company-info" class="nav-item" data-section="company-info">
+                                <i class="bi bi-building"></i> Company Details
+                            </a>
+                        }
+                        <a href="#notifications" class="nav-item" data-section="notifications">
+                            <i class="bi bi-bell"></i> Notifications
+                        </a>
+                        <a href="#security" class="nav-item" data-section="security">
+                            <i class="bi bi-shield-lock"></i> Security
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-lg-9">
+                <div class="profile-content">
+                    <h2 class="mb-4">Edit Profile</h2>
+
+                    @if (TempData["SuccessMessage"] != null)
+                    {
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <i class="bi bi-check-circle me-2"></i>@TempData["SuccessMessage"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+
+                    @if (TempData["ErrorMessage"] != null)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="bi bi-exclamation-triangle me-2"></i>@TempData["ErrorMessage"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+
+                    <form asp-action="Profile" method="post">
+                        @Html.AntiForgeryToken()
+
+                        <!-- Basic Information Section -->
+                        <div class="profile-section active" id="basic-info">
+                            <div class="section-header">
+                                <h4><i class="bi bi-person me-2"></i>Basic Information</h4>
+                                <p class="text-muted">Update your basic account information</p>
+                            </div>
+
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label asp-for="Name" class="form-label">Full Name</label>
+                                    <input asp-for="Name" class="form-control" placeholder="Enter your full name" />
+                                    <span asp-validation-for="Name" class="text-danger"></span>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label asp-for="Email" class="form-label">Email Address</label>
+                                    <input asp-for="Email" class="form-control" placeholder="your.email@example.com" />
+                                    <span asp-validation-for="Email" class="text-danger"></span>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label asp-for="Phone" class="form-label">Phone Number</label>
+                                    <input asp-for="Phone" class="form-control" placeholder="+94 71 234 5678" />
+                                    <span asp-validation-for="Phone" class="text-danger"></span>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label asp-for="City" class="form-label">City</label>
+                                    <input asp-for="City" class="form-control" placeholder="Your city" />
+                                    <span asp-validation-for="City" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Personal Information (Customers Only) -->
+                        @if (isCustomer)
+                        {
+                            <div class="profile-section" id="personal-info">
+                                <div class="section-header">
+                                    <h4><i class="bi bi-info-circle me-2"></i>Personal Details</h4>
+                                    <p class="text-muted">Tell us more about yourself</p>
+                                </div>
+
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label asp-for="DateOfBirth" class="form-label">Date of Birth</label>
+                                        <input asp-for="DateOfBirth" type="date" class="form-control" />
+                                        <span asp-validation-for="DateOfBirth" class="text-danger"></span>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label asp-for="Gender" class="form-label">Gender</label>
+                                        <select asp-for="Gender" class="form-select">
+                                            <option value="">Select Gender</option>
+                                            <option value="Male">Male</option>
+                                            <option value="Female">Female</option>
+                                            <option value="Other">Other</option>
+                                            <option value="Prefer not to say">Prefer not to say</option>
+                                        </select>
+                                        <span asp-validation-for="Gender" class="text-danger"></span>
+                                    </div>
+
+                                    <div class="col-12">
+                                        <label asp-for="Interests" class="form-label">Interests</label>
+                                        <textarea asp-for="Interests" class="form-control" rows="3"
+                                                  placeholder="E.g., Music, Sports, Technology, Arts..."></textarea>
+                                        <small class="text-muted">Help us recommend events you'll love</small>
+                                        <span asp-validation-for="Interests" class="text-danger"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+
+                        <!-- Company Information (Organizers Only) -->
+                        @if (isOrganizer)
+                        {
+                            <div class="profile-section" id="company-info">
+                                <div class="section-header">
+                                    <h4><i class="bi bi-building me-2"></i>Company Details</h4>
+                                    <p class="text-muted">Update your organization information</p>
+                                </div>
+
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label asp-for="Company" class="form-label">Company Name</label>
+                                        <input asp-for="Company" class="form-control" placeholder="Your company name" />
+                                        <span asp-validation-for="Company" class="text-danger"></span>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label asp-for="OrganizationType" class="form-label">Organization Type</label>
+                                        <select asp-for="OrganizationType" class="form-select">
+                                            <option value="">Select Type</option>
+                                            <option value="Event Company">Event Company</option>
+                                            <option value="Corporate">Corporate</option>
+                                            <option value="Non-Profit">Non-Profit</option>
+                                            <option value="Educational">Educational</option>
+                                            <option value="Individual">Individual Organizer</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                        <span asp-validation-for="OrganizationType" class="text-danger"></span>
+                                    </div>
+
+                                    <div class="col-12">
+                                        <label asp-for="Website" class="form-label">Website</label>
+                                        <input asp-for="Website" class="form-control" placeholder="https://yourwebsite.com" />
+                                        <span asp-validation-for="Website" class="text-danger"></span>
+                                    </div>
+
+                                    <div class="col-12">
+                                        <label asp-for="Description" class="form-label">Company Description</label>
+                                        <textarea asp-for="Description" class="form-control" rows="4"
+                                                  placeholder="Tell customers about your organization..."></textarea>
+                                        <span asp-validation-for="Description" class="text-danger"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+
+                        <!-- Notification Preferences -->
+                        <div class="profile-section" id="notifications">
+                            <div class="section-header">
+                                <h4><i class="bi bi-bell me-2"></i>Notification Preferences</h4>
+                                <p class="text-muted">Choose how you want to receive updates</p>
+                            </div>
+
+                            <div class="notification-options">
+                                <div class="form-check form-switch mb-3">
+                                    <input asp-for="EmailNotifications" class="form-check-input" type="checkbox" />
+                                    <label asp-for="EmailNotifications" class="form-check-label">
+                                        <strong>Email Notifications</strong>
+                                        <small class="d-block text-muted">Receive booking confirmations and updates via email</small>
+                                    </label>
+                                </div>
+
+                                <div class="form-check form-switch mb-3">
+                                    <input asp-for="SmsNotifications" class="form-check-input" type="checkbox" />
+                                    <label asp-for="SmsNotifications" class="form-check-label">
+                                        <strong>SMS Notifications</strong>
+                                        <small class="d-block text-muted">Get event reminders and important updates via SMS</small>
+                                    </label>
+                                </div>
+
+                                <div class="form-check form-switch mb-3">
+                                    <input asp-for="MarketingEmails" class="form-check-input" type="checkbox" />
+                                    <label asp-for="MarketingEmails" class="form-check-label">
+                                        <strong>Marketing Emails</strong>
+                                        <small class="d-block text-muted">Receive promotional offers and event recommendations</small>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Security Section -->
+                        <div class="profile-section" id="security">
+                            <div class="section-header">
+                                <h4><i class="bi bi-shield-lock me-2"></i>Change Password</h4>
+                                <p class="text-muted">Update your password to keep your account secure</p>
+                            </div>
+
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle me-2"></i>
+                                Leave password fields blank if you don't want to change your password
+                            </div>
+
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <label asp-for="CurrentPassword" class="form-label">Current Password</label>
+                                    <input asp-for="CurrentPassword" class="form-control" placeholder="Enter current password" />
+                                    <span asp-validation-for="CurrentPassword" class="text-danger"></span>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label asp-for="NewPassword" class="form-label">New Password</label>
+                                    <input asp-for="NewPassword" class="form-control" placeholder="Enter new password" />
+                                    <span asp-validation-for="NewPassword" class="text-danger"></span>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label asp-for="ConfirmNewPassword" class="form-label">Confirm New Password</label>
+                                    <input asp-for="ConfirmNewPassword" class="form-control" placeholder="Confirm new password" />
+                                    <span asp-validation-for="ConfirmNewPassword" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="profile-actions mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-check-circle me-2"></i>Save Changes
+                            </button>
+                            <a href="@(isCustomer? Url.Action("Dashboard", "Customer") : Url.Action("Dashboard", "Organizer"))"
+                               class="btn btn-outline-secondary btn-lg">
+                                <i class="bi bi-x-circle me-2"></i>Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Tab navigation
+            const navItems = document.querySelectorAll('.profile-nav .nav-item');
+            const sections = document.querySelectorAll('.profile-section');
+
+            navItems.forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+
+                    const targetSection = this.getAttribute('data-section');
+
+                    // Update active nav
+                    navItems.forEach(nav => nav.classList.remove('active'));
+                    this.classList.add('active');
+
+                    // Show target section
+                    sections.forEach(section => section.classList.remove('active'));
+                    document.getElementById(targetSection).classList.add('active');
+
+                    // Smooth scroll to top
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                });
+            });
+
+            // Auto-dismiss alerts after 5 seconds
+            setTimeout(() => {
+                const alerts = document.querySelectorAll('.alert');
+                alerts.forEach(alert => {
+                    const bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                });
+            }, 5000);
+        });
+    </script>
+}

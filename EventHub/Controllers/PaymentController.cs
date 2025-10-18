@@ -161,7 +161,7 @@ namespace EventHub.Controllers
                 }
 
                 // Update loyalty points
-                var pointsEarned = (int)model.Amount;
+                var pointsEarned = (int)(model.Amount / 100);
                 booking.Customer.LoyaltyPoints += pointsEarned;
                 _logger.LogInformation("⭐ LOYALTY POINTS UPDATED:");
                 _logger.LogInformation("   Points Earned: {Points}", pointsEarned);
