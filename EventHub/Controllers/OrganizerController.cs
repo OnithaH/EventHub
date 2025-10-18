@@ -787,8 +787,507 @@ namespace EventHub.Controllers
             return View();
         }
         #endregion
+
+
+
+
+
+
+
+
+
+        #region Sales Reports & Analytics
+
+        /// <summary>
+        /// GET: Sales Reports Page
+        /// </summary>
+        public async Task<IActionResult> SalesReports()
+        {
+            if (!IsOrganizer())
+            {
+                TempData["ErrorMessage"] = "Access denied.";
+                return RedirectToAction("Login", "Account");
+            }
+
+            var organizerId = GetCurrentOrganizerId();
+            var events = await _context.Events
+                .Where(e => e.OrganizerId == organizerId)
+                .OrderByDescending(e => e.EventDate)
+                .ToListAsync();
+
+            ViewBag.Events = events;
+            return View();
+        }
+
+        /// <summary>
+        /// POST: Get Sales Report Data (AJAX)
+        /// </summary>
+        [HttpPost]
+        public async Task<IActionResult> GetSalesReportData([FromBody] SalesReportRequest request)
+        {
+            try
+            {
+                if (!IsOrganizer())
+                    return Unauthorized();
+
+                var organizerId = GetCurrentOrganizerId();
+
+                // Calculate date range
+                var startDate = request.TimeFrame == "all"
+                    ? DateTime.MinValue
+                    : DateTime.UtcNow.AddDays(-int.Parse(request.TimeFrame));
+
+                // Base query for bookings
+                var bookingsQuery = _context.Bookings
+                    .Include(b => b.Event)
+                    .Include(b => b.Payment)
+                    .Include(b => b.Customer)
+                    .Where(b => b.Event.OrganizerId == organizerId && b.BookingDate >= startDate);
+
+                // Filter by event if specified
+                if (!string.IsNullOrEmpty(request.EventId) && int.TryParse(request.EventId, out int eventId))
+                {
+                    bookingsQuery = bookingsQuery.Where(b => b.EventId == eventId);
+                }
+
+                // Filter by payment status if specified
+                if (!string.IsNullOrEmpty(request.PaymentStatus))
+                {
+                    var status = Enum.Parse<PaymentStatus>(request.PaymentStatus);
+                    bookingsQuery = bookingsQuery.Where(b => b.Payment != null && b.Payment.Status == status);
+                }
+
+                var bookings = await bookingsQuery.ToListAsync();
+
+                // Calculate metrics
+                var metrics = new
+                {
+                    totalRevenue = bookings
+                        .Where(b => b.Payment != null && b.Payment.Status == PaymentStatus.Completed)
+                        .Sum(b => b.TotalAmount),
+                    totalTickets = bookings.Sum(b => b.Quantity),
+                    totalBookings = bookings.Count,
+                    avgOrderValue = bookings.Count > 0
+                        ? bookings.Average(b => b.TotalAmount)
+                        : 0
+                };
+
+                // Generate charts data
+                var revenueTrendDates = new List<string>();
+                var revenueTrendAmounts = new List<decimal>();
+
+                var currentDate = startDate;
+                while (currentDate <= DateTime.UtcNow)
+                {
+                    var dayBookings = bookings
+                        .Where(b => b.BookingDate.Date == currentDate.Date &&
+                                   b.Payment != null &&
+                                   b.Payment.Status == PaymentStatus.Completed)
+                        .Sum(b => b.TotalAmount);
+
+                    revenueTrendDates.Add(currentDate.ToString("MMM dd"));
+                    revenueTrendAmounts.Add(dayBookings);
+                    currentDate = currentDate.AddDays(1);
+                }
+
+                // Payment status breakdown
+                var paymentStatusBreakdown = new[]
+                {
+            bookings.Count(b => b.Payment != null && b.Payment.Status == PaymentStatus.Completed),
+            bookings.Count(b => b.Payment != null && b.Payment.Status == PaymentStatus.Pending),
+            bookings.Count(b => b.Payment != null && b.Payment.Status == PaymentStatus.Failed)
+        };
+
+                // Top events by revenue
+                var topEvents = bookings
+                    .GroupBy(b => b.Event.Title)
+                    .Select(g => new
+                    {
+                        name = g.Key,
+                        revenue = g.Where(b => b.Payment != null && b.Payment.Status == PaymentStatus.Completed)
+                            .Sum(b => b.TotalAmount)
+                    })
+                    .OrderByDescending(x => x.revenue)
+                    .Take(5)
+                    .ToList();
+
+                // Ticket distribution by category
+                var ticketDistribution = bookings
+                    .GroupBy(b => b.Event.Category)
+                    .Select(g => new
+                    {
+                        category = g.Key,
+                        count = g.Sum(b => b.Quantity)
+                    })
+                    .ToList();
+
+                // Sales list for table
+                var sales = bookings
+                    .Select(b => new
+                    {
+                        bookingId = b.Id,
+                        bookingReference = b.BookingReference ?? $"BK{b.Id}",
+                        eventTitle = b.Event.Title,
+                        customerName = b.Customer.Name,
+                        bookingDate = b.BookingDate,
+                        quantity = b.Quantity,
+                        totalAmount = b.TotalAmount,
+                        discountAmount = 0m, // Calculate if you have discount logic
+                        paymentStatus = b.Payment?.Status.ToString() ?? "No Payment"
+                    })
+                    .OrderByDescending(b => b.bookingDate)
+                    .ToList();
+
+                var charts = new
+                {
+                    revenueTrend = new { dates = revenueTrendDates, amounts = revenueTrendAmounts },
+                    paymentStatus = paymentStatusBreakdown,
+                    topEvents = new
+                    {
+                        names = topEvents.Select(e => e.name).ToList(),
+                        revenue = topEvents.Select(e => e.revenue).ToList()
+                    },
+                    ticketDistribution = new
+                    {
+                        categories = ticketDistribution.Select(t => t.category).ToList(),
+                        counts = ticketDistribution.Select(t => t.count).ToList()
+                    }
+                };
+
+                return Json(new { success = true, metrics, charts, sales });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting sales report data");
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// GET: Event Analytics Page
+        /// </summary>
+        public async Task<IActionResult> EventAnalytics()
+        {
+            if (!IsOrganizer())
+            {
+                TempData["ErrorMessage"] = "Access denied.";
+                return RedirectToAction("Login", "Account");
+            }
+
+            var organizerId = GetCurrentOrganizerId();
+            var events = await _context.Events
+                .Where(e => e.OrganizerId == organizerId)
+                .OrderByDescending(e => e.EventDate)
+                .ToListAsync();
+
+            ViewBag.Events = events;
+            return View();
+        }
+
+        /// <summary>
+        /// POST: Get Event Analytics Data (AJAX)
+        /// </summary>
+        [HttpPost]
+        public async Task<IActionResult> GetEventAnalyticsData([FromBody] EventAnalyticsRequest request)
+        {
+            try
+            {
+                if (!IsOrganizer() || string.IsNullOrEmpty(request.EventId) || !int.TryParse(request.EventId, out int eventId))
+                    return BadRequest();
+
+                var organizerId = GetCurrentOrganizerId();
+
+                // Get event
+                var @event = await _context.Events
+                    .Include(e => e.Venue)
+                    .Include(e => e.Bookings)
+                        .ThenInclude(b => b.Tickets)
+                    .Include(e => e.Bookings)
+                        .ThenInclude(b => b.Payment)
+                    .FirstOrDefaultAsync(e => e.Id == eventId && e.OrganizerId == organizerId);
+
+                if (@event == null)
+                    return NotFound();
+
+                // Calculate date range
+                var startDate = request.TimeFrame == "all"
+                    ? DateTime.MinValue
+                    : DateTime.UtcNow.AddDays(-int.Parse(request.TimeFrame));
+
+                // Filter bookings by date
+                var bookings = @event.Bookings
+                    .Where(b => b.BookingDate >= startDate)
+                    .ToList();
+
+                // Get tickets
+                var tickets = bookings.SelectMany(b => b.Tickets).ToList();
+
+                // Event info
+                var eventInfo = new
+                {
+                    imageUrl = @event.ImageUrl,
+                    title = @event.Title,
+                    eventDate = @event.EventDate,
+                    venueName = @event.Venue?.Name,
+                    capacity = @event.Venue?.Capacity
+                };
+
+                // Metrics
+                var ticketsSold = bookings.Sum(b => b.Quantity);
+                var ticketsUsed = tickets.Count(t => t.Status == TicketStatus.Used);
+                var occupancyRate = @event.Venue != null && @event.Venue.Capacity > 0
+                    ? (int)((ticketsSold / (decimal)@event.Venue.Capacity) * 100)
+                    : 0;
+
+                var metrics = new
+                {
+                    ticketsSold,
+                    ticketsUsed,
+                    occupancyRate,
+                    redemptionRate = ticketsSold > 0 ? (int)((ticketsUsed / (decimal)ticketsSold) * 100) : 0,
+                    totalRevenue = bookings
+                        .Where(b => b.Payment != null && b.Payment.Status == PaymentStatus.Completed)
+                        .Sum(b => b.TotalAmount)
+                };
+
+                // Booking timeline
+                var bookingTimelineDates = new List<string>();
+                var bookingTimelineCounts = new List<int>();
+
+                var currentDate = startDate;
+                while (currentDate <= DateTime.UtcNow)
+                {
+                    var dayCount = bookings.Count(b => b.BookingDate.Date == currentDate.Date);
+                    bookingTimelineDates.Add(currentDate.ToString("MMM dd"));
+                    bookingTimelineCounts.Add(dayCount);
+                    currentDate = currentDate.AddDays(1);
+                }
+
+                // Ticket status distribution
+                var ticketStatusData = new[]
+                {
+            tickets.Count(t => t.Status == TicketStatus.Active),
+            tickets.Count(t => t.Status == TicketStatus.Used),
+            tickets.Count(t => t.Status == TicketStatus.Cancelled),
+            tickets.Count(t => t.Status == TicketStatus.Expired)
+        };
+
+                // Daily attendance (check-ins)
+                var dailyAttendanceDates = new List<string>();
+                var dailyAttendanceCounts = new List<int>();
+
+                currentDate = @event.EventDate.Date;
+                var endDate = @event.EventDate.AddDays(1).Date;
+
+                while (currentDate < endDate)
+                {
+                    var dayCheckins = tickets.Count(t => t.UsedDate?.Date == currentDate);
+                    dailyAttendanceDates.Add(currentDate.ToString("MMM dd HH:mm"));
+                    dailyAttendanceCounts.Add(dayCheckins);
+                    currentDate = currentDate.AddHours(2);
+                }
+
+                // Payment methods
+                var paymentMethods = bookings
+                    .Where(b => b.Payment != null)
+                    .GroupBy(b => b.Payment.PaymentMethod)
+                    .Select(g => new { method = g.Key, count = g.Count() })
+                    .ToList();
+
+                var charts = new
+                {
+                    bookingTimeline = new
+                    {
+                        dates = bookingTimelineDates,
+                        counts = bookingTimelineCounts
+                    },
+                    ticketStatus = ticketStatusData,
+                    dailyAttendance = new
+                    {
+                        dates = dailyAttendanceDates,
+                        checkins = dailyAttendanceCounts
+                    },
+                    paymentMethods = new
+                    {
+                        methods = paymentMethods.Select(p => p.method).ToList(),
+                        counts = paymentMethods.Select(p => p.count).ToList()
+                    }
+                };
+
+                // Booking details
+                var bookingDetails = bookings
+                    .Select(b => new
+                    {
+                        bookingReference = b.BookingReference ?? $"BK{b.Id}",
+                        customerName = b.Customer.Name,
+                        bookingDate = b.BookingDate,
+                        quantity = b.Quantity,
+                        ticketStatus = b.Tickets.Count > 0
+                            ? (b.Tickets.Any(t => t.Status == TicketStatus.Used) ? "Used" : "Active")
+                            : "Pending",
+                        totalAmount = b.TotalAmount,
+                        discountAmount = 0m
+                    })
+                    .OrderByDescending(b => b.bookingDate)
+                    .ToList();
+
+                // Insights
+                var insights = GenerateAnalyticsInsights(metrics, @event, ticketsSold);
+
+                return Json(new { success = true, eventInfo, metrics, charts, bookings = bookingDetails, insights });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting event analytics data");
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Generate insights based on analytics
+        /// </summary>
+        private List<object> GenerateAnalyticsInsights(dynamic metrics, Event @event, int ticketsSold)
+        {
+            var insights = new List<object>();
+
+            // Occupancy insight
+            if (metrics.occupancyRate >= 90)
+            {
+                insights.Add(new
+                {
+                    type = "positive",
+                    title = "Excellent Occupancy",
+                    description = $"Your event has reached {metrics.occupancyRate}% capacity. Outstanding performance!"
+                });
+            }
+            else if (metrics.occupancyRate < 30)
+            {
+                insights.Add(new
+                {
+                    type = "warning",
+                    title = "Low Occupancy",
+                    description = $"Only {metrics.occupancyRate}% capacity filled. Consider marketing strategies to increase attendance."
+                });
+            }
+
+            // Redemption insight
+            if (metrics.redemptionRate >= 80)
+            {
+                insights.Add(new
+                {
+                    type = "positive",
+                    title = "High Ticket Redemption",
+                    description = $"{metrics.redemptionRate}% of tickets were redeemed. Great attendance rate!"
+                });
+            }
+
+            // Revenue insight
+            if (metrics.totalRevenue > 0)
+            {
+                insights.Add(new
+                {
+                    type = "positive",
+                    title = "Revenue Generated",
+                    description = $"Total revenue of Rs. {metrics.totalRevenue:N0} from {ticketsSold} tickets sold."
+                });
+            }
+
+            // Event date insight
+            if (@event.EventDate < DateTime.UtcNow)
+            {
+                insights.Add(new
+                {
+                    type = "info",
+                    title = "Event Completed",
+                    description = "This event has concluded. Review the analytics to plan future events."
+                });
+            }
+
+            return insights;
+        }
+
+        /// <summary>
+        /// Export Sales Report to CSV
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> ExportSalesReport(string timeFrame = "30")
+        {
+            if (!IsOrganizer())
+                return Unauthorized();
+
+            var organizerId = GetCurrentOrganizerId();
+            var startDate = timeFrame == "all"
+                ? DateTime.MinValue
+                : DateTime.UtcNow.AddDays(-int.Parse(timeFrame));
+
+            var bookings = await _context.Bookings
+                .Include(b => b.Event)
+                .Include(b => b.Customer)
+                .Include(b => b.Payment)
+                .Where(b => b.Event.OrganizerId == organizerId && b.BookingDate >= startDate)
+                .ToListAsync();
+
+            // Generate CSV
+            var csv = "Booking Ref,Event,Customer,Date,Quantity,Revenue,Status\n";
+            foreach (var booking in bookings)
+            {
+                csv += $"{booking.BookingReference},{booking.Event.Title},{booking.Customer.Name}," +
+                       $"{booking.BookingDate:yyyy-MM-dd},{booking.Quantity},{booking.TotalAmount}," +
+                       $"{booking.Payment?.Status.ToString() ?? "Pending"}\n";
+            }
+
+            return File(System.Text.Encoding.UTF8.GetBytes(csv), "text/csv", $"sales-report-{DateTime.Now:yyyy-MM-dd}.csv");
+        }
+
+        /// <summary>
+        /// Export Event Analytics to CSV
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> ExportEventAnalytics(int eventId)
+        {
+            if (!IsOrganizer())
+                return Unauthorized();
+
+            var organizerId = GetCurrentOrganizerId();
+            var @event = await _context.Events
+                .Include(e => e.Bookings)
+                    .ThenInclude(b => b.Customer)
+                .FirstOrDefaultAsync(e => e.Id == eventId && e.OrganizerId == organizerId);
+
+            if (@event == null)
+                return NotFound();
+
+            // Generate CSV
+            var csv = $"Event Analytics Report - {@event.Title}\n";
+            csv += $"Event Date,Venue,Total Capacity\n";
+            csv += $"{@event.EventDate:yyyy-MM-dd},{@event.Venue?.Name},{@event.Venue?.Capacity}\n\n";
+            csv += "Booking Ref,Customer,Booking Date,Quantity,Amount\n";
+
+            foreach (var booking in @event.Bookings)
+            {
+                csv += $"{booking.BookingReference},{booking.Customer.Name}," +
+                       $"{booking.BookingDate:yyyy-MM-dd},{booking.Quantity},{booking.TotalAmount}\n";
+            }
+
+            return File(System.Text.Encoding.UTF8.GetBytes(csv), "text/csv", $"analytics-{@event.Id}-{DateTime.Now:yyyy-MM-dd}.csv");
+        }
+
+        #endregion
+    }
+    // Request models for AJAX calls
+    public class SalesReportRequest
+    {
+        public string TimeFrame { get; set; } = "30";
+        public string? EventId { get; set; }
+        public string? PaymentStatus { get; set; }
     }
 
+    public class EventAnalyticsRequest
+    {
+        public string EventId { get; set; }
+        public string TimeFrame { get; set; } = "30";
+        public string? CompareWith { get; set; }
+    }
     public class VerifyTicketRequest
     {
         public string QRCodeData { get; set; } = string.Empty;
