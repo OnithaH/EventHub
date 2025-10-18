@@ -304,11 +304,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             // Tab navigation
             setupTabNavigation();
-
-            // Auto-dismiss alerts after 5 seconds
             autoDismissAlerts();
-
-            // ✅ Show changes alert if TempData has changes
             @if (TempData["ProfileChanges"] != null)
             {
                     <text>
