@@ -1,8 +1,9 @@
-﻿using EventHub.Models.ViewModels;
-using EventHub.Models.Entities;
+﻿using EventHub.Models.Entities;
+using EventHub.Models.ViewModels;
 using EventHub.Services.Interfaces;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 
 namespace EventHub.Controllers
@@ -242,40 +243,166 @@ namespace EventHub.Controllers
             return RedirectToAction("Index", "Home");
         }
 
-        // GET: /Account/Profile
+        /// <summary>
+        /// GET: Display Edit Profile page
+        /// </summary>
+        [HttpGet]
         public async Task<IActionResult> Profile()
         {
-            var userId = HttpContext.Session.GetString("UserId");
-            if (string.IsNullOrEmpty(userId))
-            {
-                return RedirectToAction("Login");
-            }
-
             try
             {
-                var user = await _userService.GetUserByIdAsync(int.Parse(userId));
-                if (user == null || !user.IsActive)
+                var userIdString = HttpContext.Session.GetString("UserId");
+                if (string.IsNullOrEmpty(userIdString))
                 {
-                    HttpContext.Session.Clear();
                     return RedirectToAction("Login");
                 }
 
-                return View(user);
+                var userId = int.Parse(userIdString);
+                var user = await _context.Users.FindAsync(userId);
+
+                if (user == null)
+                {
+                    TempData["ErrorMessage"] = "User not found.";
+                    return RedirectToAction("Login");
+                }
+
+                var viewModel = new EditProfileViewModel
+                {
+                    Name = user.Name,
+                    Email = user.Email,
+                    Phone = user.Phone,
+                    DateOfBirth = user.DateOfBirth,
+                    Gender = user.Gender,
+                    City = user.City,
+                    Interests = user.Interests,
+                    Company = user.Company,
+                    OrganizationType = user.OrganizationType,
+                    Website = user.Website,
+                    Description = user.Description,
+                    EmailNotifications = user.EmailNotifications,
+                    SmsNotifications = user.SmsNotifications,
+                    MarketingEmails = user.MarketingEmails,
+                    Role = user.Role,
+                    LoyaltyPoints = user.LoyaltyPoints,
+                    CreatedAt = user.CreatedAt
+                };
+
+                return View(viewModel);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error loading profile for user {UserId}", userId);
-                TempData["ErrorMessage"] = "Error loading your profile. Please try again.";
-                return RedirectToAction("Index", "Home");
+                _logger.LogError(ex, "Error loading profile page");
+                TempData["ErrorMessage"] = "Unable to load profile.";
+                return RedirectToAction("Login");
             }
         }
-
-        // GET: /Account/ForgotPassword (placeholder for future implementation)
-        public IActionResult ForgotPassword()
+        /// <summary>
+        /// POST: Update user profile
+        /// </summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Profile(EditProfileViewModel model)
         {
-            return View();
-        }
+            try
+            {
+                var userIdString = HttpContext.Session.GetString("UserId");
+                if (string.IsNullOrEmpty(userIdString))
+                {
+                    return RedirectToAction("Login");
+                }
 
+                var userId = int.Parse(userIdString);
+                var user = await _context.Users.FindAsync(userId);
+
+                if (user == null)
+                {
+                    TempData["ErrorMessage"] = "User not found.";
+                    return RedirectToAction("Login");
+                }
+
+                // Remove password validation if not changing password
+                if (!model.IsPasswordChangeRequested())
+                {
+                    ModelState.Remove(nameof(model.CurrentPassword));
+                    ModelState.Remove(nameof(model.NewPassword));
+                    ModelState.Remove(nameof(model.ConfirmNewPassword));
+                }
+
+                if (!ModelState.IsValid)
+                {
+                    // Reload role-specific data
+                    model.Role = user.Role;
+                    model.LoyaltyPoints = user.LoyaltyPoints;
+                    model.CreatedAt = user.CreatedAt;
+                    return View(model);
+                }
+
+                // Check if email is being changed and already exists
+                if (user.Email != model.Email)
+                {
+                    var emailExists = await _context.Users
+                        .AnyAsync(u => u.Email == model.Email && u.Id != userId);
+
+                    if (emailExists)
+                    {
+                        ModelState.AddModelError("Email", "This email is already in use.");
+                        model.Role = user.Role;
+                        model.LoyaltyPoints = user.LoyaltyPoints;
+                        model.CreatedAt = user.CreatedAt;
+                        return View(model);
+                    }
+                }
+
+                // Handle password change if requested
+                if (model.IsPasswordChangeRequested())
+                {
+                    // Verify current password
+                    if (!_userService.VerifyPassword(model.CurrentPassword!, user.Password))
+                    {
+                        ModelState.AddModelError("CurrentPassword", "Current password is incorrect.");
+                        model.Role = user.Role;
+                        model.LoyaltyPoints = user.LoyaltyPoints;
+                        model.CreatedAt = user.CreatedAt;
+                        return View(model);
+                    }
+
+                    // Hash and update new password
+                    user.Password = _userService.HashPassword(model.NewPassword!);
+                }
+
+                // Update user properties
+                user.Name = model.Name;
+                user.Email = model.Email;
+                user.Phone = model.Phone;
+                user.DateOfBirth = model.DateOfBirth;
+                user.Gender = model.Gender;
+                user.City = model.City;
+                user.Interests = model.Interests;
+                user.Company = model.Company;
+                user.OrganizationType = model.OrganizationType;
+                user.Website = model.Website;
+                user.Description = model.Description;
+                user.EmailNotifications = model.EmailNotifications;
+                user.SmsNotifications = model.SmsNotifications;
+                user.MarketingEmails = model.MarketingEmails;
+
+                _context.Users.Update(user);
+                await _context.SaveChangesAsync();
+
+                // Update session data
+                HttpContext.Session.SetString("UserName", user.Name);
+                HttpContext.Session.SetString("UserEmail", user.Email);
+
+                TempData["SuccessMessage"] = "Profile updated successfully!";
+                return RedirectToAction("Profile");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating profile");
+                TempData["ErrorMessage"] = "Unable to update profile. Please try again.";
+                return View(model);
+            }
+        }
         // POST: /Account/ForgotPassword (placeholder for future implementation)
         [HttpPost]
         [ValidateAntiForgeryToken]
