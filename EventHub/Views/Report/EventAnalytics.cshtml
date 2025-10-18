@@ -1,0 +1,522 @@
+﻿@{
+    ViewData["Title"] = "Event Analytics - EventHub";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/organizer-event-analytics.css" asp-append-version="true" />
+}
+
+<!-- Page Header -->
+<section class="page-header">
+    <div class="container">
+        <div class="header-content">
+            <div class="header-text">
+                <h1 class="page-title"><i class="bi bi-bar-chart me-3"></i>Event Analytics</h1>
+                <p class="page-subtitle">Deep insights into event performance and ticket distribution</p>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="@Url.Action("Index", "Home")">Home</a></li>
+                        <li class="breadcrumb-item"><a href="@Url.Action("Dashboard", "Organizer")">Dashboard</a></li>
+                        <li class="breadcrumb-item active">Event Analytics</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Filters Section -->
+<section class="filters-section py-4">
+    <div class="container">
+        <div class="filter-card">
+            <div class="filter-header">
+                <h5 class="filter-title">
+                    <i class="bi bi-sliders me-2"></i>Analytics Filters
+                </h5>
+            </div>
+            <div class="filter-controls">
+                <!-- Select Event -->
+                <div class="filter-group">
+                    <label class="filter-label">Select Event *</label>
+                    <select id="eventSelect" class="form-select" onchange="loadEventAnalytics()" required>
+                        <option value="">Choose an event...</option>
+                        @if (ViewBag.Events != null)
+                        {
+                            @foreach (var evt in ViewBag.Events)
+                            {
+                                <option value="@evt.Id">@evt.Title (@evt.EventDate.ToString("MMM dd, yyyy"))</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <!-- Time Frame -->
+                <div class="filter-group">
+                    <label class="filter-label">Time Frame</label>
+                    <select id="analyticsTimeFrame" class="form-select" onchange="loadEventAnalytics()">
+                        <option value="7">Past 7 Days</option>
+                        <option value="30">Past 30 Days</option>
+                        <option value="90">Past 90 Days</option>
+                        <option value="all">All Time</option>
+                    </select>
+                </div>
+
+                <!-- Comparison Period -->
+                <div class="filter-group">
+                    <label class="filter-label">Compare With</label>
+                    <select id="compareWith" class="form-select" onchange="loadEventAnalytics()">
+                        <option value="none">No Comparison</option>
+                        <option value="previous">Previous Period</option>
+                        <option value="lastYear">Last Year</option>
+                    </select>
+                </div>
+
+                <!-- Actions -->
+                <div class="filter-group filter-actions">
+                    <button class="btn btn-export" onclick="exportAnalytics()">
+                        <i class="bi bi-download me-2"></i>Export Report
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Event Overview -->
+<section class="event-overview py-4" id="eventOverview" style="display: none;">
+    <div class="container">
+        <div class="overview-card">
+            <div class="event-info-header">
+                <div class="event-info-left">
+                    <img id="eventImage" src="" alt="Event" class="event-thumbnail">
+                    <div class="event-details">
+                        <h3 id="eventTitle">Event Title</h3>
+                        <div class="event-meta">
+                            <span><i class="bi bi-calendar-event"></i> <span id="eventDate"></span></span>
+                            <span><i class="bi bi-geo-alt"></i> <span id="eventVenue"></span></span>
+                            <span><i class="bi bi-people"></i> <span id="eventCapacity"></span> capacity</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="event-status">
+                    <div class="status-badge" id="eventStatus"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Analytics Metrics -->
+<section class="analytics-metrics py-4" id="analyticsMetrics" style="display: none;">
+    <div class="container">
+        <div class="row g-3">
+            <!-- Tickets Sold -->
+            <div class="col-lg-3 col-md-6">
+                <div class="analytics-card tickets-sold">
+                    <div class="card-icon">
+                        <i class="bi bi-ticket-perforated"></i>
+                    </div>
+                    <div class="card-content">
+                        <p class="card-label">Tickets Sold</p>
+                        <h3 class="card-value" id="ticketsSold">0</h3>
+                        <small class="card-info" id="ticketsSoldInfo"></small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tickets Used/Redeemed -->
+            <div class="col-lg-3 col-md-6">
+                <div class="analytics-card tickets-used">
+                    <div class="card-icon">
+                        <i class="bi bi-check-circle"></i>
+                    </div>
+                    <div class="card-content">
+                        <p class="card-label">Tickets Used</p>
+                        <h3 class="card-value" id="ticketsUsed">0</h3>
+                        <small class="card-info" id="ticketsUsedInfo"></small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Occupancy Rate -->
+            <div class="col-lg-3 col-md-6">
+                <div class="analytics-card occupancy">
+                    <div class="card-icon">
+                        <i class="bi bi-percent"></i>
+                    </div>
+                    <div class="card-content">
+                        <p class="card-label">Occupancy Rate</p>
+                        <h3 class="card-value" id="occupancyRate">0%</h3>
+                        <small class="card-info">Of venue capacity</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Conversion Rate -->
+            <div class="col-lg-3 col-md-6">
+                <div class="analytics-card conversion">
+                    <div class="card-icon">
+                        <i class="bi bi-funnel"></i>
+                    </div>
+                    <div class="card-content">
+                        <p class="card-label">Redemption Rate</p>
+                        <h3 class="card-value" id="redemptionRate">0%</h3>
+                        <small class="card-info">Tickets used / sold</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Analytics Charts -->
+<section class="analytics-charts py-5" id="analyticsCharts" style="display: none;">
+    <div class="container">
+        <div class="row g-4">
+            <!-- Booking Timeline -->
+            <div class="col-lg-8">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h5 class="chart-title">
+                            <i class="bi bi-graph-up me-2"></i>Booking Timeline
+                        </h5>
+                        <span class="chart-period" id="bookingPeriod">Past 7 Days</span>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="bookingTimelineChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ticket Status Distribution -->
+            <div class="col-lg-4">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h5 class="chart-title">
+                            <i class="bi bi-pie-chart me-2"></i>Ticket Status
+                        </h5>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="ticketStatusChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4 mt-2">
+            <!-- Daily Attendance -->
+            <div class="col-lg-6">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h5 class="chart-title">
+                            <i class="bi bi-bar-chart me-2"></i>Daily Check-ins
+                        </h5>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="dailyAttendanceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Methods Distribution -->
+            <div class="col-lg-6">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h5 class="chart-title">
+                            <i class="bi bi-credit-card me-2"></i>Payment Methods
+                        </h5>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="paymentMethodsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Detailed Analysis Table -->
+<section class="analysis-table py-5" id="analysisTable" style="display: none;">
+    <div class="container">
+        <div class="table-card">
+            <div class="table-header">
+                <h5 class="table-title">
+                    <i class="bi bi-table me-2"></i>Detailed Booking Analysis
+                </h5>
+                <div class="table-controls">
+                    <select id="tableFilter" class="form-select" onchange="filterTable()">
+                        <option value="all">All Bookings</option>
+                        <option value="confirmed">Confirmed</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="table-wrapper">
+                <table class="analysis-data-table" id="analysisDataTable">
+                    <thead>
+                        <tr>
+                            <th>Booking Ref</th>
+                            <th>Customer</th>
+                            <th>Booking Date</th>
+                            <th>Quantity</th>
+                            <th>Check-in Status</th>
+                            <th>Revenue</th>
+                            <th>Discount</th>
+                        </tr>
+                    </thead>
+                    <tbody id="analysisTableBody">
+                        <!-- Populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Performance Insights -->
+<section class="insights-section py-5" id="insightsSection" style="display: none;">
+    <div class="container">
+        <div class="insights-card">
+            <div class="insights-header">
+                <h5 class="insights-title">
+                    <i class="bi bi-lightbulb me-2"></i>Performance Insights
+                </h5>
+            </div>
+            <div class="insights-content" id="insightsContent">
+                <!-- Populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Chart.js Library -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<script>
+    let bookingTimelineChart, ticketStatusChart, dailyAttendanceChart, paymentMethodsChart;
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function () {
+        initializeAnalyticsCharts();
+    });
+
+    // Initialize empty charts
+    function initializeAnalyticsCharts() {
+        // Booking Timeline
+        const bookingCtx = document.getElementById('bookingTimelineChart').getContext('2d');
+        bookingTimelineChart = new Chart(bookingCtx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Bookings',
+                    data: [],
+                    borderColor: '#667eea',
+                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+
+        // Ticket Status
+        const statusCtx = document.getElementById('ticketStatusChart').getContext('2d');
+        ticketStatusChart = new Chart(statusCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Active', 'Used', 'Cancelled', 'Expired'],
+                datasets: [{
+                    data: [0, 0, 0, 0],
+                    backgroundColor: ['#10b981', '#667eea', '#f59e0b', '#ef4444'],
+                    borderColor: '#fff',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { position: 'bottom' } }
+            }
+        });
+
+        // Daily Attendance
+        const attendanceCtx = document.getElementById('dailyAttendanceChart').getContext('2d');
+        dailyAttendanceChart = new Chart(attendanceCtx, {
+            type: 'bar',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Check-ins',
+                    data: [],
+                    backgroundColor: '#10b981',
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+
+        // Payment Methods
+        const paymentCtx = document.getElementById('paymentMethodsChart').getContext('2d');
+        paymentMethodsChart = new Chart(paymentCtx, {
+            type: 'pie',
+            data: {
+                labels: [],
+                datasets: [{
+                    data: [],
+                    backgroundColor: ['#667eea', '#764ba2', '#10b981', '#f59e0b']
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { position: 'bottom' } }
+            }
+        });
+    }
+
+    // Load event analytics
+    function loadEventAnalytics() {
+        const eventId = document.getElementById('eventSelect').value;
+        const timeFrame = document.getElementById('analyticsTimeFrame').value;
+        const compareWith = document.getElementById('compareWith').value;
+
+        if (!eventId) return;
+
+        fetch('@Url.Action("GetEventAnalyticsData", "Organizer")', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+            },
+            body: JSON.stringify({
+                eventId: eventId,
+                timeFrame: timeFrame,
+                compareWith: compareWith
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAnalyticsUI();
+                updateEventOverview(data.eventInfo);
+                updateAnalyticsMetrics(data.metrics);
+                updateAnalyticsCharts(data.charts);
+                updateAnalyticsTable(data.bookings);
+                generateInsights(data.insights);
+            }
+        })
+        .catch(error => console.error('Error loading analytics:', error));
+    }
+
+    function showAnalyticsUI() {
+        document.getElementById('eventOverview').style.display = 'block';
+        document.getElementById('analyticsMetrics').style.display = 'block';
+        document.getElementById('analyticsCharts').style.display = 'block';
+        document.getElementById('analysisTable').style.display = 'block';
+        document.getElementById('insightsSection').style.display = 'block';
+    }
+
+    function updateEventOverview(info) {
+        document.getElementById('eventImage').src = info.imageUrl || '/images/events/default-event.jpg';
+        document.getElementById('eventTitle').textContent = info.title;
+        document.getElementById('eventDate').textContent = new Date(info.eventDate).toLocaleDateString();
+        document.getElementById('eventVenue').textContent = info.venueName;
+        document.getElementById('eventCapacity').textContent = info.capacity;
+    }
+
+    function updateAnalyticsMetrics(metrics) {
+        document.getElementById('ticketsSold').textContent = metrics.ticketsSold;
+        document.getElementById('ticketsSoldInfo').textContent = `Rs. ${metrics.totalRevenue.toLocaleString()} revenue`;
+        document.getElementById('ticketsUsed').textContent = metrics.ticketsUsed;
+        document.getElementById('ticketsUsedInfo').textContent = metrics.ticketsUsedPercent + '% redeemed';
+        document.getElementById('occupancyRate').textContent = metrics.occupancyRate + '%';
+        document.getElementById('redemptionRate').textContent = metrics.redemptionRate + '%';
+    }
+
+    function updateAnalyticsCharts(data) {
+        // Booking Timeline
+        bookingTimelineChart.data.labels = data.bookingTimeline.dates;
+        bookingTimelineChart.data.datasets[0].data = data.bookingTimeline.counts;
+        bookingTimelineChart.update();
+
+        // Ticket Status
+        ticketStatusChart.data.datasets[0].data = data.ticketStatus;
+        ticketStatusChart.update();
+
+        // Daily Attendance
+        dailyAttendanceChart.data.labels = data.dailyAttendance.dates;
+        dailyAttendanceChart.data.datasets[0].data = data.dailyAttendance.checkins;
+        dailyAttendanceChart.update();
+
+        // Payment Methods
+        paymentMethodsChart.data.labels = data.paymentMethods.methods;
+        paymentMethodsChart.data.datasets[0].data = data.paymentMethods.counts;
+        paymentMethodsChart.update();
+    }
+
+    function updateAnalyticsTable(bookings) {
+        const tbody = document.getElementById('analysisTableBody');
+        tbody.innerHTML = '';
+
+        bookings.forEach(booking => {
+            const row = `
+                <tr>
+                    <td><strong>${booking.bookingReference}</strong></td>
+                    <td>${booking.customerName}</td>
+                    <td>${new Date(booking.bookingDate).toLocaleDateString()}</td>
+                    <td>${booking.quantity}</td>
+                    <td>
+                        <span class="status status-${booking.ticketStatus.toLowerCase()}">
+                            ${booking.ticketStatus}
+                        </span>
+                    </td>
+                    <td class="revenue">Rs. ${booking.totalAmount.toLocaleString()}</td>
+                    <td>${booking.discountAmount > 0 ? 'Rs. ' + booking.discountAmount.toLocaleString() : '-'}</td>
+                </tr>
+            `;
+            tbody.innerHTML += row;
+        });
+    }
+
+    function generateInsights(insights) {
+        const container = document.getElementById('insightsContent');
+        let html = '<div class="insights-list">';
+
+        insights.forEach(insight => {
+            const icon = insight.type === 'positive' ? 'bi-check-circle' : insight.type === 'warning' ? 'bi-exclamation-circle' : 'bi-info-circle';
+            html += `
+                <div class="insight-item insight-${insight.type}">
+                    <div class="insight-icon">
+                        <i class="bi ${icon}"></i>
+                    </div>
+                    <div class="insight-text">
+                        <h6>${insight.title}</h6>
+                        <p>${insight.description}</p>
+                    </div>
+                </div>
+            `;
+        });
+
+        html += '</div>';
+        container.innerHTML = html;
+    }
+
+    function filterTable() {
+        // Filter logic here
+    }
+
+    function exportAnalytics() {
+        const eventId = document.getElementById('eventSelect').value;
+        window.location.href = `@Url.Action("ExportEventAnalytics", "Organizer")?eventId=${eventId}`;
+    }
+</script>
