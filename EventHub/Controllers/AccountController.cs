@@ -122,23 +122,8 @@ namespace EventHub.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Register(RegisterViewModel model)
         {
-            _logger.LogInformation("╔═══════════════════════════════════════════════════════════╗");
-            _logger.LogInformation("║          REGISTRATION PROCESS STARTED                      ║");
-            _logger.LogInformation("╚═══════════════════════════════════════════════════════════╝");
-
-            _logger.LogInformation("📋 RECEIVED DATA:");
-            _logger.LogInformation("   Name: {Name}", model.Name ?? "NULL");
-            _logger.LogInformation("   Email: {Email}", model.Email ?? "NULL");
-            _logger.LogInformation("   Role: {Role}", model.Role);
-            _logger.LogInformation("   Phone: {Phone}", model.Phone ?? "NULL");
-
-            _logger.LogInformation("🔍 MODEL STATE CHECK:");
-            _logger.LogInformation("   IsValid: {IsValid}", ModelState.IsValid);
-
-            // 🔧 FIX: Check ModelState validity first
             if (!ModelState.IsValid)
             {
-                _logger.LogError("❌ MODEL STATE IS INVALID - VALIDATION ERRORS:");
                 var errors = ModelState
                     .Where(x => x.Value.Errors.Count > 0)
                     .Select(x => new { x.Key, x.Value.Errors })
@@ -146,152 +131,100 @@ namespace EventHub.Controllers
 
                 foreach (var error in errors)
                 {
-                    foreach (var err in error.Errors)
+                    foreach (var e in error.Errors)
                     {
-                        _logger.LogError("   ❗ Field: {Field} → {ErrorMessage}", error.Key, err.ErrorMessage);
+                        _logger.LogError($"VALIDATION ERROR - {error.Key}: {e.ErrorMessage}");
                     }
                 }
-
-                return View(model);
             }
-
-            _logger.LogInformation("✅ MODEL STATE IS VALID - PROCEEDING");
-
             try
             {
-                // 🔧 FIX: Validate password match (defensive check)
-                if (model.Password != model.ConfirmPassword)
+                if (ModelState.IsValid)
                 {
-                    _logger.LogError("❌ PASSWORDS DO NOT MATCH");
-                    ModelState.AddModelError("ConfirmPassword", "Passwords do not match");
-                    return View(model);
-                }
+                    // Additional server-side validation
+                    if (!IsValidEmail(model.Email))
+                    {
+                        ModelState.AddModelError("Email", "Please enter a valid email address");
+                        return View(model);
+                    }
 
-                // 🔧 FIX: Validate password length
-                if (model.Password.Length < 6)
-                {
-                    _logger.LogError("❌ PASSWORD TOO SHORT");
-                    ModelState.AddModelError("Password", "Password must be at least 6 characters");
-                    return View(model);
-                }
+                    if (!IsValidPassword(model.Password))
+                    {
+                        ModelState.AddModelError("Password", "Password must be at least 6 characters long and contain a mix of characters");
+                        return View(model);
+                    }
 
-                // 🔧 FIX: Validate email format
-                if (!IsValidEmail(model.Email))
-                {
-                    _logger.LogError("❌ INVALID EMAIL FORMAT");
-                    ModelState.AddModelError("Email", "Please enter a valid email address");
-                    return View(model);
-                }
+                    // Check if email already exists
+                    var existingUser = await _userService.GetUserByEmailAsync(model.Email);
+                    if (existingUser != null)
+                    {
+                        ModelState.AddModelError("Email", "This email is already registered");
+                        return View(model);
+                    }
 
-                // Check if email already exists
-                var existingUser = await _userService.GetUserByEmailAsync(model.Email);
-                if (existingUser != null)
-                {
-                    _logger.LogWarning("⚠️ EMAIL ALREADY EXISTS: {Email}", model.Email);
-                    ModelState.AddModelError("Email", "This email is already registered. Please log in or use a different email.");
-                    return View(model);
-                }
+                    // Validate company name for organizers
+                    if (model.Role == UserRole.Organizer && string.IsNullOrWhiteSpace(model.Company))
+                    {
+                        ModelState.AddModelError("Company", "Company name is required for organizers");
+                        return View(model);
+                    }
 
-                // 🔧 FIX: Validate phone if provided
-                if (!string.IsNullOrEmpty(model.Phone) && !IsValidPhone(model.Phone))
-                {
-                    _logger.LogError("❌ INVALID PHONE FORMAT");
-                    ModelState.AddModelError("Phone", "Please enter a valid phone number");
-                    return View(model);
-                }
+                    // FIXED: Convert DateOfBirth to UTC if provided
+                    DateTime? utcDateOfBirth = null;
+                    if (model.DateOfBirth.HasValue)
+                    {
+                        utcDateOfBirth = DateTime.SpecifyKind(model.DateOfBirth.Value, DateTimeKind.Utc);
+                    }
 
-                // 🔧 FIX: Validate organizer company
-                if (model.Role == UserRole.Organizer && string.IsNullOrEmpty(model.Company))
-                {
-                    _logger.LogError("❌ ORGANIZER WITHOUT COMPANY");
-                    ModelState.AddModelError("Company", "Company name is required for organizers");
-                    return View(model);
-                }
+                    // Create new user
+                    var user = new User
+                    {
+                        Name = model.Name.Trim(),
+                        Email = model.Email.Trim().ToLowerInvariant(),
+                        Password = model.Password, // Will be hashed in service
+                        Phone = model.Phone?.Trim(),
+                        Role = model.Role,
+                        Company = model.Company?.Trim(),
+                        LoyaltyPoints = 0,
+                        IsActive = true,
+                        CreatedAt = DateTime.UtcNow, // Already UTC
 
-                _logger.LogInformation("✅ ALL VALIDATIONS PASSED - CREATING USER");
+                        // FIXED: New fields with proper UTC handling
+                        DateOfBirth = utcDateOfBirth,
+                        Gender = model.Gender?.Trim(),
+                        City = model.City?.Trim(),
+                        Interests = model.Role == UserRole.Customer ? model.Interests?.Trim() : null,
+                        Website = model.Role == UserRole.Organizer ? model.Website?.Trim() : null,
+                        OrganizationType = model.Role == UserRole.Organizer ? model.OrganizationType?.Trim() : null,
+                        Description = model.Role == UserRole.Organizer ? model.Description?.Trim() : null,
+                        EmailNotifications = model.EmailNotifications,
+                        SmsNotifications = model.SmsNotifications,
+                        MarketingEmails = model.MarketingEmails
+                    };
 
-                // Create user
-                var user = new User
-                {
-                    Name = model.Name.Trim(),
-                    Email = model.Email.Trim().ToLower(),
-                    Password = BCrypt.Net.BCrypt.HashPassword(model.Password),
-                    Role = model.Role,
-                    Phone = model.Phone?.Trim(),
-                    Company = model.Company?.Trim(),
-                    DateOfBirth = model.DateOfBirth,
-                    Gender = model.Gender?.Trim(),
-                    City = model.City?.Trim(),
-                    Interests = model.Interests?.Trim(),
-                    Website = model.Website?.Trim(),
-                    OrganizationType = model.OrganizationType?.Trim(),
-                    Description = model.Description?.Trim(),
-                    EmailNotifications = model.EmailNotifications,
-                    SmsNotifications = model.SmsNotifications,
-                    MarketingEmails = model.MarketingEmails,
-                    LoyaltyPoints = 0,
-                    IsActive = true,
-                    CreatedAt = DateTime.UtcNow
-                };
+                    await _userService.CreateUserAsync(user);
 
-                _logger.LogInformation("👤 USER OBJECT CREATED:");
-                _logger.LogInformation("   Name: {Name}", user.Name);
-                _logger.LogInformation("   Email: {Email}", user.Email);
-                _logger.LogInformation("   Role: {Role}", user.Role);
+                    _logger.LogInformation("New user registered: {UserId} - {Email} - {Role}", user.Id, user.Email, user.Role);
 
-                // Register via service
-                var result = await _userService.RegisterUserAsync(user);
+                    // Auto-login after registration
+                    HttpContext.Session.SetString("UserId", user.Id.ToString());
+                    HttpContext.Session.SetString("UserEmail", user.Email);
+                    HttpContext.Session.SetString("UserName", user.Name);
+                    HttpContext.Session.SetString("UserRole", user.Role.ToString());
+                    HttpContext.Session.SetString("LoginTime", DateTime.UtcNow.ToString());
 
-                if (result)
-                {
-                    _logger.LogInformation("✅ USER REGISTERED SUCCESSFULLY");
-                    _logger.LogInformation("🎉 REGISTRATION COMPLETED");
-                    _logger.LogInformation("╔═══════════════════════════════════════════════════════════╗");
-                    _logger.LogInformation("║          REGISTRATION SUCCESSFUL                         ║");
-                    _logger.LogInformation("╚═══════════════════════════════════════════════════════════╝");
+                    TempData["SuccessMessage"] = "Registration successful! Welcome to EventHub.";
 
-                    TempData["SuccessMessage"] = "Registration successful! Please log in with your credentials.";
-                    return RedirectToAction("Login");
-                }
-                else
-                {
-                    _logger.LogError("❌ USER SERVICE REGISTRATION FAILED");
-                    ModelState.AddModelError("", "Registration failed. Please try again.");
-                    return View(model);
+                    return RedirectBasedOnRole(user.Role.ToString());
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError("╔═══════════════════════════════════════════════════════════╗");
-                _logger.LogError("║          ERROR IN REGISTRATION PROCESS                   ║");
-                _logger.LogError("╚═══════════════════════════════════════════════════════════╝");
-                _logger.LogError("❌ Exception: {ExceptionType}", ex.GetType().Name);
-                _logger.LogError("❌ Message: {Message}", ex.Message);
-                _logger.LogError("❌ Stack: {StackTrace}", ex.StackTrace);
-
+                _logger.LogError(ex, "Error during registration for email {Email}", model.Email);
                 ModelState.AddModelError("", "An error occurred during registration. Please try again.");
-                return View(model);
             }
-        }
 
-        // 🔧 FIX: Helper validation methods
-        private bool IsValidEmail(string email)
-        {
-            try
-            {
-                var addr = new System.Net.Mail.MailAddress(email);
-                return addr.Address == email;
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
-        private bool IsValidPhone(string phone)
-        {
-            var cleaned = System.Text.RegularExpressions.Regex.Replace(phone, @"\D", "");
-            return cleaned.Length >= 9 && cleaned.Length <= 15;
+            return View(model);
         }
 
         // POST: /Account/Logout

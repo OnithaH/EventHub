@@ -1,12 +1,12 @@
 ﻿/**
- * Enhanced Registration JavaScript for EventHub - FIXED VERSION
+ * Enhanced Registration JavaScript for EventHub
+ * Works with existing auth.js without conflicts
  */
 
 let currentStep = 1;
 let selectedRole = 'customer';
 
 document.addEventListener('DOMContentLoaded', function () {
-    console.log('🔧 Register Enhanced JS Loaded');
     initializeEnhancedRegistration();
     loadBenefits();
     setupStepNavigation();
@@ -17,179 +17,170 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 function initializeEnhancedRegistration() {
-    console.log('✅ Initializing enhanced registration');
+    // Check URL parameters for pre-selected role
+    const urlParams = new URLSearchParams(window.location.search);
+    const roleParam = urlParams.get('role');
+
+    if (roleParam && (roleParam === 'customer' || roleParam === 'organizer')) {
+        selectRole(roleParam);
+    }
+
+    // Set minimum age for date of birth (13 years ago)
+    const dobInput = document.getElementById('dateOfBirth');
+    if (dobInput) {
+        const maxDate = new Date();
+        maxDate.setFullYear(maxDate.getFullYear() - 13);
+        dobInput.max = maxDate.toISOString().split('T')[0];
+
+        // Set minimum age for a more reasonable maximum (100 years ago)
+        const minDate = new Date();
+        minDate.setFullYear(minDate.getFullYear() - 100);
+        dobInput.min = minDate.toISOString().split('T')[0];
+    }
 }
 
 function selectRole(role) {
     selectedRole = role;
-    console.log('🎯 Role selected:', role);
-    document.getElementById('roleField').value = role === 'customer' ? '1' : '2';
 
-    // Update UI
-    document.querySelectorAll('.role-option').forEach(opt => {
-        opt.classList.remove('active');
+    // Update role option styling
+    document.querySelectorAll('.role-option').forEach(option => {
+        option.classList.remove('active');
     });
-    document.querySelector(`[data-role="${role}"]`)?.classList.add('active');
+
+    const selectedOption = document.querySelector(`[data-role="${role}"]`);
+    if (selectedOption) {
+        selectedOption.classList.add('active');
+    }
+
+    // Update hidden role field with correct enum value
+    const roleField = document.getElementById('roleField');
+    if (roleField) {
+        if (role === 'customer') {
+            roleField.value = '1'; // UserRole.Customer = 1
+        } else if (role === 'organizer') {
+            roleField.value = '2'; // UserRole.Organizer = 2
+        }
+    }
+
+    // Show/hide role-specific fields
+    const customerFields = document.querySelector('.customer-fields');
+    const organizerFields = document.querySelector('.organizer-fields');
+
+    if (role === 'organizer') {
+        if (customerFields) customerFields.style.display = 'none';
+        if (organizerFields) {
+            organizerFields.style.display = 'block';
+            // Make company field required for organizers
+            const companyField = document.getElementById('company');
+            if (companyField) {
+                companyField.required = true;
+            }
+        }
+    } else {
+        if (customerFields) customerFields.style.display = 'block';
+        if (organizerFields) {
+            organizerFields.style.display = 'none';
+            // Remove required from company field for customers
+            const companyField = document.getElementById('company');
+            if (companyField) {
+                companyField.required = false;
+            }
+        }
+    }
+
+    loadBenefits();
 }
 
 function loadBenefits() {
-    console.log('📋 Loading benefits');
+    const benefitsList = document.getElementById('benefitsList');
+    if (!benefitsList) return;
+
+    const benefits = {
+        customer: [
+            { icon: 'bi-search', text: 'Discover amazing events in your city' },
+            { icon: 'bi-ticket-perforated', text: 'Quick and secure ticket booking' },
+            { icon: 'bi-qr-code', text: 'Digital tickets with QR codes' },
+            { icon: 'bi-bell', text: 'Get notified about events you love' },
+            { icon: 'bi-star', text: 'Exclusive discounts and early access' },
+            { icon: 'bi-shield-check', text: 'Safe and secure transactions' }
+        ],
+        organizer: [
+            { icon: 'bi-plus-circle', text: 'Create and manage unlimited events' },
+            { icon: 'bi-graph-up', text: 'Track sales and revenue in real-time' },
+            { icon: 'bi-people', text: 'Reach thousands of potential attendees' },
+            { icon: 'bi-credit-card', text: 'Secure payment processing' },
+            { icon: 'bi-bar-chart', text: 'Detailed analytics and insights' },
+            { icon: 'bi-headset', text: 'Dedicated organizer support' }
+        ]
+    };
+
+    benefitsList.innerHTML = benefits[selectedRole].map(benefit =>
+        `<div class="benefit-item">
+            <i class="bi ${benefit.icon}"></i>
+            <span>${benefit.text}</span>
+        </div>`
+    ).join('');
 }
 
 function setupStepNavigation() {
+    // Override the auth.js form submission to handle steps
     const form = document.getElementById('registrationForm');
-    if (!form) {
-        console.error('❌ Registration form not found');
-        return;
-    }
+    if (!form) return;
 
     form.addEventListener('submit', function (e) {
-        // 🔧 FIX: Prevent default and handle step navigation
         if (currentStep < 3) {
             e.preventDefault();
             nextStep();
             return false;
         }
 
-        // On final step, let form submit
+        // Let the existing auth.js handle final validation and submission
         return true;
-    });
-
-    // Setup Next buttons
-    document.querySelectorAll('[data-next-step]').forEach(btn => {
-        btn.addEventListener('click', function (e) {
-            e.preventDefault();
-            nextStep();
-        });
-    });
-
-    // Setup Previous buttons
-    document.querySelectorAll('[data-prev-step]').forEach(btn => {
-        btn.addEventListener('click', function (e) {
-            e.preventDefault();
-            previousStep();
-        });
     });
 }
 
 function nextStep() {
-    console.log(`📍 Attempting to move from Step ${currentStep} to ${currentStep + 1}`);
-
-    // 🔧 FIX: Clear all previous errors first
-    clearAllErrors();
-
     if (validateCurrentStep()) {
         if (currentStep < 3) {
             currentStep++;
             updateStepDisplay();
-            console.log(`✅ Moved to Step ${currentStep}`);
         }
-    } else {
-        console.log(`❌ Validation failed on Step ${currentStep}`);
     }
 }
 
 function previousStep() {
-    console.log(`📍 Moving back from Step ${currentStep} to ${currentStep - 1}`);
-
-    // 🔧 FIX: Clear errors when going back
-    clearAllErrors();
-
     if (currentStep > 1) {
         currentStep--;
         updateStepDisplay();
-        console.log(`✅ Moved to Step ${currentStep}`);
     }
 }
 
-// 🔧 FIX: Enhanced validation with detailed checks
 function validateCurrentStep() {
-    console.log(`🔍 Validating Step ${currentStep}`);
-    const currentStepElement = document.querySelector(`[data-step="${currentStep}"].form-step`);
+    const currentStepElement = document.querySelector(`[data-step="${currentStep}"].form-step.active`);
+    if (!currentStepElement) return false;
 
-    if (!currentStepElement) {
-        console.error(`❌ Step ${currentStep} element not found`);
-        return false;
-    }
-
+    const inputs = currentStepElement.querySelectorAll('input[required], select[required]');
     let isValid = true;
-    const inputs = currentStepElement.querySelectorAll('input[required], select[required], textarea[required]');
-
-    console.log(`   Found ${inputs.length} required fields`);
 
     inputs.forEach(input => {
-        const fieldName = input.name || input.id;
-        const value = input.value.trim();
-
-        // 🔧 FIX: Actual value validation, not just DOM checking
-        if (!value) {
-            showFieldError(input, `${getLabelForField(fieldName)} is required`);
-            console.log(`   ❌ ${fieldName} is empty`);
-            isValid = false;
-            return;
-        }
-
-        // 🔧 FIX: Type-specific validation
-        if (input.type === 'email') {
-            if (!isValidEmail(value)) {
-                showFieldError(input, 'Please enter a valid email address');
-                console.log(`   ❌ ${fieldName} invalid email format`);
+        // Use the existing auth.js validation if available
+        if (window.AuthHandler && window.AuthHandler.validateField) {
+            if (!window.AuthHandler.validateField(input)) {
                 isValid = false;
-                return;
+            }
+        } else {
+            // Fallback validation
+            if (!validateFieldBasic(input)) {
+                isValid = false;
             }
         }
-
-        if (input.id === 'password') {
-            if (value.length < 6) {
-                showFieldError(input, 'Password must be at least 6 characters');
-                console.log(`   ❌ Password too short`);
-                isValid = false;
-                return;
-            }
-        }
-
-        if (input.id === 'confirmPassword') {
-            const passwordField = document.getElementById('password');
-            if (value !== passwordField.value) {
-                showFieldError(input, 'Passwords do not match');
-                console.log(`   ❌ Passwords do not match`);
-                isValid = false;
-                return;
-            }
-        }
-
-        if (input.type === 'tel') {
-            if (!isValidPhone(value)) {
-                showFieldError(input, 'Please enter a valid phone number');
-                console.log(`   ❌ ${fieldName} invalid phone format`);
-                isValid = false;
-                return;
-            }
-        }
-
-        console.log(`   ✅ ${fieldName} valid`);
-        clearFieldError(input);
     });
 
-    // 🔧 FIX: Special validation for Step 2 (Organizer company)
+    // Special validation for step 2
     if (currentStep === 2 && selectedRole === 'organizer') {
         const companyField = document.getElementById('company');
-        if (companyField) {
-            const companyValue = companyField.value.trim();
-            if (!companyValue) {
-                showFieldError(companyField, 'Company name is required for organizers');
-                console.log(`   ❌ Company name missing for organizer`);
-                isValid = false;
-            }
-        }
-    }
-
-    // 🔧 FIX: Verify terms checkbox on final step
-    if (currentStep === 3) {
-        const termsCheckbox = document.getElementById('terms');
-        if (termsCheckbox && !termsCheckbox.checked) {
-            showFieldError(termsCheckbox, 'You must accept the Terms & Conditions');
-            console.log(`   ❌ Terms not accepted`);
+        if (companyField && !companyField.value.trim()) {
+            showFieldError(companyField, 'Company name is required for organizers');
             isValid = false;
         }
     }
@@ -197,153 +188,124 @@ function validateCurrentStep() {
     return isValid;
 }
 
-// 🔧 FIX: Email validation
-function isValidEmail(email) {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-}
-
-// 🔧 FIX: Phone validation
-function isValidPhone(phone) {
-    // Accept various formats with +94, 0, or digits
-    const phoneRegex = /^(\+94|0)?[0-9]{9,10}$/;
-    return phoneRegex.test(phone.replace(/\s/g, ''));
-}
-
-// 🔧 FIX: Get label for field
-function getLabelForField(fieldName) {
-    const labels = {
-        'name': 'Full Name',
-        'email': 'Email Address',
-        'password': 'Password',
-        'confirmPassword': 'Confirm Password',
-        'phone': 'Phone Number',
-        'company': 'Company Name'
-    };
-    return labels[fieldName] || fieldName;
-}
-
 function validateFieldBasic(field) {
     const value = field.value.trim();
-    if (!value) {
+
+    if (field.required && !value) {
+        showFieldError(field, 'This field is required');
         return false;
     }
 
-    if (field.type === 'email') {
-        return isValidEmail(value);
+    if (field.type === 'email' && value) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(value)) {
+            showFieldError(field, 'Please enter a valid email address');
+            return false;
+        }
     }
 
-    if (field.type === 'tel') {
-        return isValidPhone(value);
-    }
-
+    clearFieldError(field);
+    field.classList.add('is-valid');
     return true;
 }
 
 function showFieldError(field, message) {
-    console.log(`🔴 Error on ${field.name || field.id}: ${message}`);
-
-    field.classList.add('is-invalid');
     field.classList.remove('is-valid');
+    field.classList.add('is-invalid');
 
-    let errorSpan = field.parentElement.querySelector('.field-validation-error');
-    if (!errorSpan) {
-        errorSpan = document.createElement('span');
-        errorSpan.className = 'field-validation-error';
-        field.parentElement.appendChild(errorSpan);
+    // Remove existing error
+    const existingError = field.parentNode.querySelector('.field-validation-error');
+    if (existingError) {
+        existingError.remove();
     }
-    errorSpan.textContent = message;
-    errorSpan.style.display = 'block';
+
+    // Add new error
+    const errorElement = document.createElement('div');
+    errorElement.className = 'field-validation-error';
+    errorElement.textContent = message;
+    field.parentNode.appendChild(errorElement);
 }
 
 function clearFieldError(field) {
-    field.classList.remove('is-invalid');
-    field.classList.add('is-valid');
-
-    const errorSpan = field.parentElement.querySelector('.field-validation-error');
-    if (errorSpan) {
-        errorSpan.textContent = '';
-        errorSpan.style.display = 'none';
+    field.classList.remove('is-invalid', 'is-valid');
+    const errorElement = field.parentNode.querySelector('.field-validation-error');
+    if (errorElement) {
+        errorElement.remove();
     }
 }
 
-// 🔧 FIX: Clear ALL errors when changing steps
-function clearAllErrors() {
-    console.log('🧹 Clearing all validation errors');
-    document.querySelectorAll('.form-input').forEach(input => {
-        clearFieldError(input);
-    });
-    document.querySelectorAll('.field-validation-error').forEach(span => {
-        span.textContent = '';
-        span.style.display = 'none';
-    });
-}
-
 function updateStepDisplay() {
-    console.log(`📖 Updating display for Step ${currentStep}`);
+    // Update step indicator
+    document.querySelectorAll('.step').forEach((step, index) => {
+        const stepNum = index + 1;
+        step.classList.remove('active', 'completed');
 
-    // Hide all steps
+        if (stepNum === currentStep) {
+            step.classList.add('active');
+        } else if (stepNum < currentStep) {
+            step.classList.add('completed');
+        }
+    });
+
+    // Update form steps
     document.querySelectorAll('.form-step').forEach(step => {
         step.classList.remove('active');
     });
 
-    // Show current step
-    const activeStep = document.querySelector(`[data-step="${currentStep}"]`);
+    const activeStep = document.querySelector(`[data-step="${currentStep}"].form-step`);
     if (activeStep) {
         activeStep.classList.add('active');
     }
 
-    // Update step indicator
-    document.querySelectorAll('.step').forEach(indicator => {
-        const stepNum = parseInt(indicator.getAttribute('data-step'));
-        indicator.classList.remove('active');
-        if (stepNum === currentStep) {
-            indicator.classList.add('active');
-        } else if (stepNum < currentStep) {
-            indicator.classList.add('completed');
-        }
-    });
+    // Update navigation buttons
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const submitBtn = document.getElementById('submitBtn');
 
-    // Update button visibility
-    updateButtonVisibility();
+    if (prevBtn) prevBtn.style.display = currentStep === 1 ? 'none' : 'inline-block';
+    if (nextBtn) nextBtn.style.display = currentStep === 3 ? 'none' : 'inline-block';
+    if (submitBtn) submitBtn.style.display = currentStep === 3 ? 'inline-block' : 'none';
 
-    // Scroll to top of form
-    document.querySelector('.registration-form-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-
-function updateButtonVisibility() {
-    const nextBtn = document.querySelector('[data-next-step]');
-    const prevBtn = document.querySelector('[data-prev-step]');
-    const submitBtn = document.querySelector('button[type="submit"]');
-
-    if (currentStep === 1) {
-        if (prevBtn) prevBtn.style.display = 'none';
-    } else {
-        if (prevBtn) prevBtn.style.display = 'inline-block';
-    }
-
+    // Update verification step content
     if (currentStep === 3) {
-        if (nextBtn) nextBtn.style.display = 'none';
-        if (submitBtn) submitBtn.style.display = 'inline-block';
-    } else {
-        if (nextBtn) nextBtn.style.display = 'inline-block';
-        if (submitBtn) submitBtn.style.display = 'none';
+        updateVerificationContent();
     }
 }
 
 function updateVerificationContent() {
-    const emailSpan = document.getElementById('verificationEmail');
-    if (emailSpan) {
-        emailSpan.textContent = document.getElementById('email').value;
+    const emailField = document.getElementById('email');
+    const verificationEmail = document.getElementById('verificationEmail');
+
+    if (emailField && verificationEmail) {
+        verificationEmail.textContent = emailField.value;
     }
 }
 
 function setupRoleSelection() {
-    // Already handled in selectRole()
+    // Add click handlers to role options
+    document.querySelectorAll('.role-option').forEach(option => {
+        option.addEventListener('click', function () {
+            const role = this.getAttribute('data-role');
+            selectRole(role);
+        });
+    });
 }
 
 function setupInterestHandling() {
-    // Handle interest checkboxes if needed
+    const checkboxes = document.querySelectorAll('.interest-checkbox');
+    const interestsField = document.getElementById('interestsField');
+
+    if (!interestsField) return;
+
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function () {
+            const selectedInterests = Array.from(checkboxes)
+                .filter(cb => cb.checked)
+                .map(cb => cb.value);
+
+            interestsField.value = selectedInterests.join(',');
+        });
+    });
 }
 
 function setupPhoneFormatting() {
@@ -379,5 +341,108 @@ function setupDateValidation() {
     });
 }
 
-// Initialize on DOM ready
-console.log('✅ Register Enhanced JS ready');
+// Utility functions for terms and privacy policy
+function showTerms() {
+    alert('Terms of Service\n\n1. Acceptance of Terms\nBy creating an account with EventHub, you agree to be bound by these Terms of Service.\n\n2. Account Responsibilities\nYou are responsible for maintaining the confidentiality of your account credentials.\n\n3. Event Listings and Bookings\nEvent organizers must provide accurate information. Customers acknowledge that event details may change.\n\n4. Payment and Refunds\nPayments are processed securely. Refund policies vary by event.\n\n5. Prohibited Activities\nUsers must not engage in fraud, spam, harassment, or illegal activities.');
+}
+
+function showPrivacyPolicy() {
+    alert('Privacy Policy\n\nInformation We Collect\nWe collect information you provide directly, including account details and event preferences.\n\nHow We Use Information\nYour information is used to provide services, process transactions, and send notifications.\n\nInformation Sharing\nWe don\'t sell your personal information. We only share data with service providers as required.\n\nData Security\nWe implement industry-standard security measures to protect your information.\n\nYour Rights\nYou can access, update, or delete your personal information at any time.\n\nContact Us\nFor privacy questions, contact us at privacy@eventhub.lk');
+}
+
+// Enhanced form submission handling
+document.addEventListener('DOMContentLoaded', function () {
+    const form = document.getElementById('registrationForm');
+    if (!form) return;
+
+    // Override form submission to collect additional data
+    form.addEventListener('submit', function (e) {
+        if (currentStep !== 3) {
+            e.preventDefault();
+            return false;
+        }
+
+        // Collect additional form data and append to existing form
+        collectAdditionalFormData();
+
+        // Let auth.js handle the validation and submission
+        return true;
+    });
+});
+
+function collectAdditionalFormData() {
+    const form = document.getElementById('registrationForm');
+    if (!form) return;
+
+    // Create hidden inputs for additional data
+    const additionalFields = [
+        { id: 'dateOfBirth', name: 'DateOfBirth' },
+        { id: 'gender', name: 'Gender' },
+        { id: 'city', name: 'City' },
+        { id: 'interestsField', name: 'Interests' },
+        { id: 'website', name: 'Website' },
+        { id: 'organizationType', name: 'OrganizationType' },
+        { id: 'description', name: 'Description' }
+    ];
+
+    additionalFields.forEach(field => {
+        const element = document.getElementById(field.id);
+        if (element && element.value) {
+            // Check if hidden input already exists
+            let hiddenInput = form.querySelector(`input[name="${field.name}"]`);
+            if (!hiddenInput) {
+                hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.name = field.name;
+                form.appendChild(hiddenInput);
+            }
+            hiddenInput.value = element.value;
+        }
+    });
+
+    // Handle checkboxes for preferences
+    const preferences = [
+        { id: 'emailNotifications', name: 'EmailNotifications' },
+        { id: 'smsNotifications', name: 'SmsNotifications' },
+        { id: 'marketingEmails', name: 'MarketingEmails' }
+    ];
+
+    preferences.forEach(pref => {
+        const checkbox = document.getElementById(pref.id);
+        if (checkbox) {
+            let hiddenInput = form.querySelector(`input[name="${pref.name}"]`);
+            if (!hiddenInput) {
+                hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.name = pref.name;
+                form.appendChild(hiddenInput);
+            }
+            hiddenInput.value = checkbox.checked ? 'true' : 'false';
+        }
+    });
+
+    // Update interests field with selected checkboxes
+    const checkboxes = document.querySelectorAll('.interest-checkbox:checked');
+    const interestsField = document.getElementById('interestsField');
+    if (interestsField) {
+        const selectedInterests = Array.from(checkboxes).map(cb => cb.value);
+        interestsField.value = selectedInterests.join(',');
+    }
+}
+
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', function () {
+    // Wait for auth.js to initialize, then enhance
+    setTimeout(function () {
+        // Check if auth.js loaded properly
+        if (typeof AuthHandler !== 'undefined') {
+            console.log('Auth.js detected, enhancing registration form');
+        } else {
+            console.log('Auth.js not detected, using fallback validation');
+        }
+
+        // Initialize the enhanced registration regardless
+        selectRole('customer'); // Default to customer
+        updateStepDisplay(); // Initialize step display
+    }, 100);
+});
