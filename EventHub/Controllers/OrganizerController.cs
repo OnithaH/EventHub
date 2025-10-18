@@ -440,24 +440,32 @@ namespace EventHub.Controllers
                 _logger.LogInformation("   New Total: {NewTotal}, New Available: {NewAvailable}",
                     eventModel.TotalTickets, eventModel.AvailableTickets);
 
-                // Handle image upload
+                // Handle image upload to Azure Blob Storage
                 if (eventImage != null && eventImage.Length > 0)
                 {
-                    var fileName = $"event-{Guid.NewGuid()}{Path.GetExtension(eventImage.FileName)}";
-                    var uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "images", "events");
-                    Directory.CreateDirectory(uploadsFolder);
-                    var filePath = Path.Combine(uploadsFolder, fileName);
-
-                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    try
                     {
-                        await eventImage.CopyToAsync(stream);
-                    }
+                        // Delete old image if exists
+                        if (!string.IsNullOrEmpty(existingEvent.ImageUrl) &&
+                            !existingEvent.ImageUrl.Contains("default-event"))
+                        {
+                            await _blobStorageService.DeleteImageAsync(existingEvent.ImageUrl);
+                        }
 
-                    eventModel.ImageUrl = $"/images/events/{fileName}";
+                        // Upload new image to Blob Storage
+                        eventModel.ImageUrl = await _blobStorageService.UploadImageAsync(eventImage);
+                        _logger.LogInformation($"✅ Event image updated to: {eventModel.ImageUrl}");
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError($"❌ Image upload failed: {ex.Message}");
+                        TempData["ErrorMessage"] = "Failed to upload image. Please try again.";
+                        return RedirectToAction(nameof(MyEvents));
+                    }
                 }
                 else if (string.IsNullOrEmpty(eventModel.ImageUrl))
                 {
-                    eventModel.ImageUrl = "/images/events/default-event.jpg";
+                    eventModel.ImageUrl = "https://eventhubstorageonitha.blob.core.windows.net/eventhub-images/default-event.jpg";
                 }
 
                 // Update the event
