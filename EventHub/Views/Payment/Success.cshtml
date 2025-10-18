@@ -78,9 +78,7 @@
 
         // Auto redirect to tickets after 10 seconds
         setTimeout(() => {
-            if (confirm('View your tickets now?')) {
                 window.location.href = '@Url.Action("ViewTickets", "Ticket", new { bookingId = Model.BookingId })';
-            }
         }, 10000);
     </script>
 }
