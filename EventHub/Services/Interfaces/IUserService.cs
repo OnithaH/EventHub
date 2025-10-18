@@ -90,5 +90,20 @@ namespace EventHub.Services.Interfaces
         /// <param name="email">Email address to check</param>
         /// <returns>True if email is available</returns>
         Task<bool> IsEmailAvailableAsync(string email);
+
+        /// <summary>
+        /// Hashes a plain text password using BCrypt
+        /// </summary>
+        /// <param name="password">Plain text password</param>
+        /// <returns>Hashed password string</returns>
+        string HashPassword(string password);
+
+        /// <summary>
+        /// Verifies a plain text password against a hashed password
+        /// </summary>
+        /// <param name="password">Plain text password</param>
+        /// <param name="hashedPassword">Hashed password to verify against</param>
+        /// <returns>True if password matches</returns>
+        bool VerifyPassword(string password, string hashedPassword);
     }
 }
