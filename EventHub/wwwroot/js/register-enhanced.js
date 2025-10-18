@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', function () {
     setupInterestHandling();
     setupPhoneFormatting();
     setupDateValidation();
+    setupPasswordConfirmation();
 });
 
 function initializeEnhancedRegistration() {
@@ -74,6 +75,11 @@ function selectRole(role) {
             const companyField = document.getElementById('company');
             if (companyField) {
                 companyField.required = true;
+                // Add required indicator to label
+                const companyLabel = document.querySelector('label[for="company"]');
+                if (companyLabel) {
+                    companyLabel.classList.add('required');
+                }
             }
         }
     } else {
@@ -84,6 +90,11 @@ function selectRole(role) {
             const companyField = document.getElementById('company');
             if (companyField) {
                 companyField.required = false;
+                // Remove required indicator from label
+                const companyLabel = document.querySelector('label[for="company"]');
+                if (companyLabel) {
+                    companyLabel.classList.remove('required');
+                }
             }
         }
     }
@@ -134,12 +145,19 @@ function setupStepNavigation() {
             return false;
         }
 
+        // Final validation before submission
+        if (!validateCurrentStep()) {
+            e.preventDefault();
+            return false;
+        }
+
         // Let the existing auth.js handle final validation and submission
         return true;
     });
 }
 
 function nextStep() {
+    // Only proceed if validation passes
     if (validateCurrentStep()) {
         if (currentStep < 3) {
             currentStep++;
@@ -153,6 +171,79 @@ function previousStep() {
         currentStep--;
         updateStepDisplay();
     }
+}
+
+// Fixed version for password confirmation setup
+function setupPasswordConfirmation() {
+    const passwordField = document.getElementById('password');
+    const confirmPasswordField = document.getElementById('confirmPassword');
+
+    if (!passwordField || !confirmPasswordField) return;
+
+    // Only validate on blur (when field loses focus)
+    confirmPasswordField.addEventListener('blur', function () {
+        if (confirmPasswordField.value) {
+            validatePasswordMatch();
+        }
+    });
+
+    // Clear validation messages when typing
+    confirmPasswordField.addEventListener('input', function () {
+        removeAllErrorMessages(confirmPasswordField);
+        confirmPasswordField.classList.remove('is-invalid', 'is-valid');
+    });
+}
+
+// New function to completely remove all error messages
+function removeAllErrorMessages(field) {
+    if (!field || !field.parentNode) return;
+
+    const errorMessages = field.parentNode.querySelectorAll('.field-validation-error');
+    errorMessages.forEach(message => message.remove());
+}
+
+// Improved password match validation
+function validatePasswordMatch() {
+    const passwordField = document.getElementById('password');
+    const confirmPasswordField = document.getElementById('confirmPassword');
+
+    if (!passwordField || !confirmPasswordField) return true;
+
+    // Remove all existing error messages first
+    removeAllErrorMessages(confirmPasswordField);
+
+    // Only validate if the confirm field has a value
+    if (confirmPasswordField.value) {
+        if (passwordField.value !== confirmPasswordField.value) {
+            // Show a single error message
+            showSingleError(confirmPasswordField, 'Passwords do not match');
+            return false;
+        } else {
+            // Passwords match - show success
+            confirmPasswordField.classList.add('is-valid');
+            confirmPasswordField.classList.remove('is-invalid');
+        }
+    }
+
+    return true;
+}
+
+// Function to show a single error message
+function showSingleError(field, message) {
+    if (!field || !field.parentNode) return;
+
+    // Remove any existing error messages first
+    removeAllErrorMessages(field);
+
+    // Add the error class to the field
+    field.classList.remove('is-valid');
+    field.classList.add('is-invalid');
+
+    // Create and append a new error message
+    const errorElement = document.createElement('div');
+    errorElement.className = 'field-validation-error';
+    errorElement.textContent = message;
+    field.parentNode.appendChild(errorElement);
 }
 
 function validateCurrentStep() {
@@ -176,11 +267,25 @@ function validateCurrentStep() {
         }
     });
 
+    // Special validation for password match on step 1
+    if (currentStep === 1) {
+        const passwordField = document.getElementById('password');
+        const confirmPasswordField = document.getElementById('confirmPassword');
+
+        if (passwordField && confirmPasswordField &&
+            passwordField.value && confirmPasswordField.value &&
+            passwordField.value !== confirmPasswordField.value) {
+
+            showSingleError(confirmPasswordField, 'Passwords do not match');
+            isValid = false;
+        }
+    }
+
     // Special validation for step 2
     if (currentStep === 2 && selectedRole === 'organizer') {
         const companyField = document.getElementById('company');
         if (companyField && !companyField.value.trim()) {
-            showFieldError(companyField, 'Company name is required for organizers');
+            showSingleError(companyField, 'Company name is required for organizers');
             isValid = false;
         }
     }
@@ -192,46 +297,29 @@ function validateFieldBasic(field) {
     const value = field.value.trim();
 
     if (field.required && !value) {
-        showFieldError(field, 'This field is required');
+        showSingleError(field, 'This field is required');
         return false;
     }
 
     if (field.type === 'email' && value) {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(value)) {
-            showFieldError(field, 'Please enter a valid email address');
+            showSingleError(field, 'Please enter a valid email address');
             return false;
         }
     }
 
-    clearFieldError(field);
+    if (field.id === 'password' && value) {
+        if (value.length < 6) {
+            showSingleError(field, 'Password must be at least 6 characters long');
+            return false;
+        }
+    }
+
+    removeAllErrorMessages(field);
     field.classList.add('is-valid');
+    field.classList.remove('is-invalid');
     return true;
-}
-
-function showFieldError(field, message) {
-    field.classList.remove('is-valid');
-    field.classList.add('is-invalid');
-
-    // Remove existing error
-    const existingError = field.parentNode.querySelector('.field-validation-error');
-    if (existingError) {
-        existingError.remove();
-    }
-
-    // Add new error
-    const errorElement = document.createElement('div');
-    errorElement.className = 'field-validation-error';
-    errorElement.textContent = message;
-    field.parentNode.appendChild(errorElement);
-}
-
-function clearFieldError(field) {
-    field.classList.remove('is-invalid', 'is-valid');
-    const errorElement = field.parentNode.querySelector('.field-validation-error');
-    if (errorElement) {
-        errorElement.remove();
-    }
 }
 
 function updateStepDisplay() {
@@ -334,9 +422,10 @@ function setupDateValidation() {
         const age = new Date().getFullYear() - dob.getFullYear();
 
         if (age < 13) {
-            showFieldError(this, 'You must be at least 13 years old to register');
+            showSingleError(this, 'You must be at least 13 years old to register');
         } else {
-            clearFieldError(this);
+            removeAllErrorMessages(this);
+            this.classList.remove('is-invalid');
         }
     });
 }
@@ -362,6 +451,12 @@ document.addEventListener('DOMContentLoaded', function () {
             return false;
         }
 
+        // Final validation before submission
+        if (!validateCurrentStep() || !validateAllSteps()) {
+            e.preventDefault();
+            return false;
+        }
+
         // Collect additional form data and append to existing form
         collectAdditionalFormData();
 
@@ -369,6 +464,74 @@ document.addEventListener('DOMContentLoaded', function () {
         return true;
     });
 });
+
+// Validate all steps before final submission
+function validateAllSteps() {
+    let isValid = true;
+    const passwordField = document.getElementById('password');
+    const confirmPasswordField = document.getElementById('confirmPassword');
+
+    // Check required fields in step 1
+    if (!passwordField || !passwordField.value.trim()) {
+        showSingleError(passwordField, 'Password is required');
+        isValid = false;
+    }
+
+    if (!confirmPasswordField || !confirmPasswordField.value.trim()) {
+        showSingleError(confirmPasswordField, 'Confirm password is required');
+        isValid = false;
+    }
+
+    // Check password match
+    if (passwordField && confirmPasswordField &&
+        passwordField.value && confirmPasswordField.value &&
+        passwordField.value !== confirmPasswordField.value) {
+        showSingleError(confirmPasswordField, 'Passwords do not match');
+        isValid = false;
+    }
+
+    // Check company name for organizers
+    if (selectedRole === 'organizer') {
+        const companyField = document.getElementById('company');
+        if (companyField && !companyField.value.trim()) {
+            showSingleError(companyField, 'Company name is required for organizers');
+            isValid = false;
+        }
+    }
+
+    // Check terms and age confirmation
+    const termsCheckbox = document.getElementById('terms');
+    const ageCheckbox = document.getElementById('ageConfirmation');
+
+    if (termsCheckbox && !termsCheckbox.checked) {
+        isValid = false;
+        showCheckboxError(termsCheckbox, 'You must agree to the Terms of Service and Privacy Policy');
+    }
+
+    if (ageCheckbox && !ageCheckbox.checked) {
+        isValid = false;
+        showCheckboxError(ageCheckbox, 'You must confirm you are at least 13 years old');
+    }
+
+    return isValid;
+}
+
+function showCheckboxError(checkbox, message) {
+    const parent = checkbox.closest('.form-check');
+    if (!parent) return;
+
+    // Remove existing error
+    const existingError = parent.querySelector('.field-validation-error');
+    if (existingError) {
+        existingError.remove();
+    }
+
+    // Add new error
+    const errorElement = document.createElement('div');
+    errorElement.className = 'field-validation-error';
+    errorElement.textContent = message;
+    parent.appendChild(errorElement);
+}
 
 function collectAdditionalFormData() {
     const form = document.getElementById('registrationForm');
