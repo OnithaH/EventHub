@@ -299,9 +299,166 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Tab navigation
+            setupTabNavigation();
+
+            // Auto-dismiss alerts after 5 seconds
+            autoDismissAlerts();
+
+            // ✅ Show changes alert if TempData has changes
+            @if (TempData["ProfileChanges"] != null)
+            {
+                    <text>
+                    const changesJson = '@Html.Raw(TempData["ProfileChanges"])';
+                    showChangesAlert(changesJson);
+                    </text>
+            }
+            else if (TempData["SuccessMessage"] != null)
+            {
+                    <text>
+                    // Fallback: Show simple success message if no changes tracked
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Profile Updated!',
+                        text: '@TempData["SuccessMessage"]',
+                        confirmButtonColor: '#10b981',
+                        timer: 3000,
+                        timerProgressBar: true
+                    });
+                    </text>
+            }
+        });
+
+        function showChangesAlert(changesJson) {
+            let changes = [];
+
+            try {
+                changes = JSON.parse(changesJson);
+            } catch (e) {
+                console.error('Error parsing changes:', e);
+                // Fallback to simple message
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Profile Updated!',
+                    text: 'Your profile has been updated successfully.',
+                    confirmButtonColor: '#10b981',
+                    timer: 3000,
+                    timerProgressBar: true
+                });
+                return;
+            }
+
+            if (changes.length === 0) {
+                // No changes, show simple message
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Profile Updated!',
+                    text: 'Your profile has been updated successfully.',
+                    confirmButtonColor: '#10b981',
+                    timer: 3000,
+                    timerProgressBar: true
+                });
+                return;
+            }
+
+            // Build HTML for changes
+            let changesHtml = '<div style="text-align: left; max-height: 400px; overflow-y: auto;">';
+            changesHtml += '<div style="margin-bottom: 1.5rem; text-align: center;">';
+            changesHtml += `<div style="
+                display: inline-flex;
+                align-items: center;
+                gap: 0.5rem;
+                background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+                padding: 0.75rem 1.5rem;
+                border-radius: 50px;
+                color: #065f46;
+                font-weight: 700;
+                font-size: 1.1rem;
+            ">
+                <i class="bi bi-check-circle-fill"></i>
+                ${changes.length} change${changes.length > 1 ? 's' : ''} saved successfully!
+            </div>`;
+            changesHtml += '</div>';
+
+            changes.forEach((change, index) => {
+                changesHtml += `
+                    <div style="
+                        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+                        border-left: 4px solid #10b981;
+                        padding: 1.25rem;
+                        margin-bottom: 1rem;
+                        border-radius: 0.75rem;
+                        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+                        transition: all 0.3s ease;
+                    ">
+                        <div style="
+                            font-weight: 700;
+                            color: #374151;
+                            margin-bottom: 0.75rem;
+                            display: flex;
+                            align-items: center;
+                            gap: 0.5rem;
+                            font-size: 1rem;
+                        ">
+                            <i class="bi bi-pencil-square" style="color: #10b981;"></i>
+                            ${change.field}
+                        </div>
+                        <div style="
+                            display: grid;
+                            gap: 0.5rem;
+                            font-size: 0.95rem;
+                        ">
+                            <div style="
+                                padding: 0.5rem 0.75rem;
+                                background: white;
+                                border-radius: 0.5rem;
+                                color: #6b7280;
+                            ">
+                                <strong style="color: #9ca3af;">Before:</strong>
+                                <span style="color: #6b7280;">${change.oldValue}</span>
+                            </div>
+                            <div style="
+                                padding: 0.5rem 0.75rem;
+                                background: #d1fae5;
+                                border-radius: 0.5rem;
+                                color: #065f46;
+                            ">
+                                <strong style="color: #047857;">After:</strong>
+                                <span style="color: #065f46; font-weight: 600;">${change.newValue}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            changesHtml += '</div>';
+
+            Swal.fire({
+                icon: 'success',
+                title: '<span style="color: #059669;">Profile Updated Successfully!</span>',
+                html: changesHtml,
+                confirmButtonText: '<i class="bi bi-check-lg me-2"></i>Perfect!',
+                confirmButtonColor: '#10b981',
+                width: '650px',
+                padding: '2rem',
+                customClass: {
+                    popup: 'changes-alert-popup',
+                    title: 'changes-alert-title',
+                    htmlContainer: 'changes-alert-content'
+                },
+                showClass: {
+                    popup: 'animate__animated animate__fadeInDown animate__faster'
+                },
+                hideClass: {
+                    popup: 'animate__animated animate__fadeOutUp animate__faster'
+                }
+            });
+        }
+
+        function setupTabNavigation() {
             const navItems = document.querySelectorAll('.profile-nav .nav-item');
             const sections = document.querySelectorAll('.profile-section');
 
@@ -323,8 +480,9 @@
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                 });
             });
+        }
 
-            // Auto-dismiss alerts after 5 seconds
+        function autoDismissAlerts() {
             setTimeout(() => {
                 const alerts = document.querySelectorAll('.alert');
                 alerts.forEach(alert => {
@@ -332,6 +490,7 @@
                     bsAlert.close();
                 });
             }, 5000);
-        });
+        }
     </script>
+
 }

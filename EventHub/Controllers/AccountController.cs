@@ -1,4 +1,5 @@
-﻿using EventHub.Models.Entities;
+﻿using EventHub.Data;
+using EventHub.Models.Entities;
 using EventHub.Models.ViewModels;
 using EventHub.Services.Interfaces;
 using Microsoft.AspNetCore.Http;
@@ -12,11 +13,13 @@ namespace EventHub.Controllers
     {
         private readonly IUserService _userService;
         private readonly ILogger<AccountController> _logger;
+        private readonly ApplicationDbContext _context;
 
-        public AccountController(IUserService userService, ILogger<AccountController> logger)
+        public AccountController(IUserService userService, ILogger<AccountController> logger, ApplicationDbContext context)
         {
             _userService = userService;
             _logger = logger;
+            _context = context;
         }
 
         // GET: /Account/Login
@@ -353,6 +356,55 @@ namespace EventHub.Controllers
                     }
                 }
 
+                // ✅ TRACK CHANGES - Store what changed
+                var changes = new List<object>();
+
+                // Track basic info changes
+                if (user.Name != model.Name)
+                    changes.Add(new { field = "Name", oldValue = user.Name, newValue = model.Name });
+
+                if (user.Email != model.Email)
+                    changes.Add(new { field = "Email", oldValue = user.Email, newValue = model.Email });
+
+                if (user.Phone != model.Phone)
+                    changes.Add(new { field = "Phone Number", oldValue = user.Phone ?? "Not set", newValue = model.Phone ?? "Not set" });
+
+                if (user.City != model.City)
+                    changes.Add(new { field = "City", oldValue = user.City ?? "Not set", newValue = model.City ?? "Not set" });
+
+                // Track personal info changes (for customers)
+                if (user.DateOfBirth != model.DateOfBirth)
+                    changes.Add(new { field = "Date of Birth", oldValue = user.DateOfBirth?.ToString("MMM dd, yyyy") ?? "Not set", newValue = model.DateOfBirth?.ToString("MMM dd, yyyy") ?? "Not set" });
+
+                if (user.Gender != model.Gender)
+                    changes.Add(new { field = "Gender", oldValue = user.Gender ?? "Not set", newValue = model.Gender ?? "Not set" });
+
+                if (user.Interests != model.Interests)
+                    changes.Add(new { field = "Interests", oldValue = user.Interests ?? "Not set", newValue = model.Interests ?? "Not set" });
+
+                // Track company info changes (for organizers)
+                if (user.Company != model.Company)
+                    changes.Add(new { field = "Company Name", oldValue = user.Company ?? "Not set", newValue = model.Company ?? "Not set" });
+
+                if (user.OrganizationType != model.OrganizationType)
+                    changes.Add(new { field = "Organization Type", oldValue = user.OrganizationType ?? "Not set", newValue = model.OrganizationType ?? "Not set" });
+
+                if (user.Website != model.Website)
+                    changes.Add(new { field = "Website", oldValue = user.Website ?? "Not set", newValue = model.Website ?? "Not set" });
+
+                if (user.Description != model.Description)
+                    changes.Add(new { field = "Description", oldValue = user.Description ?? "Not set", newValue = model.Description ?? "Not set" });
+
+                // Track notification preferences
+                if (user.EmailNotifications != model.EmailNotifications)
+                    changes.Add(new { field = "Email Notifications", oldValue = user.EmailNotifications ? "Enabled" : "Disabled", newValue = model.EmailNotifications ? "Enabled" : "Disabled" });
+
+                if (user.SmsNotifications != model.SmsNotifications)
+                    changes.Add(new { field = "SMS Notifications", oldValue = user.SmsNotifications ? "Enabled" : "Disabled", newValue = model.SmsNotifications ? "Enabled" : "Disabled" });
+
+                if (user.MarketingEmails != model.MarketingEmails)
+                    changes.Add(new { field = "Marketing Emails", oldValue = user.MarketingEmails ? "Enabled" : "Disabled", newValue = model.MarketingEmails ? "Enabled" : "Disabled" });
+
                 // Handle password change if requested
                 if (model.IsPasswordChangeRequested())
                 {
@@ -368,6 +420,9 @@ namespace EventHub.Controllers
 
                     // Hash and update new password
                     user.Password = _userService.HashPassword(model.NewPassword!);
+
+                    // Add password change to changes list
+                    changes.Add(new { field = "Password", oldValue = "••••••••", newValue = "••••••••" });
                 }
 
                 // Update user properties
@@ -392,6 +447,12 @@ namespace EventHub.Controllers
                 // Update session data
                 HttpContext.Session.SetString("UserName", user.Name);
                 HttpContext.Session.SetString("UserEmail", user.Email);
+
+                // ✅ PASS CHANGES TO VIEW via TempData
+                if (changes.Count > 0)
+                {
+                    TempData["ProfileChanges"] = System.Text.Json.JsonSerializer.Serialize(changes);
+                }
 
                 TempData["SuccessMessage"] = "Profile updated successfully!";
                 return RedirectToAction("Profile");

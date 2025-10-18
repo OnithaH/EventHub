@@ -316,7 +316,7 @@ namespace EventHub.Services.Implementations
         }
 
         // Private helper methods
-        public static string HashPassword(string password)
+        public string HashPassword(string password)
         {
             try
             {
@@ -329,7 +329,7 @@ namespace EventHub.Services.Implementations
             }
         }
 
-        public static bool VerifyPassword(string password, string hashedPassword)
+        public bool VerifyPassword(string password, string hashedPassword)
         {
             try
             {
