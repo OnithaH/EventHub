@@ -28,6 +28,7 @@
 
     <!-- EventHub Styles -->
     <link rel="stylesheet" href="~/css/eventhub-header.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/footer.css" asp-append-version="true" />
 </head>
 
 <body>
@@ -329,6 +330,89 @@
     <!-- Main Content Area -->
     <main role="main">
         @RenderBody()
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="container">
+                <div class="row g-4">
+                    <!-- Brand Column -->
+                    <div class="col-lg-4">
+                        <div class="footer-brand">
+                            <div class="brand d-flex align-items-center">
+                                <i class="bi bi-calendar-event me-2"></i>
+                                <span>EventHub</span>
+                            </div>
+                            <p class="footer-description">
+                                Sri Lanka's premier event ticketing platform. Discover, book, and enjoy amazing events across the country.
+                            </p>
+                            <div class="social-links">
+                                <a href="https://facebook.com/eventhub" class="social-link" title="Facebook" target="_blank" rel="noopener noreferrer">
+                                    <i class="bi bi-facebook"></i>
+                                </a>
+                                <a href="https://twitter.com/eventhub" class="social-link" title="Twitter" target="_blank" rel="noopener noreferrer">
+                                    <i class="bi bi-twitter"></i>
+                                </a>
+                                <a href="https://instagram.com/eventhub" class="social-link" title="Instagram" target="_blank" rel="noopener noreferrer">
+                                    <i class="bi bi-instagram"></i>
+                                </a>
+                                <a href="https://linkedin.com/company/eventhub" class="social-link" title="LinkedIn" target="_blank" rel="noopener noreferrer">
+                                    <i class="bi bi-linkedin"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Links Column -->
+                    <div class="col-lg-3 col-md-6">
+                        <h5 class="footer-title">Quick Links</h5>
+                        <ul class="footer-links">
+                            <li><a asp-controller="Home" asp-action="Index">Home</a></li>
+                            <li><a asp-controller="Event" asp-action="Index">Events</a></li>
+                            <li><a asp-controller="Home" asp-action="About">About Us</a></li>
+                            <li><a asp-controller="Home" asp-action="Contact">Contact</a></li>
+                        </ul>
+                    </div>
+
+                    <!-- Categories Column -->
+                    <div class="col-lg-3 col-md-6">
+                        <h5 class="footer-title">Categories</h5>
+                        <ul class="footer-links">
+                            <li><a asp-controller="Event" asp-action="Index" asp-route-category="music">Music</a></li>
+                            <li><a asp-controller="Event" asp-action="Index" asp-route-category="sports">Sports</a></li>
+                            <li><a asp-controller="Event" asp-action="Index" asp-route-category="arts">Arts & Culture</a></li>
+                            <li><a asp-controller="Event" asp-action="Index" asp-route-category="business">Business</a></li>
+                            <li><a asp-controller="Event" asp-action="Index" asp-route-category="food">Food & Drink</a></li>
+                            <li><a asp-controller="Event" asp-action="Index" asp-route-category="technology">Technology</a></li>
+                            <li><a asp-controller="Event" asp-action="Index" asp-route-category="health">Health & Wellness</a></li>
+                        </ul>
+                    </div>
+
+                    <!-- Support Column -->
+                    <div class="col-lg-2 col-md-6">
+                        <h5 class="footer-title">Support</h5>
+                        <ul class="footer-links">
+                            <li><a asp-controller="Home" asp-action="Help">Help Center</a></li>
+                            <li><a href="#terms">Terms of Service</a></li>
+                            <li><a href="#privacy">Privacy Policy</a></li>
+                            <li><a asp-controller="Home" asp-action="FAQ">FAQ</a></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Footer Divider -->
+                <hr class="footer-divider">
+
+                <!-- Footer Bottom -->
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <p class="footer-copyright">&copy; 2025 EventHub. All rights reserved.</p>
+                    </div>
+                    <div class="col-md-6 text-md-end">
+                        <p class="footer-tagline">Made with ❤️ in Sri Lanka</p>
+                    </div>
+                </div>
+            </div>
+        </footer>
     </main>
 
     <!-- jQuery FIRST -->

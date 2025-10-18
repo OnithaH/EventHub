@@ -163,8 +163,9 @@ html {
 }
 
 .btn-hero-primary {
-    background: white;
-    color: #667eea;
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+    border: none;
+    color: #1f2937 !important;
     font-weight: 600;
     padding: 1rem 2rem;
     border-radius: 50px;
@@ -172,14 +173,13 @@ html {
     transition: all 0.3s ease;
     display: inline-flex;
     align-items: center;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    border-radius: 50px;
 }
 
     .btn-hero-primary:hover {
-        background: #f8f9fa;
-        color: #667eea;
+        color: #1f2937 !important;
         transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 8px 25px rgba(251, 191, 36, 0.4);
     }
 
 .btn-hero-secondary {
