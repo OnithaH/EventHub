@@ -640,20 +640,10 @@ namespace EventHub.Controllers
         {
             try
             {
-                // Parse QR code data format: TicketID|BookingID|EventID|IssueDate
-                var parts = request.QRCodeData.Split('|');
+                _logger.LogInformation("🔍 Verifying ticket: {TicketCode}", request.QRCodeData);
 
-                if (parts.Length < 3)
-                {
-                    return Json(new { success = false, status = "invalid", message = "Invalid QR code format" });
-                }
-
-                if (!int.TryParse(parts[0], out int ticketId) ||
-                    !int.TryParse(parts[1], out int bookingId) ||
-                    !int.TryParse(parts[2], out int eventId))
-                {
-                    return Json(new { success = false, status = "invalid", message = "Invalid ticket data" });
-                }
+                // Simple lookup by ticket number (what's in the QR code)
+                var ticketCode = request.QRCodeData.Trim();
 
                 // Fetch ticket with related data
                 var ticket = await _context.Tickets
@@ -662,10 +652,11 @@ namespace EventHub.Controllers
                     .Include(t => t.Booking)
                         .ThenInclude(b => b.Event)
                             .ThenInclude(e => e.Venue)
-                    .FirstOrDefaultAsync(t => t.Id == ticketId && t.BookingId == bookingId);
+                    .FirstOrDefaultAsync(t => t.TicketNumber == ticketCode);
 
                 if (ticket == null)
                 {
+                    _logger.LogWarning("❌ Ticket not found: {TicketCode}", ticketCode);
                     return Json(new
                     {
                         success = false,
@@ -674,9 +665,13 @@ namespace EventHub.Controllers
                     });
                 }
 
+                _logger.LogInformation("✅ Ticket found: {TicketNumber}, Status: {Status}",
+                    ticket.TicketNumber, ticket.Status);
+
                 // Check if ticket already used
                 if (ticket.Status == TicketStatus.Used)
                 {
+                    _logger.LogWarning("⚠️ Ticket already used: {TicketNumber}", ticket.TicketNumber);
                     return Json(new
                     {
                         success = false,
@@ -695,6 +690,8 @@ namespace EventHub.Controllers
                 // Check if ticket is valid (use Active enum value)
                 if (ticket.Status != TicketStatus.Active)
                 {
+                    _logger.LogWarning("❌ Ticket not active: {TicketNumber}, Status: {Status}",
+                        ticket.TicketNumber, ticket.Status);
                     return Json(new
                     {
                         success = false,
@@ -711,6 +708,8 @@ namespace EventHub.Controllers
                 // Check if event date has passed
                 if (ticket.Booking.Event.EventDate.Date < DateTime.UtcNow.Date)
                 {
+                    _logger.LogWarning("❌ Event date passed: {EventDate}",
+                        ticket.Booking.Event.EventDate);
                     return Json(new
                     {
                         success = false,
@@ -724,9 +723,12 @@ namespace EventHub.Controllers
                 }
 
                 // Mark ticket as used
+                _logger.LogInformation("✅ Marking ticket as USED: {TicketNumber}", ticket.TicketNumber);
                 ticket.Status = TicketStatus.Used;
                 ticket.UsedDate = DateTime.UtcNow;
                 await _context.SaveChangesAsync();
+
+                _logger.LogInformation("🎉 Ticket verified successfully: {TicketNumber}", ticket.TicketNumber);
 
                 // Return success
                 return Json(new
@@ -751,7 +753,7 @@ namespace EventHub.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error verifying ticket");
+                _logger.LogError(ex, "💥 Error verifying ticket: {TicketCode}", request.QRCodeData);
                 return Json(new
                 {
                     success = false,

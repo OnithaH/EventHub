@@ -1,6 +1,6 @@
 ﻿@{
+    Layout = "_Layout";
     ViewData["Title"] = "QR Ticket Scanner";
-    var userName = Context.Session.GetString("UserName") ?? "Organizer";
 }
 
 <!DOCTYPE html>
@@ -8,7 +8,6 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - EventHub</title>
     <!-- QR Scanner Library -->
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <!-- Custom QR Scanner CSS -->

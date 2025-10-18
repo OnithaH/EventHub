@@ -23,6 +23,7 @@
 
   <ItemGroup>
     <Folder Include="Models\DT0s\" />
+    <Folder Include="wwwroot\images\events\" />
   </ItemGroup>
 
 </Project>
