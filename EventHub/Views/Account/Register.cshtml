@@ -117,9 +117,6 @@
                                         <label asp-for="Password" class="form-label required">Password</label>
                                         <div class="input-group">
                                             <input asp-for="Password" type="password" class="form-control " id="password" required>
-                                            <button type="button" class="btn btn-outline-secondary password-toggle" tabindex="-1">
-                                                <i class="bi bi-eye"></i>
-                                            </button>
                                         </div>
                                         <span asp-validation-for="Password" class="field-validation-error"></span>
                                         <div class="password-strength" style="display: none;">
@@ -132,9 +129,6 @@
                                         <label asp-for="ConfirmPassword" class="form-label required">Confirm Password</label>
                                         <div class="input-group">
                                             <input asp-for="ConfirmPassword" type="password" class="form-control " id="confirmPassword" required>
-                                            <button type="button" class="btn btn-outline-secondary password-toggle" tabindex="-1">
-                                                <i class="bi bi-eye"></i>
-                                            </button>
                                         </div>
                                         <span asp-validation-for="ConfirmPassword" class="field-validation-error"></span>
                                     </div>

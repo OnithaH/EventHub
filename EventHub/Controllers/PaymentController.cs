@@ -114,6 +114,13 @@ namespace EventHub.Controllers
 
                 _logger.LogInformation("✅ BOOKING STATUS IS PENDING - CREATING PAYMENT RECORD...");
 
+                // 🔧 FIX: Calculate loyalty points EARLY (before saving to DB)
+                var pointsEarned = (int)(model.Amount / 100);
+                _logger.LogInformation("⭐ LOYALTY POINTS CALCULATION:");
+                _logger.LogInformation("   Amount: {Amount} Rs.", model.Amount);
+                _logger.LogInformation("   Formula: Amount / 100 = {Amount} / 100", model.Amount);
+                _logger.LogInformation("   Points Earned: {Points}", pointsEarned);
+
                 // Create payment
                 var payment = new Payment
                 {
@@ -130,7 +137,7 @@ namespace EventHub.Controllers
                 _logger.LogInformation("💳 PAYMENT RECORD CREATED:");
                 _logger.LogInformation("   Transaction ID: {TransactionId}", payment.TransactionId);
                 _logger.LogInformation("   Method: {Method}", payment.PaymentMethod);
-                _logger.LogInformation("   Amount: {Amount}", payment.Amount);
+                _logger.LogInformation("   Amount: {Amount} Rs.", payment.Amount);
 
                 // Update booking
                 booking.Status = BookingStatus.Confirmed;
@@ -160,12 +167,13 @@ namespace EventHub.Controllers
                         i + 1, booking.Quantity, ticketNumber);
                 }
 
-                // Update loyalty points
-                var pointsEarned = (int)(model.Amount / 100);
+                // 🔧 FIX: Update loyalty points with CALCULATED points (not full amount)
+                var oldBalance = booking.Customer.LoyaltyPoints;
                 booking.Customer.LoyaltyPoints += pointsEarned;
                 _logger.LogInformation("⭐ LOYALTY POINTS UPDATED:");
+                _logger.LogInformation("   Old Balance: {OldBalance}", oldBalance);
                 _logger.LogInformation("   Points Earned: {Points}", pointsEarned);
-                _logger.LogInformation("   New Total: {Total}", booking.Customer.LoyaltyPoints);
+                _logger.LogInformation("   New Balance: {NewBalance}", booking.Customer.LoyaltyPoints);
 
                 // Update available tickets
                 booking.Event.AvailableTickets -= booking.Quantity;
@@ -179,6 +187,10 @@ namespace EventHub.Controllers
                 _logger.LogInformation("✅ DATABASE UPDATED - {Count} records saved", savedCount);
 
                 TempData["SuccessMessage"] = $"Payment successful! Booking confirmed: {booking.BookingReference}";
+
+                // 🔧 FIX: Store calculated points in TempData to pass to Success page
+                TempData["LoyaltyPointsEarned"] = pointsEarned;
+                _logger.LogInformation("💾 TEMPDATA STORED - LoyaltyPointsEarned: {Points}", pointsEarned);
 
                 _logger.LogInformation("🎉 PAYMENT COMPLETED SUCCESSFULLY!");
                 _logger.LogInformation("🔀 REDIRECTING TO SUCCESS PAGE - PaymentId: {PaymentId}", payment.Id);
@@ -249,6 +261,28 @@ namespace EventHub.Controllers
                 _logger.LogInformation("   Event: {Event}", payment.Booking.Event.Title);
                 _logger.LogInformation("   Tickets: {Count}", payment.Booking.Tickets.Count);
 
+                // 🔧 FIX: Get points from TempData first, then fallback to calculation
+                int loyaltyPointsEarned = 0;
+
+                if (TempData["LoyaltyPointsEarned"] is int pointsFromTempData)
+                {
+                    loyaltyPointsEarned = pointsFromTempData;
+                    _logger.LogInformation("⭐ LOYALTY POINTS FROM TEMPDATA: {Points}", loyaltyPointsEarned);
+                }
+                else
+                {
+                    // 🔧 FIX: Fallback calculation (divide by 100, NOT use full amount)
+                    loyaltyPointsEarned = (int)(payment.Amount / 100);
+                    _logger.LogInformation("⭐ LOYALTY POINTS CALCULATED FALLBACK: {Amount} / 100 = {Points}",
+                        payment.Amount, loyaltyPointsEarned);
+                }
+
+                _logger.LogInformation("📊 LOYALTY POINTS DEBUG:");
+                _logger.LogInformation("   Payment Amount: {Amount} Rs.", payment.Amount);
+                _logger.LogInformation("   Points to Display: {Points}", loyaltyPointsEarned);
+                _logger.LogInformation("   Formula Check: {Amount} / 100 = {Calculated}",
+                    payment.Amount, (int)(payment.Amount / 100));
+
                 var viewModel = new PaymentSuccessViewModel
                 {
                     BookingId = payment.Booking.Id,
@@ -259,9 +293,15 @@ namespace EventHub.Controllers
                     EventDate = payment.Booking.Event.EventDate,
                     VenueName = payment.Booking.Event.Venue.Name,
                     TicketCount = payment.Booking.Tickets.Count,
-                    LoyaltyPointsEarned = (int)payment.Amount,
+                    LoyaltyPointsEarned = loyaltyPointsEarned,  // 🔧 FIX: Use calculated points, NOT full amount
                     CustomerEmail = payment.Booking.Customer.Email
                 };
+
+                _logger.LogInformation("✅ SUCCESS VIEW MODEL CREATED:");
+                _logger.LogInformation("   BookingRef: {Ref}", viewModel.BookingReference);
+                _logger.LogInformation("   Amount: {Amount} Rs.", viewModel.AmountPaid);
+                _logger.LogInformation("   Points to Show: {Points}", viewModel.LoyaltyPointsEarned);
+                _logger.LogInformation("   Tickets: {Count}", viewModel.TicketCount);
 
                 _logger.LogInformation("✅ SUCCESS VIEW MODEL CREATED - RENDERING PAGE");
                 return View(viewModel);
