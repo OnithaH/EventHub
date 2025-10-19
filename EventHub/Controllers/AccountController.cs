@@ -22,6 +22,34 @@ namespace EventHub.Controllers
             _context = context;
         }
 
+        [HttpGet]
+        public async Task<IActionResult> CheckEmailAvailability(string email)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(email))
+                {
+                    return Json(new { available = false, message = "Email is required" });
+                }
+
+                var isAvailable = await _userService.IsEmailAvailableAsync(email);
+
+                return Json(new
+                {
+                    available = isAvailable,
+                    message = isAvailable
+                        ? "Email is available"
+                        : "This email is already registered. Please use a different email or login to your existing account."
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error checking email availability for {Email}", email);
+                // Return true on error to allow registration to proceed (fail-safe)
+                return Json(new { available = true, message = "Unable to verify email" });
+            }
+        }
+
         // GET: /Account/Login
         public IActionResult Login()
         {

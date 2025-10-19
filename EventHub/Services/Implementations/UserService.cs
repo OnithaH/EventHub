@@ -74,10 +74,22 @@ namespace EventHub.Services.Implementations
                 if (string.IsNullOrWhiteSpace(user.Name))
                     throw new ArgumentException("Name is required", nameof(user));
 
-                // Check if email already exists
-                var existingUser = await GetUserByEmailAsync(user.Email);
+                // ⭐ FIX 1: Check if email exists regardless of IsActive status
+                var existingUser = await _context.Users
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(u => u.Email.ToLower() == user.Email.Trim().ToLower());
+
                 if (existingUser != null)
+                {
+                    if (!existingUser.IsActive)
+                    {
+                        _logger.LogWarning("Registration attempt with inactive email: {Email}", user.Email);
+                        throw new InvalidOperationException("This email was previously registered. Please contact support to reactivate your account.");
+                    }
+
+                    _logger.LogWarning("Registration attempt with existing email: {Email}", user.Email);
                     throw new InvalidOperationException("A user with this email already exists");
+                }
 
                 // Validate and hash password
                 if (!IsValidPassword(user.Password))
@@ -305,8 +317,13 @@ namespace EventHub.Services.Implementations
                 if (string.IsNullOrWhiteSpace(email))
                     return false;
 
-                var existingUser = await GetUserByEmailAsync(email);
-                return existingUser == null;
+                // ⭐ FIX 2: Check ALL users (active and inactive) for email
+                var existingUser = await _context.Users
+                    .AsNoTracking()
+                    .AnyAsync(u => u.Email.ToLower() == email.Trim().ToLower());
+
+                // Return true if NO user exists with this email
+                return !existingUser;
             }
             catch (Exception ex)
             {

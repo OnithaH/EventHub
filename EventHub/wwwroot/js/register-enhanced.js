@@ -5,6 +5,8 @@
 
 let currentStep = 1;
 let selectedRole = 'customer';
+let isEmailChecking = false; // Track if email check is in progress
+let isEmailValid = false; // Track if email is available
 
 document.addEventListener('DOMContentLoaded', function () {
     initializeEnhancedRegistration();
@@ -15,6 +17,7 @@ document.addEventListener('DOMContentLoaded', function () {
     setupPhoneFormatting();
     setupDateValidation();
     setupPasswordConfirmation();
+    setupEmailValidation(); // ⭐ NEW: Add email validation
 });
 
 function initializeEnhancedRegistration() {
@@ -38,6 +41,125 @@ function initializeEnhancedRegistration() {
         minDate.setFullYear(minDate.getFullYear() - 100);
         dobInput.min = minDate.toISOString().split('T')[0];
     }
+}
+
+// ⭐ NEW: Setup real-time email validation
+function setupEmailValidation() {
+    const emailInput = document.getElementById('email');
+    if (!emailInput) return;
+
+    let emailCheckTimeout;
+
+    // Check email when user types (with debounce)
+    emailInput.addEventListener('input', function () {
+        clearTimeout(emailCheckTimeout);
+        isEmailValid = false; // Reset validation status
+
+        const email = this.value.trim();
+
+        // Remove previous validation states
+        removeAllErrorMessages(emailInput);
+        emailInput.classList.remove('is-invalid', 'is-valid');
+
+        if (!email) return;
+
+        // Basic email format check first
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return; // Don't check server if format is invalid
+        }
+
+        // Show loading indicator
+        showEmailCheckingStatus(emailInput, 'Checking email availability...');
+
+        // Debounce - wait 800ms after user stops typing
+        emailCheckTimeout = setTimeout(async () => {
+            await checkEmailAvailability(email, emailInput);
+        }, 800);
+    });
+
+    // Also check when field loses focus
+    emailInput.addEventListener('blur', function () {
+        const email = this.value.trim();
+        if (email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (emailRegex.test(email)) {
+                checkEmailAvailability(email, emailInput);
+            }
+        }
+    });
+}
+
+// ⭐ NEW: Check email availability via AJAX
+async function checkEmailAvailability(email, emailInput) {
+    if (isEmailChecking) return; // Prevent multiple simultaneous checks
+
+    isEmailChecking = true;
+
+    try {
+        const response = await fetch(`/Account/CheckEmailAvailability?email=${encodeURIComponent(email)}`);
+
+        if (!response.ok) {
+            throw new Error('Server error');
+        }
+
+        const data = await response.json();
+
+        removeAllErrorMessages(emailInput);
+
+        if (data.available) {
+            // Email is available - show success
+            emailInput.classList.remove('is-invalid');
+            emailInput.classList.add('is-valid');
+            isEmailValid = true;
+
+            // Show success message
+            showEmailSuccessMessage(emailInput, '✓ Email is available');
+        } else {
+            // Email already registered - show error
+            emailInput.classList.remove('is-valid');
+            emailInput.classList.add('is-invalid');
+            isEmailValid = false;
+
+            showSingleError(emailInput, data.message || 'This email is already registered. Please use a different email or login to your existing account.');
+        }
+    } catch (error) {
+        console.error('Email check failed:', error);
+        // On error, allow user to proceed (fail-safe)
+        isEmailValid = true;
+        emailInput.classList.remove('is-invalid', 'is-valid');
+        removeAllErrorMessages(emailInput);
+    } finally {
+        isEmailChecking = false;
+    }
+}
+
+// ⭐ NEW: Show checking status
+function showEmailCheckingStatus(field, message) {
+    removeAllErrorMessages(field);
+
+    const statusElement = document.createElement('div');
+    statusElement.className = 'field-validation-info';
+    statusElement.innerHTML = `<i class="bi bi-hourglass-split"></i> ${message}`;
+    statusElement.style.color = '#6c757d';
+    statusElement.style.fontSize = '0.875rem';
+    statusElement.style.marginTop = '0.25rem';
+
+    field.parentNode.appendChild(statusElement);
+}
+
+// ⭐ NEW: Show success message
+function showEmailSuccessMessage(field, message) {
+    removeAllErrorMessages(field);
+
+    const successElement = document.createElement('div');
+    successElement.className = 'field-validation-success';
+    successElement.innerHTML = `<i class="bi bi-check-circle"></i> ${message}`;
+    successElement.style.color = '#28a745';
+    successElement.style.fontSize = '0.875rem';
+    successElement.style.marginTop = '0.25rem';
+
+    field.parentNode.appendChild(successElement);
 }
 
 function selectRole(role) {
@@ -156,7 +278,36 @@ function setupStepNavigation() {
     });
 }
 
+// ⭐ UPDATED: Check email validation before moving to next step
 function nextStep() {
+    // ⭐ Special validation for Step 1: Check email availability
+    if (currentStep === 1) {
+        const emailInput = document.getElementById('email');
+
+        // Wait for email check to complete
+        if (isEmailChecking) {
+            showSingleError(emailInput, 'Please wait while we verify your email...');
+            return;
+        }
+
+        // Check if email is valid and available
+        if (emailInput && emailInput.value.trim()) {
+            if (!isEmailValid) {
+                // Email is not available or not checked
+                const hasError = emailInput.classList.contains('is-invalid');
+                if (!hasError) {
+                    // Force check if not already checked
+                    checkEmailAvailability(emailInput.value.trim(), emailInput);
+                }
+
+                // Scroll to email field
+                emailInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                emailInput.focus();
+                return; // Don't proceed
+            }
+        }
+    }
+
     // Only proceed if validation passes
     if (validateCurrentStep()) {
         if (currentStep < 3) {
@@ -198,7 +349,7 @@ function setupPasswordConfirmation() {
 function removeAllErrorMessages(field) {
     if (!field || !field.parentNode) return;
 
-    const errorMessages = field.parentNode.querySelectorAll('.field-validation-error');
+    const errorMessages = field.parentNode.querySelectorAll('.field-validation-error, .field-validation-info, .field-validation-success');
     errorMessages.forEach(message => message.remove());
 }
 
@@ -432,11 +583,11 @@ function setupDateValidation() {
 
 // Utility functions for terms and privacy policy
 function showTerms() {
-    alert('Terms of Service\n\n1. Acceptance of Terms\nBy creating an account with EventHub, you agree to be bound by these Terms of Service.\n\n2. Account Responsibilities\nYou are responsible for maintaining the confidentiality of your account credentials.\n\n3. Event Listings and Bookings\nEvent organizers must provide accurate information. Customers acknowledge that event details may change.\n\n4. Payment and Refunds\nPayments are processed securely. Refund policies vary by event.\n\n5. Prohibited Activities\nUsers must not engage in fraud, spam, harassment, or illegal activities.');
+    alert('Terms of Service\n\n1. Acceptance of Terms\nBy creating an account with EventHub, you agree to be bound by these Terms of Service.\n\n2. Account Responsibilities\nYou are responsible for maintaining the confidentiality of your account.');
 }
 
 function showPrivacyPolicy() {
-    alert('Privacy Policy\n\nInformation We Collect\nWe collect information you provide directly, including account details and event preferences.\n\nHow We Use Information\nYour information is used to provide services, process transactions, and send notifications.\n\nInformation Sharing\nWe don\'t sell your personal information. We only share data with service providers as required.\n\nData Security\nWe implement industry-standard security measures to protect your information.\n\nYour Rights\nYou can access, update, or delete your personal information at any time.\n\nContact Us\nFor privacy questions, contact us at privacy@eventhub.lk');
+    alert('Privacy Policy\n\nInformation We Collect\nWe collect information you provide directly, including account details and event preferences.\n\nHow We Use Information\nYour information is used to provide and improve our services.');
 }
 
 // Enhanced form submission handling
