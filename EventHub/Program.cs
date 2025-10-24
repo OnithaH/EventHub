@@ -1,9 +1,10 @@
 using Azure.Storage.Blobs;
 using EventHub.Data;
-using EventHub.Services.Interfaces;
+using EventHub.Models.Entities;
 using EventHub.Services.Implementations;
-using Microsoft.EntityFrameworkCore;
+using EventHub.Services.Interfaces;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.EntityFrameworkCore;
 using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -33,6 +34,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IEventService, EventService>();
+builder.Services.AddScoped<IVenueService, VenueService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
 builder.Services.AddScoped<IQRCodeService, QRCodeService>();
 
@@ -177,6 +179,60 @@ app.Run();
 
 static async Task SeedInitialData(ApplicationDbContext context)
 {
-    if (context.Users.Any())
+    // Check if any admin user already exists
+    if (await context.Users.AnyAsync(u => u.Role == UserRole.Admin))
+    {
+        Console.WriteLine("? Admin user already exists in database");
         return;
+    }
+
+    // Check if any users exist at all
+    if (await context.Users.AnyAsync())
+    {
+        Console.WriteLine("?? Users exist but no admin found. Creating super admin...");
+    }
+
+    try
+    {
+        // Create Super Admin with BCrypt hashed password
+        var superAdmin = new User
+        {
+            Name = "Super Admin",
+            Email = "admin@eventhub.lk",
+            Password = BCrypt.Net.BCrypt.HashPassword("Admin@123", 12), // BCrypt with work factor 12
+            Role = UserRole.Admin,
+            Phone = "+94771234567",
+            LoyaltyPoints = 0,
+            Company = "EventHub Administration",
+            CreatedAt = DateTime.UtcNow,
+            IsActive = true,
+            DateOfBirth = new DateTime(1990, 1, 1),
+            Gender = "Not Specified",
+            City = "Colombo",
+            Interests = "System Administration",
+            Website = "https://eventhub.lk",
+            Description = "Super Administrator Account - Full System Access",
+            EmailNotifications = true,
+            SmsNotifications = false,
+            MarketingEmails = false
+        };
+
+        context.Users.Add(superAdmin);
+        await context.SaveChangesAsync();
+
+        Console.WriteLine("========================================");
+        Console.WriteLine("? SUPER ADMIN CREATED SUCCESSFULLY!");
+        Console.WriteLine("========================================");
+        Console.WriteLine($"?? Email: {superAdmin.Email}");
+        Console.WriteLine($"?? Password: Admin@123");
+        Console.WriteLine($"?? Role: Admin");
+        Console.WriteLine("========================================");
+        Console.WriteLine("??  IMPORTANT: Change this password after first login!");
+        Console.WriteLine("========================================");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"? ERROR: Failed to create super admin: {ex.Message}");
+        throw;
+    }
 }

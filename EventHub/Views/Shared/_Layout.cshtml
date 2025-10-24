@@ -178,6 +178,34 @@
                             </a>
                         </li>
                     }
+                    else if (isAdmin)
+                    {
+                        <!-- Admin-specific navigation -->
+                        <li class="nav-item">
+                            <a class="nav-link eventhub-nav-link @(IsActive("Admin", "ManageEvents") ? "active" : "")"
+                               asp-controller="Admin" asp-action="ManageEvents">
+                                <i class="bi bi-calendar-check me-1"></i>Manage Events
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link eventhub-nav-link @(IsActive("Admin", "ManageVenues") ? "active" : "")"
+                               asp-controller="Admin" asp-action="ManageVenues">
+                                <i class="bi bi-building me-1"></i>Manage Venues
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link eventhub-nav-link @(IsActive("Admin", "SystemReports") ? "active" : "")"
+                               asp-controller="Admin" asp-action="SystemReports">
+                                <i class="bi bi-graph-up-arrow me-1"></i>System Reports
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link eventhub-nav-link @(IsActive("Admin", "ManageUsers") ? "active" : "")"
+                               asp-controller="Admin" asp-action="ManageUsers">
+                                <i class="bi bi-people me-1"></i>Manage Users
+                            </a>
+                        </li>
+                    }
 
                         <li class="nav-item">
                             <a class="nav-link eventhub-nav-link @(IsActive("Home", "About") ? "active" : "")"
@@ -288,10 +316,31 @@
                                 else if (isAdmin)
                                 {
                                     <li>
-                                        <a class="dropdown-item" asp-controller="Admin" asp-action="Dashboard">
+                                        <a class="dropdown-item" asp-controller="Admin" asp-action="Index">
                                             <i class="bi bi-speedometer2 me-2"></i>Admin Dashboard
                                         </a>
                                     </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Admin" asp-action="ManageEvents">
+                                            <i class="bi bi-calendar-check me-2"></i>Manage Events
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Admin" asp-action="ManageVenues">
+                                            <i class="bi bi-building me-2"></i>Manage Venues
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Admin" asp-action="SystemReports">
+                                            <i class="bi bi-graph-up-arrow me-2"></i>System Reports
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Admin" asp-action="ManageUsers">
+                                            <i class="bi bi-people me-2"></i>Manage Users
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
                                     <li>
                                         <a class="dropdown-item" asp-controller="Account" asp-action="Profile">
                                             <i class="bi bi-person me-2"></i>Edit Profile
