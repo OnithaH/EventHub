@@ -1,0 +1,98 @@
+﻿@{
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+<div class="container-fluid px-4 py-4">
+    <!-- Welcome Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <div class="card-body text-white p-4">
+                    <h1 class="display-4 mb-2">
+                        <i class="bi bi-speedometer2 me-2"></i>Admin Dashboard
+                    </h1>
+                    <p class="lead mb-0">Welcome, @Context.Session.GetString("UserName")!</p>
+                    <small class="opacity-75">Manage your EventHub platform</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Action Cards -->
+    <div class="row g-4">
+        <!-- Manage Events Card -->
+        <div class="col-md-6 col-lg-3">
+            <a asp-action="ManageEvents" class="text-decoration-none">
+                <div class="card border-0 shadow-sm h-100" style="transition: all 0.3s;">
+                    <div class="card-body text-center p-4">
+                        <div class="mb-3">
+                            <div class="rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                                <i class="bi bi-calendar-event text-primary" style="font-size: 2.5rem;"></i>
+                            </div>
+                        </div>
+                        <h5 class="card-title">Manage Events</h5>
+                        <p class="text-muted small mb-0">View and control all events</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Manage Venues Card -->
+        <div class="col-md-6 col-lg-3">
+            <a asp-action="ManageVenues" class="text-decoration-none">
+                <div class="card border-0 shadow-sm h-100" style="transition: all 0.3s;">
+                    <div class="card-body text-center p-4">
+                        <div class="mb-3">
+                            <div class="rounded-circle bg-success bg-opacity-10 d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                                <i class="bi bi-building text-success" style="font-size: 2.5rem;"></i>
+                            </div>
+                        </div>
+                        <h5 class="card-title">Manage Venues</h5>
+                        <p class="text-muted small mb-0">Add and edit venues</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- System Reports Card -->
+        <div class="col-md-6 col-lg-3">
+            <a asp-action="SystemReports" class="text-decoration-none">
+                <div class="card border-0 shadow-sm h-100" style="transition: all 0.3s;">
+                    <div class="card-body text-center p-4">
+                        <div class="mb-3">
+                            <div class="rounded-circle bg-info bg-opacity-10 d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                                <i class="bi bi-graph-up-arrow text-info" style="font-size: 2.5rem;"></i>
+                            </div>
+                        </div>
+                        <h5 class="card-title">System Reports</h5>
+                        <p class="text-muted small mb-0">View analytics</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Manage Users Card -->
+        <div class="col-md-6 col-lg-3">
+            <a asp-action="ManageUsers" class="text-decoration-none">
+                <div class="card border-0 shadow-sm h-100" style="transition: all 0.3s;">
+                    <div class="card-body text-center p-4">
+                        <div class="mb-3">
+                            <div class="rounded-circle bg-warning bg-opacity-10 d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                                <i class="bi bi-people text-warning" style="font-size: 2.5rem;"></i>
+                            </div>
+                        </div>
+                        <h5 class="card-title">Manage Users</h5>
+                        <p class="text-muted small mb-0">Control user accounts</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15) !important;
+    }
+</style>

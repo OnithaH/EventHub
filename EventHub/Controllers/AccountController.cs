@@ -542,7 +542,7 @@ namespace EventHub.Controllers
         {
             return role switch
             {
-                "Admin" => RedirectToAction("Dashboard", "Admin"),
+                "Admin" => RedirectToAction("Index", "Admin"),
                 "Organizer" => RedirectToAction("Dashboard", "Organizer"),
                 "Customer" => RedirectToAction("Index", "Home"),
                 _ => RedirectToAction("Index", "Home")
